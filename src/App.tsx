@@ -1,0 +1,56 @@
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
+import AppRoutesFixed from './components/AppRoutesFixed';
+import { initializeApp } from './utils/appInit';
+import './App.css';
+
+function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Initialize the app
+    const init = async () => {
+      try {
+        // Initialize the app
+        await initializeApp();
+      } catch (error) {
+        console.error('App initialization error:', error);
+      } finally {
+        // Finish loading after initialization
+        setIsLoading(false);
+      }
+    };
+    
+    init();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-b from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-300">
+            Felearn
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">Loading your creative space...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <AppRoutesFixed />
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+export default App;

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test Import Map</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "@google/genai": "https://esm.sh/@google/genai@^0.7.0",
+      "marked": "https://esm.sh/marked@^15.0.7"
+    }
+  }
+  </script>
+</head>
+<body>
+  <h1>Testing Import Map</h1>
+  <div id="output"></div>
+
+  <script type="module">
+    // Test importing from the CDN
+    import { GoogleGenAI, Modality } from '@google/genai';
+    
+    const output = document.getElementById('output');
+    
+    try {
+      output.innerHTML = `<p>Successfully imported GoogleGenAI and Modality from @google/genai</p>`;
+      output.innerHTML += `<p>GoogleGenAI: ${typeof GoogleGenAI}</p>`;
+      output.innerHTML += `<p>Modality: ${typeof Modality}</p>`;
+    } catch (error) {
+      output.innerHTML = `<p style="color: red">Error: ${error.message}</p>`;
+    }
+  </script>
+</body>
+</html>

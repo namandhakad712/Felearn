@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appwrite Monitoring Fix</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #d00;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 30px;
+        }
+        code {
+            background-color: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Appwrite Monitoring System Fix</h1>
+    
+    <div class="warning">
+        <strong>Problem:</strong> Your application was crashing due to Appwrite database errors, specifically:
+        <ul>
+            <li>Missing collections (404 Not Found)</li>
+            <li>Rate limiting issues (429 Too Many Requests)</li>
+        </ul>
+    </div>
+
+    <h2>Changes Made</h2>
+    <p>The following changes have been made to fix the issues:</p>
+    
+    <h3>1. Error Handling Improvements</h3>
+    <ul>
+        <li>Added proper error handling for missing collections</li>
+        <li>Added rate limiting protection with exponential backoff</li>
+        <li>Made initialization non-blocking so your app continues even if monitoring fails</li>
+    </ul>
+
+    <h3>2. Rate Limiting Protection</h3>
+    <ul>
+        <li>Added client-side rate limiting for error tracking (max 10 errors per minute)</li>
+        <li>Added debouncing for error events (1 second between errors)</li>
+        <li>Added local storage for errors when rate limited</li>
+    </ul>
+
+    <h3>3. Configuration Changes</h3>
+    <ul>
+        <li>Disabled non-essential monitoring features</li>
+        <li>Reduced sampling rates to minimize API calls</li>
+        <li>Increased collection intervals to reduce API call frequency</li>
+    </ul>
+
+    <h2>How to Fix Appwrite Database Issues</h2>
+    
+    <p>To completely fix the issues, you need to create the missing collections in your Appwrite database:</p>
+
+    <h3>Option 1: Use the Setup Script</h3>
+    <p>Run the provided setup script to create all required collections:</p>
+    <pre>npm install node-appwrite
+set APPWRITE_API_KEY=your_api_key_here
+node setup-appwrite-collections.js</pre>
+
+    <h3>Option 2: Manually Create Collections</h3>
+    <p>Create these collections in your Appwrite console:</p>
+    <ul>
+        <li><code>alert_configs</code></li>
+        <li><code>system_metrics</code></li>
+        <li><code>alerts</code></li>
+        <li><code>performance_logs</code></li>
+        <li><code>error_logs</code></li>
+        <li><code>request_logs</code></li>
+        <li><code>api_usage_logs</code></li>
+    </ul>
+
+    <h3>Required Attributes for alert_configs</h3>
+    <ul>
+        <li>name (string, required)</li>
+        <li>metric (string, required)</li>
+        <li>threshold (float, required)</li>
+        <li>operator (string, required)</li>
+        <li>enabled (boolean, required)</li>
+        <li>recipients (string array, optional)</li>
+    </ul>
+
+    <h2>Re-enabling Features</h2>
+    <p>After creating the collections, you can gradually re-enable monitoring features in <code>src/config/monitoring.ts</code>:</p>
+    <pre>// Feature flags
+features: {
+  realTimeMonitoring: true,  // Re-enable when collections are created
+  performanceTracking: true, // Re-enable when collections are created
+  errorTracking: true,       
+  userAnalytics: true,       // Re-enable when collections are created
+  alerting: true,            // Re-enable when collections are created
+  healthChecks: true,        // Re-enable when collections are created
+},</pre>
+
+    <div class="success">
+        <strong>Success:</strong> Your application should now run without crashing, even with the missing collections. For full functionality, create the required collections in Appwrite.
+    </div>
+</body>
+</html>

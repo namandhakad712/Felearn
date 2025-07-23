@@ -1,0 +1,350 @@
+{
+  "projectId": "ai-storytelling-platform",
+  "projectName": "AI Storytelling Platform",
+  "functions": [
+    {
+      "functionId": "export-story",
+      "name": "Export Story",
+      "runtime": "node-18.0",
+      "path": "functions/export-story",
+      "entrypoint": "src/main.js",
+      "ignore": [
+        "node_modules",
+        ".npm"
+      ],
+      "execute": ["users"],
+      "events": [],
+      "schedule": "",
+      "timeout": 30,
+      "enabled": true,
+      "logging": true,
+      "scopes": [
+        "databases.read",
+        "databases.write"
+      ]
+    },
+    {
+      "functionId": "analytics",
+      "name": "Analytics Processing",
+      "runtime": "node-18.0",
+      "path": "functions/analytics",
+      "entrypoint": "src/main.js",
+      "ignore": [
+        "node_modules",
+        ".npm"
+      ],
+      "execute": ["users"],
+      "events": [],
+      "schedule": "0 2 * * *",
+      "timeout": 300,
+      "enabled": true,
+      "logging": true,
+      "scopes": [
+        "databases.read",
+        "databases.write"
+      ]
+    },
+    {
+      "functionId": "cleanup",
+      "name": "Data Cleanup",
+      "runtime": "node-18.0",
+      "path": "functions/cleanup",
+      "entrypoint": "src/main.js",
+      "ignore": [
+        "node_modules",
+        ".npm"
+      ],
+      "execute": ["users"],
+      "events": [],
+      "schedule": "0 3 * * 0",
+      "timeout": 600,
+      "enabled": true,
+      "logging": true,
+      "scopes": [
+        "databases.read",
+        "databases.write",
+        "files.read",
+        "files.write"
+      ]
+    }
+  ],
+  "databases": [
+    {
+      "databaseId": "main",
+      "name": "Main Database",
+      "collections": [
+        {
+          "collectionId": "users",
+          "name": "Users",
+          "permissions": [
+            "read(\"users\")",
+            "write(\"users\")"
+          ],
+          "documentSecurity": true,
+          "enabled": true,
+          "attributes": [
+            {
+              "key": "email",
+              "type": "string",
+              "size": 255,
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "geminiKey",
+              "type": "string",
+              "size": 1000,
+              "required": false,
+              "array": false
+            },
+            {
+              "key": "settings",
+              "type": "string",
+              "size": 2000,
+              "required": false,
+              "array": false
+            },
+            {
+              "key": "isAdmin",
+              "type": "boolean",
+              "required": false,
+              "array": false,
+              "default": false
+            },
+            {
+              "key": "createdAt",
+              "type": "datetime",
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "lastLogin",
+              "type": "datetime",
+              "required": false,
+              "array": false
+            }
+          ],
+          "indexes": [
+            {
+              "key": "email_index",
+              "type": "unique",
+              "attributes": ["email"]
+            },
+            {
+              "key": "created_at_index",
+              "type": "key",
+              "attributes": ["createdAt"]
+            }
+          ]
+        },
+        {
+          "collectionId": "stories",
+          "name": "Stories",
+          "permissions": [
+            "read(\"users\")",
+            "write(\"users\")"
+          ],
+          "documentSecurity": true,
+          "enabled": true,
+          "attributes": [
+            {
+              "key": "userId",
+              "type": "string",
+              "size": 255,
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "title",
+              "type": "string",
+              "size": 500,
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "content",
+              "type": "string",
+              "size": 10000,
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "images",
+              "type": "string",
+              "size": 2000,
+              "required": false,
+              "array": false
+            },
+            {
+              "key": "isPinned",
+              "type": "boolean",
+              "required": false,
+              "array": false,
+              "default": false
+            },
+            {
+              "key": "createdAt",
+              "type": "datetime",
+              "required": true,
+              "array": false
+            }
+          ],
+          "indexes": [
+            {
+              "key": "user_stories_index",
+              "type": "key",
+              "attributes": ["userId", "createdAt"]
+            },
+            {
+              "key": "created_at_index",
+              "type": "key",
+              "attributes": ["createdAt"]
+            }
+          ]
+        },
+        {
+          "collectionId": "admin_logs",
+          "name": "Admin Logs",
+          "permissions": [
+            "read(\"admins\")",
+            "write(\"admins\")"
+          ],
+          "documentSecurity": false,
+          "enabled": true,
+          "attributes": [
+            {
+              "key": "action",
+              "type": "string",
+              "size": 255,
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "adminId",
+              "type": "string",
+              "size": 255,
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "details",
+              "type": "string",
+              "size": 5000,
+              "required": false,
+              "array": false
+            },
+            {
+              "key": "timestamp",
+              "type": "datetime",
+              "required": true,
+              "array": false
+            }
+          ],
+          "indexes": [
+            {
+              "key": "timestamp_index",
+              "type": "key",
+              "attributes": ["timestamp"]
+            }
+          ]
+        },
+        {
+          "collectionId": "error_logs",
+          "name": "Error Logs",
+          "permissions": [
+            "read(\"admins\")",
+            "write(\"users\")"
+          ],
+          "documentSecurity": false,
+          "enabled": true,
+          "attributes": [
+            {
+              "key": "type",
+              "type": "string",
+              "size": 50,
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "message",
+              "type": "string",
+              "size": 1000,
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "stack",
+              "type": "string",
+              "size": 5000,
+              "required": false,
+              "array": false
+            },
+            {
+              "key": "userId",
+              "type": "string",
+              "size": 255,
+              "required": false,
+              "array": false
+            },
+            {
+              "key": "context",
+              "type": "string",
+              "size": 2000,
+              "required": false,
+              "array": false
+            },
+            {
+              "key": "severity",
+              "type": "string",
+              "size": 20,
+              "required": true,
+              "array": false
+            },
+            {
+              "key": "resolved",
+              "type": "boolean",
+              "required": false,
+              "array": false,
+              "default": false
+            },
+            {
+              "key": "timestamp",
+              "type": "datetime",
+              "required": true,
+              "array": false
+            }
+          ],
+          "indexes": [
+            {
+              "key": "timestamp_index",
+              "type": "key",
+              "attributes": ["timestamp"]
+            },
+            {
+              "key": "severity_index",
+              "type": "key",
+              "attributes": ["severity"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "buckets": [
+    {
+      "bucketId": "storytelling-images",
+      "name": "Storytelling Images",
+      "permissions": [
+        "read(\"users\")",
+        "write(\"users\")"
+      ],
+      "fileSecurity": true,
+      "enabled": true,
+      "maximumFileSize": 10485760,
+      "allowedFileExtensions": ["jpg", "jpeg", "png", "gif", "webp"],
+      "compression": "gzip",
+      "encryption": true,
+      "antivirus": true
+    }
+  ]
+}

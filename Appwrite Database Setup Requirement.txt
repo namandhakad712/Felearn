@@ -1,0 +1,30 @@
+# Appwrite Database Setup Requirements
+
+## Required Database Collections
+
+1. **alert_configs**
+   - Purpose: Store monitoring alert configurations
+   - Required attributes:
+     - name (string)
+     - threshold (number)
+     - enabled (boolean)
+     - notification_method (string)
+
+## Configuration Steps
+
+1. Create a database with ID "687a8ae6003b5969331a" or update the database ID in your application code
+2. Create the required collections with proper attributes and permissions
+3. Implement rate limiting handling in your application code
+4. Configure proper error reporting (currently disabled - "Error reporting service disabled (no DSN configured)")
+
+## Common Issues to Avoid
+
+1. Missing collections causing 404 errors
+2. Rate limiting (429 Too Many Requests) - implement backoff strategy
+3. Proper initialization of monitoring system
+
+## Implementation Notes
+
+- The monitoring system attempts to initialize on application startup
+- Default alert configurations are created if none exist
+- Ensure proper permissions are set for database operations
