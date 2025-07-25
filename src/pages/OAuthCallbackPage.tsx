@@ -1,0 +1,65 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthService } from '@/services/auth';
+
+const OAuthCallbackPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { refreshUser } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      try {
+        const authService = new AuthService();
+        await authService.handleOAuthCallback();
+        await refreshUser(); // Refresh user data with merged database info
+        navigate('/dashboard');
+      } catch (error: any) {
+        console.error('OAuth callback error:', error);
+        setError(error.message || 'OAuth authentication failed');
+        setTimeout(() => {
+          navigate('/auth/login');
+        }, 3000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    handleCallback();
+  }, [navigate, refreshUser]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Completing sign in...</h2>
+          <p className="text-gray-600">Please wait while we set up your account.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md">
+          <div className="bg-red-100 rounded-full p-3 mx-auto mb-4 w-16 h-16 flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Failed</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-sm text-gray-500">Redirecting to login page...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+export default OAuthCallbackPage;

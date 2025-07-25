@@ -1,8 +1,6 @@
-import { useState } from 'react';
-import useAuthFix from './useAuthFix';
-import { User } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
-const useAuth = useAuthFix;
+export default useAuth;
 
 /**
  * Hook for user profile operations

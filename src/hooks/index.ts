@@ -1,19 +1,9 @@
-// Re-export all hooks
-import useAuthFix from './useAuthFix';
-export const useAuth = useAuthFix;
+// Re-export hooks
+import { useAuth } from '../contexts/AuthContext';
 
 // Import hooks directly to avoid circular dependencies
-import useAuthState, { 
-  useAuthStateWithLoading, 
-  useUserProfile, 
-  useHasRole 
-} from './useAuthState';
-export { 
-  useAuthState, 
-  useAuthStateWithLoading, 
-  useUserProfile, 
-  useHasRole 
-};
+import useAuthState from './useAuthState';
+export { useAuthState };
 
 import { 
   useLogin, 
@@ -82,9 +72,6 @@ export const useToast = () => {
 const hooks = {
   useAuth,
   useAuthState,
-  useAuthStateWithLoading,
-  useUserProfile,
-  useHasRole,
   useLogin,
   useRegister,
   useLogout,
@@ -99,3 +86,4 @@ const hooks = {
 };
 
 export default hooks;
+export { useAuth };

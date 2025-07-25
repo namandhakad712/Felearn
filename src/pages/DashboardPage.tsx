@@ -6,6 +6,7 @@ import { ChatInterface, StoryDisplay, ExportModal, AdvancedSearchFilter, StorySe
 import { ProfileModal } from '../components/profile';
 import { useAuth } from '../contexts/AuthContext';
 import { useStories, useToast } from '../hooks';
+import { useUserTheme } from '../hooks/useUserTheme';
 import { Story } from '../types';
 
 // Define the StorySlide interface
@@ -28,6 +29,9 @@ const StoryGenerator = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const { user } = useAuth();
+  
+  // Apply user's theme preference automatically
+  useUserTheme();
   const { success: showSuccessToast, error: showErrorToast, toasts, removeToast } = useToast();
 
 

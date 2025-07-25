@@ -1,56 +1,189 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
-import AppRoutesFixed from './components/AppRoutesFixed';
-import { initializeApp } from './utils/appInit';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import AuthPage from '@/pages/AuthPage';
+import EmailVerificationPage from '@/pages/EmailVerificationPage';
+import ResetPasswordPage from '@/pages/ResetPasswordPage';
+import OnboardingPage from '@/pages/OnboardingPage';
+import OAuthCallbackPage from '@/pages/OAuthCallbackPage';
+import DashboardPage from '@/pages/DashboardPage';
+import { useAuth } from '@/contexts/AuthContext';
 
-function App() {
-  const [isLoading, setIsLoading] = useState(true);
+// Protected Route component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const [checkingOnboarding, setCheckingOnboarding] = React.useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = React.useState(false);
 
-  useEffect(() => {
-    // Initialize the app
-    const init = async () => {
-      try {
-        // Initialize the app
-        await initializeApp();
-      } catch (error) {
-        console.error('App initialization error:', error);
-      } finally {
-        // Finish loading after initialization
-        setIsLoading(false);
+  React.useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (user && isAuthenticated) {
+        try {
+          // Import here to avoid circular dependency
+          const { databaseService } = await import('@/services/database');
+          const userDoc = await databaseService.getUserDocument(user.$id);
+          
+          if (!userDoc) {
+            // User document doesn't exist, create it and require onboarding
+            console.log('User document not found, creating and requiring onboarding');
+            try {
+              const { extractNameFromEmail } = await import('@/utils/userUtils');
+              await databaseService.createUserDocument(user.$id, {
+                email: user.email,
+                name: extractNameFromEmail(user.email),
+                geminiKey: '',
+                lastLogin: new Date().toISOString(),
+                isAdmin: false,
+                createdAt: new Date().toISOString(),
+                emailVerification: user.emailVerification || false,
+                disabled: false,
+                onboardingcompleted: false
+              });
+            } catch (createError) {
+              console.error('Failed to create user document:', createError);
+            }
+            setNeedsOnboarding(true);
+          } else if (!userDoc.onboardingcompleted) {
+            setNeedsOnboarding(true);
+          } else {
+            setNeedsOnboarding(false);
+          }
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+          // If we can't check, assume onboarding is needed
+          setNeedsOnboarding(true);
+        }
       }
+      setCheckingOnboarding(false);
     };
-    
-    init();
-  }, []);
 
-  if (isLoading) {
+    if (isAuthenticated && user) {
+      checkOnboardingStatus();
+    } else {
+      setCheckingOnboarding(false);
+    }
+  }, [user, isAuthenticated]);
+
+  if (isLoading || checkingOnboarding) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-b from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
-          <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-300">
-            Felearn
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">Loading your creative space...</p>
-        </motion.div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  // Check if user needs onboarding (only for non-onboarding routes)
+  if (needsOnboarding && !window.location.pathname.includes('/onboarding')) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Public Route component (redirects to dashboard if already authenticated)
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AppRoutesFixed />
-      </AuthProvider>
-    </ThemeProvider>
+    <Router>
+      <ThemeProvider>
+        <AuthProvider>
+        <Routes>
+          {/* Public Routes */}
+          <Route
+            path="/auth/login"
+            element={
+              <PublicRoute>
+                <AuthPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/auth/register"
+            element={
+              <PublicRoute>
+                <AuthPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/auth/verify"
+            element={
+              <PublicRoute>
+                <EmailVerificationPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/auth/reset-password"
+            element={
+              <PublicRoute>
+                <ResetPasswordPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/auth/callback"
+            element={<OAuthCallbackPage />}
+          />
+
+          {/* Onboarding Route - Protected */}
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute>
+                <OnboardingPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard/*"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Redirect root to login */}
+          <Route
+            path="/"
+            element={<Navigate to="/auth/login" replace />}
+          />
+
+          {/* Catch all route - redirect to login */}
+          <Route
+            path="*"
+            element={<Navigate to="/auth/login" replace />}
+          />
+        </Routes>
+        </AuthProvider>
+      </ThemeProvider>
+    </Router>
   );
-}
+};
 
 export default App;

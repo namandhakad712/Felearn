@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useAuth } from '../contexts/AuthContext';
-import { Layout } from '../components/layout';
-import { Card } from '../components/ui';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { AuthService } from '@/services/auth';
 
 const EmailVerificationPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const { verifyEmail, resendVerificationEmail } = useAuth();
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error' | 'resend'>('verifying');
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [message, setMessage] = useState('');
-  const [isResending, setIsResending] = useState(false);
 
+  // Get verification parameters from URL
   const userId = searchParams.get('userId');
   const secret = searchParams.get('secret');
 
@@ -24,136 +21,83 @@ const EmailVerificationPage: React.FC = () => {
       }
 
       try {
-        await verifyEmail(userId, secret);
-        setStatus('success');
-        setMessage('Your email has been verified successfully! You can now log in to your account.');
+        const authService = new AuthService();
+        const result = await authService.verifyEmail(userId, secret);
+        
+        if (result.success) {
+          setStatus('success');
+          setMessage('Email verified successfully! You will be redirected to login.');
+          
+          // Redirect to login after successful verification
+          setTimeout(() => {
+            navigate('/auth/login');
+          }, 2000);
+        } else {
+          throw new Error(result.message);
+        }
       } catch (error: any) {
+        console.error('Verification error:', error);
         setStatus('error');
-        setMessage(error.message || 'Email verification failed. The link may be expired or invalid.');
+        
+        if (error.code === 401) {
+          setMessage('This verification link has expired. Please request a new one.');
+        } else if (error.code === 404) {
+          setMessage('Invalid verification link. Please make sure you\'re using the most recent link.');
+        } else {
+          setMessage(error.message || 'Verification failed. Please try again or request a new link.');
+        }
       }
     };
 
     handleVerification();
-  }, [userId, secret, verifyEmail]);
-
-  const handleResendVerification = async () => {
-    setIsResending(true);
-    try {
-      await resendVerificationEmail();
-      setStatus('resend');
-      setMessage('A new verification email has been sent to your inbox. Please check your email.');
-    } catch (error: any) {
-      setMessage(error.message || 'Failed to resend verification email. Please try again later.');
-    } finally {
-      setIsResending(false);
-    }
-  };
-
-  const getStatusColor = () => {
-    switch (status) {
-      case 'success':
-        return 'text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-900/30';
-      case 'error':
-        return 'text-red-800 dark:text-red-200 bg-red-50 dark:bg-red-900/30';
-      case 'resend':
-        return 'text-blue-800 dark:text-blue-200 bg-blue-50 dark:bg-blue-900/30';
-      default:
-        return 'text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/30';
-    }
-  };
-
-  const getStatusIcon = () => {
-    switch (status) {
-      case 'verifying':
-        return (
-          <svg className="w-8 h-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        );
-      case 'success':
-        return (
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        );
-      case 'error':
-        return (
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        );
-      case 'resend':
-        return (
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-        );
-    }
-  };
+  }, [userId, secret, navigate]);
 
   return (
-    <Layout>
-      <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
-        <Card
-          as={motion.div}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
-          padding="lg"
-        >
-          <div className="text-center">
-            <Link to="/" className="inline-block mb-8">
-              <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Felearn</h1>
-            </Link>
-
-            <div className="mb-6">
-              <div className="flex justify-center mb-4">
-                {getStatusIcon()}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
+        <div className="text-center">
+          {status === 'verifying' && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4 text-gray-900">Verifying Your Email</h2>
+              <div className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {status === 'verifying' && 'Verifying Email'}
-                {status === 'success' && 'Email Verified!'}
-                {status === 'error' && 'Verification Failed'}
-                {status === 'resend' && 'Email Sent!'}
-              </h2>
             </div>
-
-            <div className={`p-4 rounded-lg mb-6 ${getStatusColor()}`}>
-              {message}
+          )}
+          
+          {status === 'success' && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4 text-green-600">Success!</h2>
+              <div className="text-green-600">
+                <svg className="w-16 h-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="text-gray-600">{message}</p>
             </div>
-
-            <div className="space-y-4">
-              {status === 'success' && (
-                <Link
-                  to="/auth/login"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Continue to Login
-                </Link>
-              )}
-
-              {status === 'error' && (
-                <button
-                  onClick={handleResendVerification}
-                  disabled={isResending}
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                >
-                  {isResending ? 'Sending...' : 'Resend Verification Email'}
-                </button>
-              )}
-
-              <Link
-                to="/auth/login"
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          )}
+          
+          {status === 'error' && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4 text-red-600">Verification Failed</h2>
+              <div className="text-red-600">
+                <svg className="w-16 h-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <p className="text-gray-600 mb-4">{message}</p>
+              <button
+                onClick={() => navigate('/auth/login')}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
               >
-                Back to Login
-              </Link>
+                Return to Login
+              </button>
             </div>
-          </div>
-        </Card>
+          )}
+        </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

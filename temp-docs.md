@@ -1,195 +1,164 @@
-Skip to content
-appwrite
+You are given a task to integrate an existing React component in the codebase
 
-Search in docs
-Platform
-Platform
-Overview
-Shortcuts
-Roles
-Integration
-Events
-Webhooks
-Response codes
-Error handling
-Access control
-Permissions
-Rate limits
-API keys
-Dev keys
-Plans
-Billing
-Free
-Pro
-Scale
-Enterprise
-Open source
-Add ons
-Compute
-Phone OTP
-Image Transformations
-Database Reads and Writes
-Configuration
-Custom domains
-Message templates
-Policies
-Release
-Fair use
-Abuse
-Support SLA
-New
-Uptime SLA
-New
-Refund
-New
-Message templates
-Appwrite uses emails to communicate with users to perform authentication and verification actions. Emails can be customized to fit your app's design and voice.
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
 
-Each Appwrite project can have its own set of unique templates. Templates also support localization, so every template can be written in multiple languages and served depending on the configured locale.
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
 
-Custom SMTP server
-Appwrite Cloud has a default SMTP server to get you started. This SMTP server sends generic emails and doesn't allow customizing SMTP templates. To use custom SMTP templates, you will need to configure your own SMTP server.
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+clean-minimal-sign-in.tsx
+"use client" 
 
-There are many third-party SMTP providers like SendGrid and Mailgun. Before proceeding, pick an SMTP provider, create an account, and obtain Sender name, Sender email, Server host, Server port, Username, and Password.
+import * as React from "react"
+ 
+import { useState } from "react";
 
-Navigate to your project's Settings.
-
-Navigate to the SMTP tab.
-
-Under SMTP server, toggle Custom SMTP server.
-
-Input Sender name, Sender email, Server host, Server port, Username, and Password from your provider.
-
-Click Update.
-
-Customize templates
-You can customize email templates for each of your projects in the Appwrite Console.
-
-Custom SMTP server required
-The built-in email service does not support custom email templates to prevent malicious templates. Configure a custom SMTP server to enable custom email templates.
-
-In your project, navigate to the Auth service.
-
-Under the Auth service, navigate to the Templates tab.
-
-Expand the email template you want to edit.
-
-Select the Template language. You can have a different template for each language your app supports.
-
-Update the email template fields and click Update to save your changes.
-
-Email templates
-You can customize the email templates for account verification, magic-url authentication, password resets, and user invites.
-
-Email template components
-Each email template has the following components that you can customize.
-
-Component	Description
-Sender name	Readers will see this as a display name of the sender.
-Sender email	Readers will see this as a display email of the sender. This email must be authenticated on the SMTP provider you've configured, otherwise it will be delivered to the spam folder. This usually means the email must end with the same domain as your SMTP username.
-Reply to	Readers will reply to this email address instead of the sender address. You can leave this field empty, and the sender email will be used automatically.
-Subject	The title of the email.
-Message	The body of the email in HTML format. You can find the variables available in the Email Template Syntax section.
-Email template syntax
-Variables can be used in email templates to dynamically construct unique emails for each reader. These variables can only be used in the Message field of the email template.
-
-Variable	Description
-{{project}}	The project name.
-{{team}}	The project team's name.
-{{user}}	The name of the user receiving the email. This variable is not available in the Magic URL template, as there might not be a user yet.
-{{redirect}}	The URL for the user to complete the email template's action.
-Email template syntax
-Here's an example of using these variables in a template.
-
-HTML
-
-<!doctype html>
-<html>
-
-<head>
-    <!-- <style>
-        ... your style here
-    </style> -->
-</head>
-
-<body style="direction: ltr">
-
-    <div style="max-width:650px; word-wrap: break-word; overflow-wrap: break-word;
-  word-break: break-all; margin:0 auto;">
-        <table style="margin-top: 32px">
-            <tr>
-                <td>
-                    <h1>{{subject}}</h1>
-                </td>
-            </tr>
-        </table>
-
-        <table style="margin-top: 40px">
-            <tr>
-                <td>
-                    <p>Hello </p>
-
-                    <p>Follow this link to reset your {{project}} password.</p>
-
-                    <a href="{{redirect}}" target="_blank" rel="noopener noreferrer">{{redirect}}</a>
-
-                    <p><br />If you didn't ask to reset your password, you can ignore this message.</p>
-                    <br />
-
-                    <p>Thanks
-                        <br />
-                        {{project}} team</p>
-                </td>
-            </tr>
-        </table>
+import {LogIn, Lock, Mail} from "lucide-react";
+ 
+const SignIn2 = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+ 
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+ 
+  const handleSignIn = () => {
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    setError("");
+    alert("Sign in successful! (Demo)");
+  };
+ 
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-white rounded-xl  z-1">
+      <div className="w-full max-w-sm bg-gradient-to-b from-sky-50/50 to-white  rounded-3xl shadow-xl shadow-opacity-10 p-8 flex flex-col items-center border border-blue-100 text-black">
+        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white mb-6 shadow-lg shadow-opacity-5">
+          <LogIn className="w-7 h-7 text-black" />
+        </div>
+        <h2 className="text-2xl font-semibold mb-2 text-center">
+          Sign in with email
+        </h2>
+        <p className="text-gray-500 text-sm mb-6 text-center">
+          Make a new doc to bring your words, data, and teams together. For free
+        </p>
+        <div className="w-full flex flex-col gap-3 mb-2">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <Mail className="w-4 h-4" />
+            </span>
+            <input
+              placeholder="Email"
+              type="email"
+              value={email}
+              className="w-full pl-10 pr-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 bg-gray-50 text-black text-sm"
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <Lock className="w-4 h-4" />
+            </span>
+            <input
+              placeholder="Password"
+              type="password"
+              value={password}
+              className="w-full pl-10 pr-10 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 bg-gray-50 text-black text-sm"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer text-xs select-none"></span>
+          </div>
+          <div className="w-full flex justify-end">
+          {error && (
+            <div className="text-sm text-red-500 text-left">{error}</div>
+          )}
+            <button className="text-xs  hover:underline font-medium">
+              Forgot password?
+            </button>
+          </div>
+        </div>
+        <button
+          onClick={handleSignIn}
+          className="w-full bg-gradient-to-b from-gray-700 to-gray-900 text-white font-medium py-2 rounded-xl shadow hover:brightness-105 cursor-pointer transition mb-4 mt-2"
+        >
+          Get Started
+        </button>
+        <div className="flex items-center w-full my-2">
+          <div className="flex-grow border-t border-dashed border-gray-200"></div>
+          <span className="mx-2 text-xs text-gray-400">Or sign in with</span>
+          <div className="flex-grow border-t border-dashed border-gray-200"></div>
+        </div>
+        <div className="flex gap-3 w-full justify-center mt-2">
+          <button className="flex items-center justify-center w-12 h-12 rounded-xl border bg-white hover:bg-gray-100 transition grow">
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google"
+              className="w-6 h-6"
+            />
+          </button>
+          <button className="flex items-center justify-center w-12 h-12 rounded-xl border bg-white hover:bg-gray-100 transition grow">
+            <img
+              src="https://www.svgrepo.com/show/448224/facebook.svg"
+              alt="Facebook"
+              className="w-6 h-6"
+            />
+          </button>
+          <button className="flex items-center justify-center w-12 h-12 rounded-xl border bg-white hover:bg-gray-100 transition grow">
+            <img
+              src="https://www.svgrepo.com/show/511330/apple-173.svg"
+              alt="Apple"
+              className="w-6 h-6"
+            />
+          </button>
+        </div>
+      </div>
     </div>
+  );
+};
+ 
+export { SignIn2 };
 
-</body>
+demo.tsx
+import { SignIn2 } from "@/components/ui/clean-minimal-sign-in"
 
-</html>
-Localization
-Each template can have multiple supported locales, displayed in different format and language. This can be configured under the Template language selector of each template.
+const Demo = () =>{
+    return (
+        <SignIn2/>
+    )
+}
 
-You can send messages in different languages by setting the locale with client.setLocale() in the SDKs or the X-Appwrite-Locale HTTP header. View here the list of available locales.
+export {Demo}
+```
 
-For example, you can send an email verification in French.
+Install NPM dependencies:
+```bash
+lucide-react
+```
 
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
 
-import { Client, Account } from "appwrite";
-
-const client = new Client();
-
-const account = new Account(client);
-
-client
-    .setEndpoint('https://<REGION>.cloud.appwrite.io/v1') // Your API Endpoint
-    .setProject('<PROJECT_ID>')                 // Your project ID
-    .setLocale('fr')                             // Your locale
-;
-
-const promise = account.createVerification('https://example.com');
-
-promise.then(function (response) {
-    console.log(response); // Success
-}, function (error) {
-    console.log(error); // Failure
-});
-Was this page helpful?
-
-
- Update on GitHub
-On This Page
-Custom SMTP server
-Customize templates
-Email templates
-Email template components
-Email template syntax
-Email template syntax
-Localization
-
-Back to Top
-Support
-Status
-Copyright © 2025 Appwrite
-Search in docs
-Recommended
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Use lucide-react icons for svgs or logos if component requires them

@@ -1,5 +1,5 @@
-import { User } from '../types';
-import { authService } from './authService';
+import { User } from '../types/user';
+import { AuthService } from './auth';
 
 /**
  * Authentication State Manager
@@ -10,6 +10,7 @@ export class AuthStateManager {
   private listeners: Array<(user: User | null) => void> = [];
   private currentUser: User | null = null;
   private isInitialized = false;
+  private authService: AuthService;
   
   // Session storage keys
   private readonly SESSION_KEY = 'auth_session';
@@ -19,7 +20,7 @@ export class AuthStateManager {
   private readonly DEFAULT_SESSION_EXPIRY = 24 * 60 * 60 * 1000;
   
   private constructor() {
-    // Private constructor for singleton pattern
+    this.authService = new AuthService();
   }
   
   /**
@@ -109,6 +110,15 @@ export class AuthStateManager {
       this.notifyListeners();
     }
   }
+
+  /**
+   * Clear the authentication state
+   */
+  public async clearAuthState(): Promise<void> {
+    this.currentUser = null;
+    this.clearSession();
+    this.notifyListeners();
+  }
   
   /**
    * Restore the authentication session from storage
@@ -126,7 +136,7 @@ export class AuthStateManager {
         // Check if session has expired
         if (Date.now() < expiryTime) {
           // Session is still valid in storage, but we need to verify with Appwrite
-          const user = await authService.getCurrentUser();
+          const user = await this.authService.getCurrentUser();
           
           if (user) {
             // Session is valid in Appwrite too
@@ -140,7 +150,7 @@ export class AuthStateManager {
       }
       
       // No valid session in storage, check with Appwrite directly
-      const user = await authService.getCurrentUser();
+      const user = await this.authService.getCurrentUser();
       
       if (user) {
         // Valid session in Appwrite
@@ -199,7 +209,7 @@ export class AuthStateManager {
     setInterval(async () => {
       try {
         // Check if session is still valid
-        const user = await authService.getCurrentUser();
+        const user = await this.authService.getCurrentUser();
         
         // Update auth state if needed
         await this.updateAuthState(user);

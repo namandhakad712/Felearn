@@ -1,195 +1,160 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '../types';
-import { authService, authStateManager, userService } from '../services';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Models } from 'appwrite';
+import { AuthService, AuthResponse } from '@/services/auth';
 
-// Define the context type
 interface AuthContextType {
-  user: User | null;
+  user: Models.User<Models.Preferences> | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<User>;
-  register: (email: string, password: string) => Promise<{ success: boolean; message: string; requiresVerification?: boolean }>;
+  login: (email: string, password: string) => Promise<AuthResponse>;
+  register: (email: string, password: string) => Promise<AuthResponse>;
   logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  loginWithOAuth: (provider: string) => void;
-  updateUser: (userData: Partial<User>) => Promise<User>;
-  verifyEmail: (userId: string, secret: string) => Promise<void>;
-  resendVerificationEmail: () => Promise<void>;
+  resetPassword: (email: string) => Promise<AuthResponse>;
+  completePasswordReset: (userId: string, secret: string, password: string) => Promise<AuthResponse>;
+  createOAuthSession: (provider: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
+  updateUser: (data: any) => Promise<void>;
 }
 
-// Create the context with a default value
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   isAuthenticated: false,
-  login: async () => { throw new Error('Not implemented'); },
-  register: async () => { throw new Error('Not implemented'); },
-  logout: async () => { throw new Error('Not implemented'); },
-  resetPassword: async () => { throw new Error('Not implemented'); },
-  loginWithOAuth: () => { throw new Error('Not implemented'); },
-  updateUser: async () => { throw new Error('Not implemented'); },
-  verifyEmail: async () => { throw new Error('Not implemented'); },
-  resendVerificationEmail: async () => { throw new Error('Not implemented'); },
+  login: async () => ({ success: false, message: 'AuthContext not initialized' }),
+  register: async () => ({ success: false, message: 'AuthContext not initialized' }),
+  logout: async () => {},
+  resetPassword: async () => ({ success: false, message: 'AuthContext not initialized' }),
+  completePasswordReset: async () => ({ success: false, message: 'AuthContext not initialized' }),
+  createOAuthSession: async () => { throw new Error('AuthContext not initialized'); },
+  refreshUser: async () => {},
+  updateUser: async () => {},
 });
 
-// Custom hook to use the auth context
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
-// Provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const authService = new AuthService();
 
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        // Initialize the auth state manager
-        await authStateManager.initialize();
-        
-        // Set initial user state
-        setUser(authStateManager.getCurrentUser());
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        setIsLoading(false);
-      }
-    };
-
-    initialize();
-
-    // Set up listener for auth state changes
-    const unsubscribe = authStateManager.addAuthStateListener((newUser) => {
-      setUser(newUser);
-    });
-
-    // Clean up listener on unmount
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  // Authentication methods
-  const login = async (email: string, password: string): Promise<User> => {
-    const user = await authService.login(email, password);
-    await authStateManager.updateAuthState(user);
-    return user;
-  };
-
-  const register = async (email: string, password: string): Promise<{ success: boolean; message: string; requiresVerification?: boolean }> => {
-    const result = await authService.register(email, password);
-    // Don't update auth state yet - user needs to verify email first
-    return result;
-  };
-
-  const logout = async (): Promise<void> => {
-    await authService.logout();
-    await authStateManager.updateAuthState(null);
-  };
-
-  const resetPassword = async (email: string): Promise<void> => {
-    await authService.resetPassword(email);
-  };
-
-  // OAuth login method
-  const loginWithOAuth = (provider: string): void => {
-    authService.loginWithOAuth(provider);
-  };
-
-  // Email verification methods
-  const verifyEmail = async (userId: string, secret: string): Promise<void> => {
-    await authService.verifyEmail(userId, secret);
-  };
-
-  const resendVerificationEmail = async (): Promise<void> => {
-    await authService.resendVerificationEmail();
-  };
-
-  // Update user method
-  const updateUser = async (userData: Partial<User>): Promise<User> => {
-    if (!user || !user.$id) {
-      throw new Error('No authenticated user');
-    }
-    
+  const refreshUser = async () => {
     try {
-      // Try to update the user document
-      const updatedUser = await userService.updateUser(user.$id, userData);
-      await authStateManager.updateAuthState(updatedUser);
-      return updatedUser;
-    } catch (error: any) {
-      // If the document doesn't exist, create it
-      if (error.message && (
-          error.message.includes('not found') || 
-          error.message.includes('could not be found')
-      )) {
-        console.log('User document not found, creating a new one...');
-        
-        // Create a new user document with the provided data and basic user info
-        const newUserData: Partial<User> = {
-          ...userData,
-          $id: user.$id,
-          email: user.email || '',
-          name: user.name || user.email?.split('@')[0] || '',
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-        };
-        
-        // If settings are being updated, ensure they have default values
-        if (userData.settings) {
-          newUserData.settings = {
-            theme: 'light',
-            language: 'en',
-            onboardingCompleted: false,
-            ...userData.settings
-          };
-        }
-        
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        // Merge with database user document
         try {
-          // Create the user document
-          const createdUser = await userService.createUser(
-            user.$id, 
-            newUserData.email || '', 
-            newUserData.name
-          );
+          const { databaseService } = await import('@/services/database');
+          const userDoc = await databaseService.getUserDocument(currentUser.$id);
           
-          // If there are additional fields to update beyond what createUser handles
-          if (Object.keys(userData).some(key => key !== 'email' && key !== 'name')) {
-            // Update with the remaining fields
-            const finalUser = await userService.updateUser(user.$id, userData);
-            await authStateManager.updateAuthState(finalUser);
-            return finalUser;
+          if (userDoc) {
+            // Merge auth user with database document
+            const mergedUser = {
+              ...currentUser,
+              geminiKey: userDoc.geminiKey,
+              name: userDoc.name,
+              bio: userDoc.bio,
+              isAdmin: userDoc.isAdmin,
+              settings: userDoc.settings,
+              onboardingcompleted: userDoc.onboardingcompleted,
+              lastLogin: userDoc.lastLogin
+            };
+            setUser(mergedUser as any);
+            return mergedUser;
           }
-          
-          await authStateManager.updateAuthState(createdUser);
-          return createdUser;
-        } catch (createError: any) {
-          console.error('Error creating user document:', createError);
-          
-          // Return a mock user with the updated data as a fallback
-          const mockUser: User = {
-            ...user,
-            ...userData,
-            $id: user.$id,
-            email: user.email || '',
-            name: user.name || user.email?.split('@')[0] || '',
-            settings: {
-              theme: 'light',
-              language: 'en',
-              onboardingCompleted: true,
-              ...(userData.settings || {})
-            }
-          };
-          
-          await authStateManager.updateAuthState(mockUser);
-          return mockUser;
+        } catch (dbError) {
+          console.error('Error fetching user document:', dbError);
         }
       }
       
-      // For other errors, rethrow
+      setUser(currentUser);
+      return currentUser;
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      setUser(null);
+      return null;
+    }
+  };
+
+  const login = async (email: string, password: string): Promise<AuthResponse> => {
+    try {
+      const response = await authService.login(email, password);
+      if (response.success && response.user) {
+        setUser(response.user);
+      }
+      return response;
+    } catch (error: any) {
+      // Re-throw the error so AuthPage can handle auto-registration
       throw error;
     }
   };
 
-  // Context value
+  const register = async (email: string, password: string): Promise<AuthResponse> => {
+    try {
+      const response = await authService.register(email, password);
+      if (response.success && !response.requiresVerification) {
+        setUser(response.user || null);
+      }
+      return response;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || 'Registration failed. Please try again.'
+      };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await authService.logout();
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string): Promise<AuthResponse> => {
+    return await authService.resetPassword(email);
+  };
+
+  const completePasswordReset = async (userId: string, secret: string, password: string): Promise<AuthResponse> => {
+    return await authService.completePasswordReset(userId, secret, password);
+  };
+
+  const createOAuthSession = async (provider: string) => {
+    return await authService.createOAuthSession(provider);
+  };
+
+  const updateUser = async (data: any) => {
+    try {
+      await authService.updateUser(data);
+      await refreshUser(); // Refresh merged user data after update
+    } catch (error) {
+      console.error('Update user error:', error);
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        await refreshUser();
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
   const value = {
     user,
     isLoading,
@@ -198,10 +163,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     register,
     logout,
     resetPassword,
-    loginWithOAuth,
+    completePasswordReset,
+    createOAuthSession,
+    refreshUser,
     updateUser,
-    verifyEmail,
-    resendVerificationEmail,
   };
 
   return (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { AuthErrorHandler } from '../utils/authErrorHandler';
 import { AuthErrorDisplay, ErrorDisplayData } from '../utils/authErrorDisplay';
 
