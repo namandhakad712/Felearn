@@ -1,0 +1,49 @@
+{
+  "mcpServers": {
+    "fetch": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ],
+      "env": {},
+      "disabled": true,
+      "autoApprove": []
+    },
+    "mcp": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@appwrite/mcp",
+        "--key",
+        "1249bc54-5182-4db0-b330-db8b74f569ed",
+        "--profile",
+        "thick-donkey-mrC4eu"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "databases_create"
+      ]
+    },
+    "browser-tools-mcp": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@diulela/browser-tools-mcp",
+        "--key",
+        "1249bc54-5182-4db0-b330-db8b74f569ed",
+        "--profile",
+        "thick-donkey-mrC4eu"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

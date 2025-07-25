@@ -1,0 +1,24 @@
+{
+  "name": "analytics-function",
+  "version": "1.0.0",
+  "description": "Appwrite function to process and aggregate analytics data",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "node-appwrite": "^11.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "appwrite",
+    "function",
+    "analytics",
+    "aggregation"
+  ],
+  "author": "AI Storytelling Platform",
+  "license": "MIT"
+}
