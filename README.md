@@ -1,44 +1,95 @@
-# Felearn - AI Storytelling Platform
+# AI Storytelling Platform
 
-An AI-powered storytelling platform that helps users create engaging stories using Google's Gemini AI.
-
-## Setup Instructions
-
-1. Create a `.env` file based on `.env.example`:
-   ```
-   VITE_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
-   VITE_APPWRITE_PROJECT_ID=your_project_id
-   VITE_APPWRITE_DATABASE_ID=687a8ae6003b5969331a
-   APPWRITE_API_KEY=your_api_key
-   VITE_GEMINI_API_KEY=your_gemini_api_key
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+A modern, standalone AI-powered storytelling platform built with React, TypeScript, and Appwrite.
 
 ## Features
 
-- AI-powered story generation using Google Gemini
-- User authentication and story management
-- Story export functionality
-- Responsive design with dark mode support
-- Admin dashboard for user management
+- 🤖 AI-powered story generation
+- 🔐 Secure authentication with Appwrite
+- 📱 Responsive design
+- 🎨 Modern UI with Tailwind CSS
+- 📖 Story management and library
+- 👤 User profiles and preferences
+- 🔒 Security features and API key management
 
-## Required Collections
+## Tech Stack
 
-The following Appwrite collections are required:
-- `users`: Stores user profiles and preferences
-- `stories`: Stores generated stories
-- `user_settings`: Stores user configuration
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS
+- **Backend**: Appwrite
+- **Authentication**: Appwrite Auth with OAuth support
+- **Database**: Appwrite Database
+- **AI**: Google Gemini API
 
-## Common Issues
+## Getting Started
 
-- **404 Not Found**: Collections don't exist - create them in your Appwrite console
-- **401 Unauthorized**: Check your API keys in the environment variables
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Appwrite account and project
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <your-repo-url>
+cd <project-name>
+```
+
+2. Navigate to the project directory:
+```bash
+cd retrieved_best_project
+```
+
+3. Install dependencies:
+```bash
+npm install
+```
+
+4. Set up environment variables:
+```bash
+cp .env.example .env
+```
+
+5. Configure your Appwrite settings in `.env`
+
+6. Start the development server:
+```bash
+npm run dev
+```
+
+## Project Structure
+
+```
+retrieved_best_project/
+├── src/
+│   ├── components/     # React components
+│   ├── pages/         # Page components
+│   ├── services/      # API services
+│   ├── hooks/         # Custom React hooks
+│   ├── utils/         # Utility functions
+│   ├── types/         # TypeScript types
+│   └── config/        # Configuration files
+├── public/            # Static assets
+└── ...config files
+```
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License.
