@@ -137,11 +137,7 @@ const App: React.FC = () => {
           />
           <Route
             path="/auth/reset-password"
-            element={
-              <PublicRoute>
-                <ResetPasswordPage />
-              </PublicRoute>
-            }
+            element={<ResetPasswordPage />}
           />
           <Route
             path="/auth/callback"

@@ -134,7 +134,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUser = async (data: any) => {
     try {
       await authService.updateUser(data);
-      await refreshUser(); // Refresh merged user data after update
+      // Only refresh user if not during onboarding to prevent step reset
+      if (!data.onboardingcompleted) {
+        await refreshUser(); // Refresh merged user data after update
+      } else {
+        // For onboarding completion, just update the user state directly
+        if (user) {
+          setUser({
+            ...user,
+            ...data
+          } as any);
+        }
+      }
     } catch (error) {
       console.error('Update user error:', error);
       throw error;

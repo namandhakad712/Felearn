@@ -8,9 +8,9 @@ const ImportTest: React.FC = () => {
   useEffect(() => {
     const testImports = async () => {
       try {
-        // Test importing from @google/genai
-        const genaiModule = await import('@google/genai');
-        const { GoogleGenAI, Modality } = genaiModule;
+        // Test importing from @google/generative-ai
+        const genaiModule = await import('@google/generative-ai');
+        const { GoogleGenerativeAI } = genaiModule;
         
         // Check if the imported classes are functions/objects
         const importDetails = {

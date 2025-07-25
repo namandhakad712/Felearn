@@ -127,16 +127,16 @@ const StoryGenerator = () => {
           console.log('Generating images for prompt:', prompt);
           
           // Import the Google Generative AI library exactly like in main thing/index.tsx
-          const { GoogleGenAI, Modality } = await import('@google/genai');
+          const { GoogleGenerativeAI } = await import('@google/generative-ai');
           
           // Initialize the Gemini API with the user's API key
-          const ai = new GoogleGenAI({apiKey: apiKey});
+          const ai = new GoogleGenerativeAI(apiKey);
           
           // Create a chat with a model that supports image generation
           const chat = ai.chats.create({
             model: 'gemini-2.0-flash-preview-image-generation',
             config: {
-              responseModalities: [Modality.TEXT, Modality.IMAGE],
+              // responseModalities: ['text', 'image'], // Simplified for now
             },
             history: [],
           });

@@ -21,6 +21,6 @@ export default defineConfig({
     entries: [
       'index.html' // Only scan the main index.html
     ],
-    exclude: ['@google/genai', 'marked'] // Exclude ESM dependencies
+    exclude: ['@google/generative-ai', 'marked'] // Exclude ESM dependencies
   }
 });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { authService } from '../../services';
+import { AuthService } from '../../services/auth';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SecurityManagerProps {
@@ -9,7 +9,8 @@ interface SecurityManagerProps {
 }
 
 const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError }) => {
-  const { user } = useAuth();
+  const { user, resetPassword } = useAuth();
+  const authService = new AuthService();
   
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -143,13 +144,39 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
   const executeEmailUpdate = async () => {
     setIsUpdatingEmail(true);
     try {
-      await authService.updateEmail(newEmail, emailPassword);
-      onSuccess('Email updated successfully. Please check your inbox for verification.');
-      setNewEmail('');
-      setEmailPassword('');
-      setShowConfirmDialog(false);
+      console.log('🔄 Updating email to:', newEmail);
+      const result = await authService.updateEmail(newEmail, emailPassword);
+      console.log('✅ Email update result:', result);
+      
+      if (result.success) {
+        // Clear form data
+        setNewEmail('');
+        setEmailPassword('');
+        setShowConfirmDialog(false);
+        
+        // Show success message with logout warning
+        onSuccess('Email updated successfully! You will be logged out for security reasons. Please log in with your new email to verify it.');
+        
+        // Wait a moment for user to see the message, then logout
+        setTimeout(async () => {
+          try {
+            const { useAuth } = await import('../../contexts/AuthContext');
+            // We can't use useAuth hook here, so we'll use the authService directly
+            await authService.logout();
+            // Redirect to login page
+            window.location.href = '/auth';
+          } catch (logoutError) {
+            console.error('Logout error after email update:', logoutError);
+            // Force redirect even if logout fails
+            window.location.href = '/auth';
+          }
+        }, 3000); // 3 second delay to show success message
+      } else {
+        onError(result.message || 'Failed to update email');
+      }
     } catch (error: any) {
-      onError(error.message || 'Failed to update email');
+      console.error('❌ Email update error:', error);
+      onError(error.message || 'Failed to update email. Please check your password.');
     } finally {
       setIsUpdatingEmail(false);
     }
@@ -165,14 +192,22 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
   const executePasswordUpdate = async () => {
     setIsUpdatingPassword(true);
     try {
-      await authService.updatePassword(newPassword, currentPassword);
-      onSuccess('Password updated successfully');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setShowConfirmDialog(false);
+      console.log('🔄 Updating password...');
+      const result = await authService.updatePassword(newPassword, currentPassword);
+      console.log('✅ Password update result:', result);
+      
+      if (result.success) {
+        onSuccess(result.message || 'Password updated successfully');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowConfirmDialog(false);
+      } else {
+        onError(result.message || 'Failed to update password');
+      }
     } catch (error: any) {
-      onError(error.message || 'Failed to update password');
+      console.error('❌ Password update error:', error);
+      onError(error.message || 'Failed to update password. Please check your current password.');
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -185,7 +220,9 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
     const isEmail = confirmAction === 'email';
     const title = isEmail ? 'Confirm Email Change' : 'Confirm Password Change';
     const message = isEmail 
-      ? `Are you sure you want to change your email to ${newEmail}? You will need to verify your new email address.`
+      ? `Are you sure you want to change your email to ${newEmail}? 
+      
+⚠️ Important: You will be automatically logged out for security reasons after the email is updated. You'll need to log in again with your new email address to verify it.`
       : 'Are you sure you want to change your password? You will be logged out of other devices.';
     const executeAction = isEmail ? executeEmailUpdate : executePasswordUpdate;
     const isLoading = isEmail ? isUpdatingEmail : isUpdatingPassword;
@@ -207,9 +244,29 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
               {title}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {message}
-            </p>
+            <div className="text-gray-600 dark:text-gray-400 mb-6">
+              {isEmail ? (
+                <div>
+                  <p className="mb-3">
+                    Are you sure you want to change your email to <strong>{newEmail}</strong>?
+                  </p>
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                    <div className="flex">
+                      <svg className="h-5 w-5 text-yellow-400 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                          Important: You will be automatically logged out for security reasons after the email is updated. You'll need to log in again with your new email address to verify it.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p>{message}</p>
+              )}
+            </div>
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
@@ -288,9 +345,17 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
                   type="button"
                   onClick={async () => {
                     try {
-                      await authService.sendEmailVerification();
-                      onSuccess('Verification email sent. Please check your inbox.');
+                      console.log('🔄 Sending email verification...');
+                      const result = await authService.sendEmailVerification();
+                      console.log('✅ Email verification result:', result);
+                      
+                      if (result.success) {
+                        onSuccess(result.message || 'Verification email sent. Please check your inbox.');
+                      } else {
+                        onError(result.message || 'Failed to send verification email');
+                      }
                     } catch (error: any) {
+                      console.error('❌ Email verification error:', error);
                       onError(error.message || 'Failed to send verification email');
                     }
                   }}
@@ -356,6 +421,23 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
             {emailErrors.password && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">{emailErrors.password}</p>
             )}
+          </div>
+          
+          {/* Security Warning */}
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <div className="flex">
+              <svg className="h-5 w-5 text-yellow-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  Security Notice
+                </h4>
+                <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                  Updating your email will automatically log you out for security reasons. You'll need to log in again with your new email address to verify it.
+                </p>
+              </div>
+            </div>
           </div>
           
           <div className="pt-2">
@@ -567,11 +649,19 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
           onClick={async () => {
             try {
               if (user?.email) {
-                await authService.resetPassword(user.email);
-                onSuccess('Password reset email sent. Please check your inbox.');
+                console.log('🔄 Sending password reset email to:', user.email);
+                const result = await resetPassword(user.email);
+                if (result.success) {
+                  onSuccess(result.message || 'Password reset email sent. Please check your inbox.');
+                } else {
+                  onError(result.message || 'Failed to send password reset email');
+                }
+              } else {
+                onError('No email address found for your account');
               }
             } catch (error: any) {
-              onError(error.message || 'Failed to send password reset email');
+              console.error('❌ Password reset error:', error);
+              onError(error.message || 'Failed to send password reset email. Please check your internet connection.');
             }
           }}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"

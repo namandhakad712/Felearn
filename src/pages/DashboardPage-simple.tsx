@@ -19,8 +19,8 @@ const DashboardPage: React.FC = () => {
     setIsGenerating(true);
     try {
       // Simple story generation without complex components
-      const { GoogleGenAI } = await import('@google/genai');
-      const genAI = new GoogleGenAI({ apiKey: user.geminiKey });
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(user.geminiKey);
       const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
       
       const result = await model.generateContent(

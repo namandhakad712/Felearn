@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { resetPassword, completePasswordReset } = useAuth();
+  const { resetPassword, completePasswordReset, user } = useAuth();
   
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -16,6 +16,13 @@ const ResetPasswordPage: React.FC = () => {
   // Get reset parameters from URL if they exist
   const userId = searchParams.get('userId');
   const secret = searchParams.get('secret');
+  
+  // Debug: Log the parameters
+  React.useEffect(() => {
+    console.log('🔍 ResetPasswordPage loaded');
+    console.log('🔍 URL parameters:', { userId, secret });
+    console.log('🔍 User authenticated:', !!user);
+  }, [userId, secret, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,14 +37,17 @@ const ResetPasswordPage: React.FC = () => {
           throw new Error('Please enter a new password.');
         }
 
+        console.log('🔄 Completing password reset...');
         const result = await completePasswordReset(userId, secret, newPassword);
+        console.log('✅ Password reset result:', result);
+        
         if (result.success) {
-          setSuccessMessage('Password has been reset successfully. You can now log in.');
+          setSuccessMessage('Password has been reset successfully! Redirecting to login...');
           setTimeout(() => {
             navigate('/auth/login');
-          }, 2000);
+          }, 3000);
         } else {
-          setError(result.message);
+          setError(result.message || 'Failed to reset password. Please try again.');
         }
       } else {
         // Request password reset

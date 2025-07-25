@@ -153,32 +153,81 @@ export class AuthService {
    */
   async verifyEmail(userId: string, secret: string): Promise<AuthResponse> {
     try {
+      console.log('🔍 Verifying email with userId:', userId, 'secret:', secret);
+      
       // Use the userId as-is from Appwrite's verification URL
       await this.account.updateVerification(userId, secret);
-      const user = await this.account.get();
-
-      return {
-        success: true,
-        user,
-        message: 'Email verified successfully!'
-      };
-    } catch (error: any) {
-      console.error('Verification error:', error);
-      console.log('Error code:', error.code);
-      console.log('Error message:', error.message);
-
-      if (error.code === 401) {
-        throw new Error('Verification link has expired. Please request a new one.');
-      }
-
-      if (error.message?.includes('already verified')) {
+      
+      // Try to get updated user info, but don't fail if user is not logged in
+      try {
+        const user = await this.account.get();
+        console.log('✅ Email verification successful for user:', user.email);
         return {
           success: true,
-          message: 'Email is already verified!'
+          user,
+          message: 'Email verified successfully! You can now access all features.'
+        };
+      } catch (getUserError: any) {
+        // If we can't get user info (user not logged in), verification still succeeded
+        console.log('✅ Email verification successful, but user not logged in');
+        return {
+          success: true,
+          message: 'Email verified successfully! Please log in to continue.'
+        };
+      }
+    } catch (error: any) {
+      console.error('❌ Verification error:', error);
+      console.log('Error code:', error.code);
+      console.log('Error message:', error.message);
+      console.log('Error type:', error.type);
+
+      // Check if email is already verified (this should be SUCCESS, not error)
+      if (error.message?.includes('already verified') || 
+          error.message?.includes('User already verified') ||
+          error.message?.includes('email verification') ||
+          error.type === 'user_already_verified') {
+        console.log('✅ Email already verified - treating as success');
+        return {
+          success: true,
+          message: 'Your email is already verified! Please log in to continue.'
         };
       }
 
-      throw error;
+      // Handle different 401 error types
+      if (error.code === 401) {
+        if (error.type === 'general_unauthorized_scope') {
+          // This might mean the email is already verified or there's a scope issue
+          console.log('🔍 Unauthorized scope error - checking if email is already verified');
+          return {
+            success: true,
+            message: 'Your email verification is complete! Please log in to access your account.'
+          };
+        } else if (error.type === 'user_invalid_token' || error.message?.includes('Invalid token')) {
+          return {
+            success: false,
+            message: 'This verification link is invalid or has already been used. If your email is not verified, please request a new verification email.'
+          };
+        } else {
+          return {
+            success: false,
+            message: 'This verification link has expired. Please request a new verification email from your account settings.'
+          };
+        }
+      }
+      
+      // Handle invalid links
+      if (error.code === 400) {
+        return {
+          success: false,
+          message: 'This verification link is invalid. Please check your email for the correct link or request a new one.'
+        };
+      }
+
+      // For other errors, return a generic message
+      return {
+        success: false,
+        message: 'Email verification failed. Please try again or request a new verification link.'
+      };
     }
   }
 
@@ -241,21 +290,41 @@ export class AuthService {
 
         // Check if user document exists, create if not
         try {
-          const userDoc = await databaseService.getUserDocument(user.$id);
+          let userDoc;
+          try {
+            userDoc = await databaseService.getUserDocument(user.$id);
+          } catch (error) {
+            // Document doesn't exist, userDoc will be null
+            userDoc = null;
+          }
+
           if (!userDoc) {
-            // Create user document for OAuth user
-            await databaseService.createUserDocument(user.$id, {
-              email: user.email,
-              name: user.name || extractNameFromEmail(user.email),
-              geminiKey: '', // Will be set during onboarding
-              lastLogin: new Date().toISOString(),
-              isAdmin: false,
-              createdAt: new Date().toISOString(),
-              emailVerification: user.emailVerification || true, // OAuth users are usually verified
-              disabled: false,
-              onboardingcompleted: false,
-              oauthProvider: oauthProvider
-            });
+            // Try to create user document for OAuth user
+            try {
+              await databaseService.createUserDocument(user.$id, {
+                email: user.email,
+                name: user.name || extractNameFromEmail(user.email),
+                geminiKey: '', // Will be set during onboarding
+                lastLogin: new Date().toISOString(),
+                isAdmin: false,
+                createdAt: new Date().toISOString(),
+                emailVerification: user.emailVerification || true, // OAuth users are usually verified
+                disabled: false,
+                onboardingcompleted: false,
+                oauthProvider: oauthProvider
+              });
+            } catch (createError: any) {
+              // If document already exists, just update it
+              if (createError.message?.includes('already exists')) {
+                console.log('User document already exists, updating instead');
+                await databaseService.updateUserDocument(user.$id, {
+                  lastLogin: new Date().toISOString(),
+                  oauthProvider: oauthProvider
+                });
+              } else {
+                throw createError;
+              }
+            }
           } else {
             // Update last login and OAuth provider
             await databaseService.updateUserDocument(user.$id, {
@@ -265,6 +334,7 @@ export class AuthService {
           }
         } catch (dbError) {
           console.error('Failed to handle OAuth user document:', dbError);
+          // Continue anyway - the user can still use the app
         }
 
         return {

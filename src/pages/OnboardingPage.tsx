@@ -15,6 +15,16 @@ const OnboardingPage: React.FC = () => {
   const [isValidatingKey, setIsValidatingKey] = useState(false);
   const [error, setError] = useState('');
 
+  // Debug: Log when currentStep changes
+  React.useEffect(() => {
+    console.log('🔄 OnboardingPage: currentStep changed to:', currentStep);
+  }, [currentStep]);
+
+  // Debug: Log when selectedTheme changes
+  React.useEffect(() => {
+    console.log('🎨 OnboardingPage: selectedTheme changed to:', selectedTheme);
+  }, [selectedTheme]);
+
 
 
   const totalSteps = 3;
@@ -67,6 +77,7 @@ const OnboardingPage: React.FC = () => {
   };
 
   const handleCompleteOnboarding = async () => {
+    console.log('🎯 Completing onboarding with theme:', selectedTheme);
     setIsLoading(true);
     setError('');
 
@@ -81,7 +92,12 @@ const OnboardingPage: React.FC = () => {
         })
       });
       
-      // Navigate to dashboard - theme will be applied automatically
+      console.log('🎯 Onboarding completed, navigating to dashboard');
+      // Apply theme before navigating
+      setTheme(selectedTheme);
+      console.log('🎨 Applying theme:', selectedTheme);
+      
+      // Navigate to dashboard
       navigate('/dashboard');
       
     } catch (error: any) {
@@ -271,7 +287,10 @@ const OnboardingPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 {/* Light Theme */}
                 <button
-                  onClick={() => setSelectedTheme('light')}
+                  onClick={() => {
+                    console.log('🎨 Light theme clicked, current step:', currentStep);
+                    setSelectedTheme('light');
+                  }}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     selectedTheme === 'light'
                       ? 'border-indigo-500 bg-indigo-50'
@@ -292,7 +311,11 @@ const OnboardingPage: React.FC = () => {
 
                 {/* Dark Theme */}
                 <button
-                  onClick={() => setSelectedTheme('dark')}
+                  onClick={() => {
+                    console.log('🎨 Dark theme clicked, current step:', currentStep);
+                    console.log('🎨 Selected theme set to dark');
+                    setSelectedTheme('dark');
+                  }}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     selectedTheme === 'dark'
                       ? 'border-indigo-500 bg-indigo-50'
