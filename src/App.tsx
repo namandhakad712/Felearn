@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import AuthPage from '@/pages/AuthPage';
@@ -162,12 +162,6 @@ const App: React.FC = () => {
                 <DashboardPage />
               </ProtectedRoute>
             }
-          />
-
-          {/* Redirect root to login */}
-          <Route
-            path="/"
-            element={<Navigate to="/auth/login" replace />}
           />
 
           {/* Catch all route - redirect to login */}

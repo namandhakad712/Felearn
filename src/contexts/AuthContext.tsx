@@ -113,6 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authService.logout();
       setUser(null);
+      // Redirect to main website after logout
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
       throw error;

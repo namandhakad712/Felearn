@@ -163,12 +163,12 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
             const { useAuth } = await import('../../contexts/AuthContext');
             // We can't use useAuth hook here, so we'll use the authService directly
             await authService.logout();
-            // Redirect to login page
-            window.location.href = '/auth';
+            // Redirect to main website page
+            window.location.href = '/';
           } catch (logoutError) {
             console.error('Logout error after email update:', logoutError);
             // Force redirect even if logout fails
-            window.location.href = '/auth';
+            window.location.href = '/';
           }
         }, 3000); // 3 second delay to show success message
       } else {

@@ -26,7 +26,7 @@ class AppwriteService {
           await account.createMagicURLToken(
             user.$id,
             email,
-            window.location.origin + '/auth/verify'
+            window.location.origin + '/app.html#/auth/verify'
           );
           throw new Error('Please verify your email. A new verification link has been sent to your inbox.');
         } catch (error) {
@@ -45,8 +45,8 @@ class AppwriteService {
 
   async loginWithOAuth(
     provider: string,
-    successUrl: string = window.location.origin + '/onboarding',
-    failureUrl: string = window.location.origin + '/auth/login'
+    successUrl: string = window.location.origin + '/app.html#/onboarding',
+    failureUrl: string = window.location.origin + '/app.html#/auth/login'
   ) {
     try {
       return account.createOAuth2Session(
@@ -183,7 +183,7 @@ class AppwriteService {
 
   async sendPasswordRecovery(email: string) {
     try {
-      await account.createRecovery(email, window.location.origin + '/auth/reset-password');
+      await account.createRecovery(email, window.location.origin + '/app.html#/auth/reset-password');
       return true;
     } catch (error) {
       console.error('Send password recovery error:', error);
@@ -208,7 +208,7 @@ class AppwriteService {
   async sendEmailVerification() {
     try {
       // Update verification URL to match the route
-      await account.createVerification(window.location.origin + '/auth/verify');
+      await account.createVerification(window.location.origin + '/app.html#/auth/verify');
       return true;
     } catch (error) {
       console.error('Send email verification error:', error);

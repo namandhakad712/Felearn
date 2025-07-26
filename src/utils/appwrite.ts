@@ -9,8 +9,8 @@ import { APPWRITE_CONFIG } from '../config/appwrite';
  */
 export const getAuthUrl = (
   provider: string,
-  successUrl: string = window.location.origin + '/onboarding',
-  failureUrl: string = window.location.origin + '/auth/login'
+  successUrl: string = window.location.origin + '/app.html#/onboarding',
+  failureUrl: string = window.location.origin + '/app.html#/auth/login'
 ): string => {
   // For email authentication, return the signup page URL
   if (provider === 'email') {

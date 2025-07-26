@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthService } from '@/services/auth';
 import type { AuthResponse } from '@/services/auth';
+import styled from 'styled-components';
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
@@ -137,39 +138,38 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 p-6 bg-white rounded-xl shadow-lg">
+    <VideoBackgroundContainer>
+      {/* Video Background */}
+      <video
+        className="video-background"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        poster="/public/assets/placeholder-image.png"
+      >
+        <source src="/public/videos/auth-background-prem.mp4" type="video/mp4" />
+        <source src="/public/videos/auth-background-prem.webm" type="video/webm" />
+        {/* Fallback for browsers that don't support video */}
+        Your browser does not support the video tag.
+      </video>
+      
+      {/* Dark overlay for better text readability */}
+      <div className="video-overlay" />
+      
+      {/* Content */}
+      <div className="content-container">
+        <StyledWrapper>
         <div className="text-center mb-8">
           <div className="mb-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
               Welcome to Felearn
             </h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-2">
+            <p className="text-sm sm:text-base text-white/90 mt-2 drop-shadow">
               AI-powered storytelling with tiny cats
             </p>
           </div>
-          
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">
-            {isLogin ? 'Sign In or Create Account' : 'Create Account'}
-          </h2>
-          
-          <p className="text-sm sm:text-base text-gray-600">
-            {isLogin
-              ? "Enter your email and password. We'll sign you in or create a new account automatically!"
-              : 'Already have an account?'}
-            {!isLogin && (
-              <button
-                onClick={() => {
-                  setIsLogin(true);
-                  setError('');
-                  setSuccessMessage('');
-                }}
-                className="ml-2 text-indigo-600 hover:text-indigo-700 font-medium"
-              >
-                Sign in instead
-              </button>
-            )}
-          </p>
         </div>
 
         {error && (
@@ -184,53 +184,60 @@ const AuthPage: React.FC = () => {
           </div>
         )}
 
-        {isLogin && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start">
-              <svg className="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div className="text-sm text-blue-800">
-                <p className="font-medium">Smart Login</p>
-                <p>Enter your credentials. If you're a new user, we'll automatically create your account!</p>
+        <form className="form" onSubmit={handleSubmit}>
+          {isLogin && (
+            <div className="smart-login-info">
+              <div className="flex items-start">
+                <svg className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="text-xs text-blue-800">
+                  <p className="font-medium">Smart Login</p>
+                  <p>Enter your credentials. If you're a new user, we'll automatically create your account!</p>
+                </div>
               </div>
             </div>
+          )}
+          <div className="flex-column">
+            <label>Email</label>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
+          <div className="inputForm">
+            <svg height={20} viewBox="0 0 32 32" width={20} xmlns="http://www.w3.org/2000/svg">
+              <g id="Layer_3" data-name="Layer 3">
+                <path d="m30.853 13.87a15 15 0 0 0 -29.729 4.082 15.1 15.1 0 0 0 12.876 12.918 15.6 15.6 0 0 0 2.016.13 14.85 14.85 0 0 0 7.715-2.145 1 1 0 1 0 -1.031-1.711 13.007 13.007 0 1 1 5.458-6.529 2.149 2.149 0 0 1 -4.158-.759v-10.856a1 1 0 0 0 -2 0v1.726a8 8 0 1 0 .2 10.325 4.135 4.135 0 0 0 7.83.274 15.2 15.2 0 0 0 .823-7.455zm-14.853 8.13a6 6 0 1 1 6-6 6.006 6.006 0 0 1 -6 6z" />
+              </g>
+            </svg>
+            <input 
+              type="email" 
+              className="input" 
+              placeholder="Enter your Email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base sm:text-sm"
-              placeholder="your@email.com"
             />
           </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
+          
+          <div className="flex-column">
+            <label>Password</label>
+          </div>
+          <div className="inputForm">
+            <svg height={20} viewBox="-64 0 512 512" width={20} xmlns="http://www.w3.org/2000/svg">
+              <path d="m336 512h-288c-26.453125 0-48-21.523438-48-48v-224c0-26.476562 21.546875-48 48-48h288c26.453125 0 48 21.523438 48 48v224c0 26.476562-21.546875 48-48 48zm-288-288c-8.8125 0-16 7.167969-16 16v224c0 8.832031 7.1875 16 16 16h288c8.8125 0 16-7.167969 16-16v-224c0-8.832031-7.1875-16-16-16zm0 0" />
+              <path d="m304 224c-8.832031 0-16-7.167969-16-16v-80c0-52.929688-43.070312-96-96-96s-96 43.070312-96 96v80c0 8.832031-7.167969 16-16 16s-16-7.167969-16-16v-80c0-70.59375 57.40625-128 128-128s128 57.40625 128 128v80c0 8.832031-7.167969 16-16 16zm0 0" />
+            </svg>        
+            <input 
+              type="password" 
+              className="input" 
+              placeholder="Enter your Password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base sm:text-sm"
-              placeholder="Enter your password"
             />
+          </div>
+
+          {!isLogin && (
             <div className="mt-2 text-xs sm:text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
-              <p className="font-medium mb-1">
-                {isLogin ? 'For new accounts, password must have:' : 'Password requirements:'}
-              </p>
+              <p className="font-medium mb-1">Password requirements:</p>
               <ul className="space-y-1">
                 <li className="flex items-center">
                   <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
@@ -250,26 +257,28 @@ const AuthPage: React.FC = () => {
                 </li>
               </ul>
             </div>
-          </div>
-
-          {isLogin && (
-            <div className="flex items-center justify-end">
-              <button
-                type="button"
+          )}
+          
+          <div className="flex-row">
+            <div>
+              <input type="checkbox" />
+              <label>Remember me</label>
+            </div>
+            {isLogin && (
+              <span 
+                className="span" 
                 onClick={() => navigate('/auth/reset-password')}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                style={{ cursor: 'pointer' }}
               >
                 Forgot password?
-              </button>
-            </div>
-          )}
-
-          <button
+              </span>
+            )}
+          </div>
+          
+          <button 
+            className="button-submit" 
             type="submit"
             disabled={isLoading}
-            className={`w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm sm:text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors ${
-              isLoading ? 'opacity-75 cursor-not-allowed' : ''
-            }`}
           >
             {isLoading ? (
               <span className="flex items-center justify-center">
@@ -296,49 +305,56 @@ const AuthPage: React.FC = () => {
                 Processing...
               </span>
             ) : (
-              <span>
-                {isLogin ? (
-                  <>
-                    Continue
-                    <span className="text-xs block opacity-90">Sign in or create account</span>
-                  </>
-                ) : (
-                  'Create Account'
-                )}
-              </span>
+              isLogin ? 'Sign In' : 'Sign Up'
             )}
           </button>
-        </form>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
+          
+          <p className="p">
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            <span 
+              className="span" 
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+                setSuccessMessage('');
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              {isLogin ? 'Sign Up' : 'Sign In'}
+            </span>
+          </p>
+          
+          <p className="p line">Or With</p>
+          
+          <div className="flex-row">
+            <button 
+              className="btn google" 
+              type="button"
               onClick={() => handleOAuthLogin('google')}
               disabled={isLoading}
-              className="w-full inline-flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
-                />
+              <svg version="1.1" width={20} id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style={{background: 'new 0 0 512 512'}} xmlSpace="preserve">
+                <path style={{fill: '#FBBB00'}} d="M113.47,309.408L95.648,375.94l-65.139,1.378C11.042,341.211,0,299.9,0,256
+                c0-42.451,10.324-82.483,28.624-117.732h0.014l57.992,10.632l25.404,57.644c-5.317,15.501-8.215,32.141-8.215,49.456
+                C103.821,274.792,107.225,292.797,113.47,309.408z" />
+                <path style={{fill: '#518EF8'}} d="M507.527,208.176C510.467,223.662,512,239.655,512,256c0,18.328-1.927,36.206-5.598,53.451
+                c-12.462,58.683-45.025,109.925-90.134,146.187l-0.014-0.014l-73.044-3.727l-10.338-64.535
+                c29.932-17.554,53.324-45.025,65.646-77.911h-136.89V208.176h138.887L507.527,208.176L507.527,208.176z" />
+                <path style={{fill: '#28B446'}} d="M416.253,455.624l0.014,0.014C372.396,490.901,316.666,512,256,512
+                c-97.491,0-182.252-54.491-225.491-134.681l82.961-67.91c21.619,57.698,77.278,98.771,142.53,98.771
+                c28.047,0,54.323-7.582,76.87-20.818L416.253,455.624z" />
+                <path style={{fill: '#F14336'}} d="M419.404,58.936l-82.933,67.896c-23.335-14.586-50.919-23.012-80.471-23.012
+                c-66.729,0-123.429,42.957-143.965,102.724l-83.397-68.276h-0.014C71.23,56.123,157.06,0,256,0
+                C318.115,0,375.068,22.126,419.404,58.936z" />
               </svg>
-              <span className="ml-2">Continue with Google</span>
+              Google 
             </button>
-
-            <button
+            
+            <button 
+              className="btn apple" 
+              type="button"
               onClick={() => handleOAuthLogin('github')}
               disabled={isLoading}
-              className="w-full inline-flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -346,13 +362,416 @@ const AuthPage: React.FC = () => {
                   d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z"
                 />
               </svg>
-              <span className="ml-2">Continue with GitHub</span>
+              GitHub 
             </button>
           </div>
-        </div>
+        </form>
+        </StyledWrapper>
       </div>
-    </div>
+    </VideoBackgroundContainer>
   );
 };
+
+const VideoBackgroundContainer = styled.div`
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  .video-background {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: 0; /* Changed from -2 to ensure video is visible */
+    transform: translateX(-50%) translateY(-50%);
+    object-fit: cover;
+    pointer-events: none; /* Prevent video from being interactive */
+  }
+
+  .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+    
+    @media (max-width: 768px) {
+      background: rgba(0, 0, 0, 0.3); /* Lighter overlay on mobile */
+    }
+    
+    @media (max-width: 480px) {
+      background: rgba(0, 0, 0, 0.25); /* Even lighter on small mobile */
+    }
+  }
+
+  .content-container {
+    position: relative;
+    z-index: 2; /* Ensure content is above video and overlay */
+    width: 100%;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    
+    @media (max-width: 768px) {
+      padding: 1rem 0.75rem;
+      align-items: flex-start;
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+    }
+    
+    @media (max-width: 480px) {
+      padding: 1rem 0.5rem;
+      padding-top: 1.5rem;
+      padding-bottom: 1.5rem;
+    }
+  }
+
+  /* Fallback background if video fails to load */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+`;
+
+const StyledWrapper = styled.div`
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto;
+  
+  @media (max-width: 768px) {
+    max-width: 400px;
+  }
+  
+  @media (max-width: 480px) {
+    max-width: 340px;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 30px;
+    width: 100%;
+    max-width: 450px;
+    border-radius: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    box-sizing: border-box;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    
+    /* Mobile responsive - smaller form on mobile */
+    @media (max-width: 768px) {
+      padding: 24px;
+      border-radius: 16px;
+      gap: 8px;
+      background-color: rgba(255, 255, 255, 0.88);
+      max-width: 380px;
+    }
+    
+    @media (max-width: 480px) {
+      padding: 18px;
+      border-radius: 14px;
+      gap: 6px;
+      background-color: rgba(255, 255, 255, 0.85);
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    
+    @media (max-width: 360px) {
+      padding: 16px;
+      border-radius: 12px;
+      max-width: 300px;
+    }
+  }
+
+  .smart-login-info {
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    
+    @media (max-width: 640px) {
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+    }
+  }
+
+  ::placeholder {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  }
+
+  .form button {
+    align-self: flex-end;
+  }
+
+  .flex-column > label {
+    color: #000000;
+    font-weight: 600;
+    font-size: 14px;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5); /* Add subtle text shadow */
+    
+    @media (max-width: 640px) {
+      font-size: 13px;
+    }
+  }
+
+  .inputForm {
+    border: 1.5px solid rgba(236, 237, 236, 0.8);
+    border-radius: 10px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    transition: 0.2s ease-in-out;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: rgba(255, 255, 255, 0.5); /* Slightly white background */
+    
+    @media (max-width: 640px) {
+      height: 48px;
+      border-radius: 8px;
+      padding-left: 8px;
+    }
+    
+    @media (max-width: 480px) {
+      height: 46px;
+    }
+  }
+
+  .input {
+    margin-left: 10px;
+    border-radius: 10px;
+    border: none;
+    width: 85%;
+    height: 100%;
+    background: transparent; /* Make input background transparent */
+    color: #000000; /* Set text color to black */
+    font-size: 16px; /* Prevents zoom on iOS */
+    
+    @media (max-width: 640px) {
+      margin-left: 8px;
+      font-size: 16px;
+    }
+  }
+
+  .input::placeholder {
+    color: #666666; /* Darker placeholder text for better visibility */
+    opacity: 0.8;
+  }
+
+  .input:focus {
+    outline: none;
+  }
+
+  .inputForm:focus-within {
+    border: 1.5px solid #2d79f3;
+    background-color: rgba(255, 255, 255, 0.8); /* More white background when focused */
+  }
+
+  .flex-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    
+    @media (max-width: 480px) {
+      gap: 8px;
+    }
+  }
+
+  .flex-row > div > label {
+    font-size: 14px;
+    color: black;
+    font-weight: 400;
+    
+    @media (max-width: 640px) {
+      font-size: 13px;
+    }
+  }
+
+  .span {
+    font-size: 14px;
+    margin-left: 5px;
+    color: #2d79f3;
+    font-weight: 500;
+    cursor: pointer;
+    
+    @media (max-width: 640px) {
+      font-size: 13px;
+    }
+  }
+
+  .button-submit {
+    margin: 20px 0 10px 0;
+    background-color: #151717;
+    border: none;
+    color: white;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 10px;
+    height: 50px;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    
+    @media (max-width: 640px) {
+      height: 48px;
+      font-size: 14px;
+      margin: 16px 0 8px 0;
+      border-radius: 8px;
+    }
+    
+    @media (max-width: 480px) {
+      height: 46px;
+    }
+  }
+
+  .button-submit:hover {
+    background-color: #252727;
+  }
+
+  .button-submit:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+  }
+
+  .p {
+    text-align: center;
+    color: black;
+    font-size: 14px;
+    margin: 5px 0;
+    
+    @media (max-width: 640px) {
+      font-size: 13px;
+      margin: 4px 0;
+    }
+  }
+
+  .p.line {
+    position: relative;
+    margin: 20px 0;
+    
+    @media (max-width: 640px) {
+      margin: 16px 0;
+    }
+  }
+
+  .p.line::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #ededef;
+    z-index: 1;
+  }
+
+  .p.line {
+    background-color: white;
+    padding: 0 15px;
+    z-index: 2;
+    position: relative;
+    display: inline-block;
+    width: auto;
+    margin: 20px auto;
+    
+    @media (max-width: 640px) {
+      margin: 16px auto;
+      padding: 0 12px;
+    }
+  }
+
+  .btn {
+    margin-top: 10px;
+    width: 48%; /* Changed from 100% to 48% to fit side by side with gap */
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+    gap: 10px;
+    border: 1px solid #ededef;
+    background-color: white;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+    font-size: 14px;
+    
+    @media (max-width: 640px) {
+      height: 48px;
+      font-size: 13px;
+      gap: 8px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    
+    @media (max-width: 480px) {
+      height: 46px;
+      font-size: 12px;
+    }
+  }
+
+  /* OAuth buttons container */
+  .oauth-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 4%;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .btn:hover {
+    border: 1px solid #2d79f3;
+    background-color: rgba(45, 121, 243, 0.1);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn.google {
+    color: #333;
+  }
+
+  .btn.apple {
+    color: #333;
+  }
+
+  /* Update the flex-row styles for the OAuth buttons */
+  .flex-row:last-child {
+    justify-content: space-between;
+    gap: 4%;
+    
+    @media (max-width: 480px) {
+      flex-direction: row; /* Keep row direction even on mobile */
+      gap: 4%;
+    }
+  }
+
+  .flex-row:last-child .btn {
+    @media (max-width: 480px) {
+      width: 48%; /* Keep the width at 48% even on mobile */
+    }
+  }
+`;
 
 export default AuthPage;
