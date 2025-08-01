@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Carousel } from '../ui';
-import StorySlideshow from './StorySlideshow';
 import LiveSlideView from './LiveSlideView';
 import { StorySlide } from '../../types';
+import { fixSingleImageUrl, createStoryFallbackImage } from '../../utils/imageUrlFixer';
 
 interface StoryDisplayProps {
   story: string;
@@ -30,6 +30,33 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
 }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [fixedImages, setFixedImages] = useState<string[]>([]);
+  const [imageFixingStatus, setImageFixingStatus] = useState<'idle' | 'fixing' | 'done'>('idle');
+
+  // Auto-fix images when they're loaded
+  useEffect(() => {
+    const fixImages = async () => {
+      if (images.length === 0 || imageFixingStatus !== 'idle') return;
+      
+      setImageFixingStatus('fixing');
+      console.log('🔧 Auto-fixing images for story display...');
+      
+      const fixed: string[] = [];
+      for (let i = 0; i < images.length; i++) {
+        const result = await fixSingleImageUrl(images[i]);
+        fixed.push(result.fixedUrl || images[i]);
+      }
+      
+      setFixedImages(fixed);
+      setImageFixingStatus('done');
+      console.log('✅ Image fixing completed for story display');
+    };
+
+    fixImages();
+  }, [images, imageFixingStatus]);
+
+  // Use fixed images if available, otherwise use original images
+  const displayImages = fixedImages.length > 0 ? fixedImages : images;
 
   // Extract title from story if not provided
   const storyLines = story.split('\n').filter(line => line.trim());
@@ -42,11 +69,11 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   };
 
   const nextImage = () => {
-    setSelectedImageIndex((prev) => (prev + 1) % images.length);
+    setSelectedImageIndex((prev) => (prev + 1) % displayImages.length);
   };
 
   const prevImage = () => {
-    setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    setSelectedImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
   };
 
   if (isLoading) {
@@ -75,15 +102,16 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       className="mt-8 max-w-6xl mx-auto space-y-6"
     >
       {/* Header with title and actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {title || "Explain Things with Lots of Tiny Cats"}
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Generated on {new Date().toLocaleDateString()}
-          </p>
-        </div>
+      {(story || !isGenerating) && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {title || "Explain Things with Lots of Tiny Cats"}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Generated on {new Date().toLocaleDateString()}
+            </p>
+          </div>
         
         <div className="flex items-center space-x-3">
           {onSave && (
@@ -111,31 +139,33 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
             </button>
           )}
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Live Slide View - Shows images as they're generated */}
       <div className="mb-8">
         <Card className="p-0 overflow-hidden">
+          {imageFixingStatus === 'fixing' && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+              <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm font-medium">Optimizing images for better display...</span>
+              </div>
+            </div>
+          )}
           <LiveSlideView 
-            slides={slides}
-            images={images}
+            slides={slides.map((slide, idx) => ({
+              ...slide,
+              image: displayImages[idx] || slide.image
+            }))}
+            images={displayImages}
             isGenerating={isGenerating}
             className="p-6"
           />
         </Card>
       </div>
 
-      {/* Traditional slideshow for completed stories */}
-      {!isGenerating && slides.length > 0 && (
-        <div className="mb-8">
-          <Card>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Complete Story Slideshow
-            </h3>
-            <StorySlideshow slides={slides} />
-          </Card>
-        </div>
-      )}
+
 
       {/* Image modal for full-screen view */}
       <AnimatePresence>
@@ -155,14 +185,19 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <img
-                src={images[selectedImageIndex]}
+                src={displayImages[selectedImageIndex]}
                 alt={`Story illustration ${selectedImageIndex + 1}`}
                 className="max-w-full max-h-full object-contain rounded-lg"
                 onError={(e) => {
                   console.error("Modal image failed to load:", 
-                    images[selectedImageIndex]?.substring(0, 50) + "...");
-                  e.currentTarget.src = "/assets/placeholder-image.png";
-                  e.currentTarget.alt = "Image failed to load";
+                    displayImages[selectedImageIndex]?.substring(0, 50) + "...");
+                  e.currentTarget.src = createStoryFallbackImage(
+                    extractedTitle, 
+                    selectedImageIndex + 1,
+                    800,
+                    600
+                  );
+                  e.currentTarget.alt = `Story illustration ${selectedImageIndex + 1} (fallback)`;
                 }}
               />
               
@@ -177,7 +212,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               </button>
 
               {/* Navigation in modal */}
-              {images.length > 1 && (
+              {displayImages.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}

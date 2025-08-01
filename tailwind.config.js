@@ -24,7 +24,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        indie: ['"Indie Flower"', 'cursive'],
+        indie: ['"IndieFlower"', 'cursive'],
       },
       animation: {
         'bounce-slow': 'bounce 3s infinite',

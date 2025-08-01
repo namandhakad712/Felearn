@@ -24,7 +24,7 @@ const StoryGenerator = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const { user } = useAuth();
-  
+
   // Apply user's theme preference automatically
   useUserTheme();
   const { success: showSuccessToast, error: showErrorToast, toasts, removeToast } = useToast();
@@ -120,31 +120,30 @@ const StoryGenerator = () => {
         },
         generateStory: async ({ prompt, apiKey, userId, options }: any) => {
           console.log('Generating images for prompt:', prompt);
-          
+
           // Import the Google Generative AI library exactly like in main thing/index.tsx
           const { GoogleGenerativeAI } = await import('@google/generative-ai');
-          
+
           // Initialize the Gemini API with the user's API key
           const ai = new GoogleGenerativeAI(apiKey);
-          
+
           // Create a chat with a model that supports image generation
-          const model = ai.getGenerativeModel({ 
+          const model = ai.getGenerativeModel({
             model: 'gemini-2.0-flash-preview-image-generation',
             generationConfig: {
-              temperature: options.temperature || 0.7,
               maxOutputTokens: options.maxTokens || 1024,
               responseModalities: ['IMAGE', 'TEXT'] // Specify both IMAGE and TEXT as required
             }
           });
           const chat = model.startChat({ history: [] });
-          
+
           // Add compatibility properties to match your existing code
           chat.history = [];
-          
+
           // Create arrays to store the generated content
           const images = [];
           const slides = [];
-          
+
           // Use the exact same additional instructions as in main thing/index.tsx
           const additionalInstructions = `
           Use a fun story about lots of tiny cats as a metaphor.
@@ -154,13 +153,15 @@ const StoryGenerator = () => {
           Make sure each image tells the story visually with embedded text elements.
           No commentary, just begin your explanation.
           Keep going until you're done.`;
-          
-          
-          
+
+
+
+
+
           try {
             // Reset chat history
             chat.history.length = 0;
-            
+
             // Send the message and get a streaming response
             // Wrap in try-catch to handle specific streaming errors
             let result;
@@ -171,10 +172,10 @@ const StoryGenerator = () => {
               console.error('Error starting stream:', streamError);
               throw streamError; // Re-throw to be caught by outer catch
             }
-            
+
             let text = '';
             let img = null;
-            
+
             // Process the stream of content - check if result has stream property
             const streamToIterate = result.stream || result;
             for await (const chunk of streamToIterate) {
@@ -191,7 +192,7 @@ const StoryGenerator = () => {
                         const imageUrl = `data:image/png;base64,${data.data}`;
                         img = imageUrl;
                         console.log('Generated a new image');
-                        
+
                         // Validate the base64 data
                         if (!data.data || typeof data.data !== 'string') {
                           console.error('Invalid image data received:', data);
@@ -204,33 +205,33 @@ const StoryGenerator = () => {
                       console.log('no data', chunk);
                     }
                   }
-                  
+
                   // If we have both text and image, create a slide
                   if (text && img) {
                     // Add the new image to our arrays
                     images.push(img);
                     // Log the text before adding to slide
                     console.log('Adding text to slide:', typeof text, text);
-                    
+
                     // Process the text to extract the caption
                     let cleanText = String(text).trim();
-                    
+
                     // Extract the caption part (text inside quotes)
                     const captionMatch = cleanText.match(/"([^"]+)"/);
                     if (captionMatch && captionMatch[1]) {
                       // Use just the quoted text as the caption
                       cleanText = captionMatch[1];
                     }
-                    
+
                     slides.push({
                       text: cleanText.length > 0 ? cleanText : "Image caption", // Provide a fallback
                       image: img
                     });
-                    
+
                     // Update the UI in real-time as each image is generated
                     setStoryImages([...images]);
                     setStorySlides([...slides]);
-                    
+
                     // Reset for next slide
                     text = '';
                     img = null;
@@ -238,35 +239,35 @@ const StoryGenerator = () => {
                 }
               }
             }
-            
+
             // Handle any remaining image - exactly like in main thing/index.tsx
             if (img) {
               images.push(img);
               // Log the remaining text
               console.log('Adding remaining text to slide:', typeof text, text);
-              
+
               // Process the text to extract the caption
               let cleanText = String(text).trim();
-              
+
               // Extract the caption part (text inside quotes)
               const captionMatch = cleanText.match(/"([^"]+)"/);
               if (captionMatch && captionMatch[1]) {
                 // Use just the quoted text as the caption
                 cleanText = captionMatch[1];
               }
-              
+
               slides.push({
                 text: cleanText.length > 0 ? cleanText : "Image caption", // Provide a fallback
                 image: img
               });
-              
+
               setStoryImages([...images]);
               setStorySlides([...slides]);
             }
-            
+
           } catch (error) {
             console.error('Error generating images with Gemini:', error);
-            
+
             // Parse error exactly like in main thing/index.tsx
             const parseError = (error: string) => {
               const regex = /{"error":(.*)}/gm;
@@ -282,41 +283,41 @@ const StoryGenerator = () => {
                 return error;
               }
             };
-            
+
             // Log the error but don't throw - instead use fallback images
             console.log('Falling back to placeholder images due to error');
             const errorMsg = typeof error === 'string' ? parseError(error as string) : (error as Error).message || 'Unknown error';
             console.warn('Gemini API error:', errorMsg);
-            
+
             // Generate fallback images using placekitten.com
             const numImages = Math.floor(Math.random() * 6) + 3; // 3-8 images
-            
+
             for (let i = 0; i < numImages; i++) {
               // Use placeholder images with different dimensions
               const width = 400 + Math.floor(Math.random() * 50);
               const height = 300 + Math.floor(Math.random() * 50);
               const imageUrl = `https://placekitten.com/${width}/${height}`;
-              
+
               console.log(`Generated fallback image ${i + 1} of ${numImages}`);
-              
+
               // Create a slide with the image
               images.push(imageUrl);
               slides.push({
                 text: '', // No text as requested
                 image: imageUrl
               });
-              
+
               // Update UI in real-time
               setStoryImages([...images]);
               setStorySlides([...slides]);
-              
+
               // Add a small delay between images to simulate generation
               if (i < numImages - 1) {
                 await new Promise(resolve => setTimeout(resolve, 800));
               }
             }
           }
-          
+
           // Return the final set of generated images
           return {
             story: `${prompt}`, // Minimal story text
@@ -335,7 +336,6 @@ const StoryGenerator = () => {
         apiKey: user.geminiKey,
         userId: user.$id, // Add user ID for rate limiting
         options: {
-          temperature: 0.7,
           maxTokens: 1024,
           includeImages: true, // Enable image generation for better story display
         },
@@ -367,7 +367,7 @@ const StoryGenerator = () => {
         const userEmail = user?.email || 'user@example.com';
         const userName = user?.name || 'User';
         const userLastLogin = user?.lastLogin || new Date().toISOString();
-        
+
         // Create story with user information
         const savedStory = await createStory(title, response.story, response.images || [], response.slides || []);
         setSelectedStory(savedStory);
@@ -442,18 +442,6 @@ const StoryGenerator = () => {
               </>
             )}
 
-            {/* Loading State */}
-            {isGenerating && (
-              <div className="mt-8 text-center">
-                <div className="inline-flex items-center px-6 py-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-full">
-                  <div className="cat-typing mr-4"></div>
-                  <span className="text-indigo-700 dark:text-indigo-300 font-medium">
-                    Generating images... Please wait
-                  </span>
-                </div>
-              </div>
-            )}
-
             {/* Error States */}
             {(error || storiesError) && (
               <div className="mt-8 max-w-2xl mx-auto space-y-4">
@@ -507,10 +495,10 @@ const StoryGenerator = () => {
               </div>
             )}
 
-            {/* Generated Story Display */}
-            {generatedStory && (
+            {/* Live Story Display - Shows immediately when generation starts */}
+            {(generatedStory || isGenerating) && (
               <StoryDisplay
-                story={generatedStory}
+                story={generatedStory || ''}
                 images={storyImages}
                 slides={storySlides}
                 title={selectedStory?.title}

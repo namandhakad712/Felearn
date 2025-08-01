@@ -6,3 +6,7 @@ export { default as AdvancedSearchFilter } from './AdvancedSearchFilter';
 export { default as StorySearchResults } from './StorySearchResults';
 export { default as StorySlideshow } from './StorySlideshow';
 export { default as ExamplePrompts } from './ExamplePrompts';
+export { default as LiveSlideView } from './LiveSlideView';
+export { default as ImageFixHelper } from './ImageFixHelper';
+export { default as StoryViewModes } from './StoryViewModes';
+export { default as ReactPageFlipView } from './ReactPageFlipView';
