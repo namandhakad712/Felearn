@@ -1,7 +1,7 @@
 import { ID, Query } from 'appwrite';
 import { databaseService } from './databaseService';
 import { APPWRITE_CONFIG } from '../config/appwrite';
-import { Story } from '../types';
+import { Story, StorySlide } from '../types';
 
 /**
  * Story Service
@@ -40,13 +40,15 @@ export class StoryService {
     tags: string[] = [],
     email: string = 'user@example.com', // Default email as fallback
     name: string = 'User', // Default name as fallback
-    lastLogin: string = new Date().toISOString() // Default lastLogin as current time
+    lastLogin: string = new Date().toISOString(), // Default lastLogin as current time
+    slides: StorySlide[] = [] // Add slides parameter
   ): Promise<Story> {
     const storyData: Partial<Story> = {
       userId,
       title,
       content,
       images,
+      slides, // Add slides to the data being saved
       tags,
       email, // Add required email field
       name, // Add required name field

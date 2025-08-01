@@ -46,6 +46,8 @@ export const APPWRITE_CONFIG = {
     stories: getEnvVar('VITE_APPWRITE_STORIES_COLLECTION_ID', 'stories'),
     adminLogs: getEnvVar('VITE_APPWRITE_ADMIN_LOGS_COLLECTION_ID', 'admin_logs'),
     errorLogs: getEnvVar('VITE_APPWRITE_ERROR_LOGS_COLLECTION_ID', 'error_logs'),
+    subscribers: getEnvVar('VITE_APPWRITE_SUBSCRIBERS_COLLECTION_ID', 'subscribers'),
+    suggestions: getEnvVar('VITE_APPWRITE_SUGGESTIONS_COLLECTION_ID', 'suggestions'),
   },
 
   // Storage buckets

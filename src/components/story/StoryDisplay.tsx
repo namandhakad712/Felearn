@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Carousel } from '../ui';
 import StorySlideshow from './StorySlideshow';
+import LiveSlideView from './LiveSlideView';
 import { StorySlide } from '../../types';
 
 interface StoryDisplayProps {
@@ -13,6 +14,7 @@ interface StoryDisplayProps {
   onExport?: () => void;
   onNewStory?: () => void;
   isLoading?: boolean;
+  isGenerating?: boolean;
 }
 
 const StoryDisplay: React.FC<StoryDisplayProps> = ({
@@ -23,7 +25,8 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   onSave,
   onExport,
   onNewStory,
-  isLoading = false
+  isLoading = false,
+  isGenerating = false
 }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -110,53 +113,29 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
         </div>
       </div>
 
-      {/* Always prioritize the slideshow display */}
+      {/* Live Slide View - Shows images as they're generated */}
       <div className="mb-8">
-        <Card>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            AI Generated Images for: {title || 'Your Prompt'}
-          </h3>
-          
-          {slides && slides.length > 0 ? (
-            <StorySlideshow slides={slides} />
-          ) : images && images.length > 0 ? (
-            <div className="space-y-8">
-              {/* If we have images but no slides, create a simple slideshow */}
-              {images.map((image, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <div className="relative w-full max-w-2xl mx-auto">
-                    <img
-                      src={image}
-                      alt={`Generated image ${index + 1}`}
-                      className="w-full rounded-lg shadow-lg cursor-pointer"
-                      onClick={() => handleImageClick(index)}
-                      onError={(e) => {
-                        console.error("Image failed to load:", image.substring(0, 50) + "...");
-                        e.currentTarget.src = "/assets/placeholder-image.png";
-                        e.currentTarget.alt = "Image failed to load";
-                      }}
-                    />
-                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                      {index + 1} / {images.length}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            /* Placeholder when no images or slides */
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center text-gray-500 dark:text-gray-400">
-                <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p className="text-sm">No images generated yet</p>
-                <p className="text-xs mt-1">Images will appear here as they are generated</p>
-              </div>
-            </div>
-          )}
+        <Card className="p-0 overflow-hidden">
+          <LiveSlideView 
+            slides={slides}
+            images={images}
+            isGenerating={isGenerating}
+            className="p-6"
+          />
         </Card>
       </div>
+
+      {/* Traditional slideshow for completed stories */}
+      {!isGenerating && slides.length > 0 && (
+        <div className="mb-8">
+          <Card>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Complete Story Slideshow
+            </h3>
+            <StorySlideshow slides={slides} />
+          </Card>
+        </div>
+      )}
 
       {/* Image modal for full-screen view */}
       <AnimatePresence>

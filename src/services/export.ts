@@ -1,7 +1,8 @@
 import jsPDF from 'jspdf';
-import { Story } from '../types';
+import { Story, StorySlide } from '../types';
 import { appwriteService } from './appwrite';
 import { Functions } from 'appwrite';
+import { enhancedPdfExportService } from './enhancedPdfExport';
 
 export type ExportFormat = 'pdf' | 'json' | 'txt' | 'html';
 
@@ -64,14 +65,22 @@ export class ExportService {
   async exportStory(
     story: Story, 
     format: ExportFormat, 
-    options: ExportOptions = {}
+    options: ExportOptions = {},
+    slides: StorySlide[] = []
   ): Promise<void> {
     try {
       console.log('Exporting story client-side:', story.title, 'as', format);
       
       switch (format) {
         case 'pdf':
-          await this.exportToPDF(story, options);
+          // Use enhanced PDF export with real images and watermarks
+          await enhancedPdfExportService.exportStoryToPDF(story, slides, {
+            includeImages: options.includeImages !== false,
+            includeMetadata: options.includeMetadata !== false,
+            password: 'felearn2024',
+            watermarkText: 'Felearn AI',
+            watermarkOpacity: 0.3
+          });
           break;
         case 'json':
           this.exportToJSON(story, options);

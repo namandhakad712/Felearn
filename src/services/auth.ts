@@ -410,16 +410,36 @@ export class AuthService {
     password: string
   ): Promise<AuthResponse> {
     try {
+      console.log('🔐 Completing password reset for user:', userId);
+      
       // Use the userId as-is from Appwrite's password reset URL
       await this.account.updateRecovery(userId, secret, password);
 
+      console.log('✅ Password reset completed successfully');
       return {
         success: true,
-        message: 'Password has been reset successfully. You can now log in.'
+        message: '🎉 Password has been reset successfully! You can now log in with your new password.'
       };
-    } catch (error) {
-      console.error('Complete password reset error:', error);
-      throw error;
+    } catch (error: any) {
+      console.error('❌ Complete password reset error:', error);
+      
+      // Provide more user-friendly error messages
+      let errorMessage = 'Failed to reset password. Please try again.';
+      
+      if (error.message?.includes('Invalid token') || error.message?.includes('invalid')) {
+        errorMessage = 'This password reset link is invalid or has expired. Please request a new password reset.';
+      } else if (error.message?.includes('expired')) {
+        errorMessage = 'This password reset link has expired. Please request a new password reset.';
+      } else if (error.message?.includes('used')) {
+        errorMessage = 'This password reset link has already been used. Please request a new password reset if needed.';
+      } else if (error.message?.includes('password')) {
+        errorMessage = 'The new password does not meet the requirements. Please try a different password.';
+      }
+      
+      return {
+        success: false,
+        message: errorMessage
+      };
     }
   }
 

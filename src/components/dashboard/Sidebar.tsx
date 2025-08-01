@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
+import FeedbackModal from './FeedbackModal';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface NavItem {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   
   const navItems: NavItem[] = [
     {
@@ -102,6 +104,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               {item.label}
             </Link>
           ))}
+          
+          {/* Feedback/Suggestion Button */}
+          <div className="mt-8 px-6">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsFeedbackModalOpen(true)}
+                className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-lg transition-all duration-200 group"
+              >
+                <span className="mr-3 p-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-md group-hover:shadow-lg transition-shadow">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z" />
+                  </svg>
+                </span>
+                <div className="text-left">
+                  <div className="font-medium">Suggest Feature</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400">
+                    Share feedback & ideas
+                  </div>
+                </div>
+              </motion.button>
+            </div>
+          </div>
         </div>
       </nav>
       
@@ -133,6 +159,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           Logout
         </motion.button>
       </div>
+      
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+      />
     </motion.div>
   );
 };

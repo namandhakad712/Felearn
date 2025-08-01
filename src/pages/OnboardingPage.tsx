@@ -3,6 +3,51 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { validateGeminiApiKey } from '@/utils/userUtils';
+import styled from 'styled-components';
+
+// Simple error boundary for debugging
+class OnboardingErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    console.error('🚨 OnboardingPage Error:', error);
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('🚨 OnboardingPage Error Details:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-red-50">
+          <div className="text-center p-8">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Onboarding Error</h2>
+            <p className="text-red-800 mb-4">Something went wrong loading the onboarding page.</p>
+            <pre className="text-sm text-red-700 bg-red-100 p-4 rounded">
+              {this.state.error?.message}
+            </pre>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +60,16 @@ const OnboardingPage: React.FC = () => {
   const [isValidatingKey, setIsValidatingKey] = useState(false);
   const [error, setError] = useState('');
 
+  // Debug: Log component mount and user info
+  React.useEffect(() => {
+    console.log('🚀 OnboardingPage mounted');
+    console.log('👤 User:', user);
+    console.log('🔄 Current step:', currentStep);
+    return () => {
+      console.log('🚀 OnboardingPage unmounted');
+    };
+  }, []);
+
   // Debug: Log when currentStep changes
   React.useEffect(() => {
     console.log('🔄 OnboardingPage: currentStep changed to:', currentStep);
@@ -24,6 +79,19 @@ const OnboardingPage: React.FC = () => {
   React.useEffect(() => {
     console.log('🎨 OnboardingPage: selectedTheme changed to:', selectedTheme);
   }, [selectedTheme]);
+
+  // Early return with debug info if user is not available
+  if (!user) {
+    console.log('❌ OnboardingPage: No user found');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading...</h2>
+          <p className="text-gray-600">Waiting for user authentication</p>
+        </div>
+      </div>
+    );
+  }
 
 
 
@@ -129,9 +197,42 @@ const OnboardingPage: React.FC = () => {
     }
   };
 
+  console.log('🎨 OnboardingPage render called, currentStep:', currentStep);
+
+  // Add a simple test div to see if component renders at all
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🧪 OnboardingPage: Rendering in development mode');
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+    <VideoBackgroundContainer>
+      {/* Video Background */}
+      <video
+        className="video-background"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        poster="/public/assets/placeholder-image.png"
+      >
+        <source src="/public/videos/auth-background-prem.mp4" type="video/mp4" />
+        <source src="/public/videos/auth-background-prem.webm" type="video/webm" />
+        {/* Fallback for browsers that don't support video */}
+        Your browser does not support the video tag.
+      </video>
+      
+      {/* Dark overlay for better text readability */}
+      <div className="video-overlay" />
+      
+      {/* Content */}
+      <div className="content-container">
+        {/* Debug indicator */}
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-3 py-1 rounded text-sm z-50">
+          Onboarding Loaded
+        </div>
+        
+        <div className="max-w-2xl w-full bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -377,9 +478,86 @@ const OnboardingPage: React.FC = () => {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </VideoBackgroundContainer>
   );
 };
 
-export default OnboardingPage;
+const VideoBackgroundContainer = styled.div`
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  .video-background {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: 0;
+    transform: translateX(-50%) translateY(-50%);
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+    
+    @media (max-width: 768px) {
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    @media (max-width: 480px) {
+      background: rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  .content-container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    
+    @media (max-width: 768px) {
+      padding: 1rem 0.75rem;
+      align-items: flex-start;
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+    }
+    
+    @media (max-width: 480px) {
+      padding: 1rem 0.5rem;
+      padding-top: 1.5rem;
+      padding-bottom: 1.5rem;
+    }
+  }
+
+  /* Fallback background if video fails to load */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+`;
+
+// Wrap with error boundary
+const OnboardingPageWithErrorBoundary: React.FC = () => (
+  <OnboardingErrorBoundary>
+    <OnboardingPage />
+  </OnboardingErrorBoundary>
+);
+
+export default OnboardingPageWithErrorBoundary;

@@ -10,20 +10,56 @@ const ResetPasswordPage: React.FC = () => {
   
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Helper function to get parameter from multiple sources
+  const getParam = (paramNames: string[]): string | null => {
+    // First try React Router search params (hash-based)
+    for (const name of paramNames) {
+      const value = searchParams.get(name);
+      if (value) return value;
+    }
+    
+    // Then try main URL search params (before hash)
+    const mainSearch = window.location.search;
+    if (mainSearch) {
+      const mainParams = new URLSearchParams(mainSearch);
+      for (const name of paramNames) {
+        const value = mainParams.get(name);
+        if (value) return value;
+      }
+    }
+    
+    return null;
+  };
+
   // Get reset parameters from URL if they exist
-  const userId = searchParams.get('userId');
-  const secret = searchParams.get('secret');
+  // Appwrite uses different parameter names, let's try all possibilities
+  const userId = getParam(['userId', 'user', 'id', 'userID']);
+  const secret = getParam(['secret', 'token', 'code', 'verification']);
   
   // Debug: Log the parameters
   React.useEffect(() => {
     console.log('🔍 ResetPasswordPage loaded');
-    console.log('🔍 URL parameters:', { userId, secret });
+    console.log('🔍 Full URL:', window.location.href);
+    console.log('🔍 Search params:', window.location.search);
+    console.log('🔍 Hash:', window.location.hash);
+    console.log('🔍 All URL parameters:', Object.fromEntries(searchParams.entries()));
+    console.log('🔍 Extracted parameters:', { userId, secret });
     console.log('🔍 User authenticated:', !!user);
-  }, [userId, secret, user]);
+    
+    // Also try to extract from main URL search params (like we did for email verification)
+    const mainSearch = window.location.search;
+    if (mainSearch) {
+      const mainParams = new URLSearchParams(mainSearch);
+      const mainUserId = mainParams.get('userId') || mainParams.get('user') || mainParams.get('id');
+      const mainSecret = mainParams.get('secret') || mainParams.get('token') || mainParams.get('code');
+      console.log('🔍 Main URL parameters:', { mainUserId, mainSecret });
+    }
+  }, [userId, secret, user, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +74,32 @@ const ResetPasswordPage: React.FC = () => {
           throw new Error('Please enter a new password.');
         }
 
-        console.log('🔄 Completing password reset...');
+        if (!confirmPassword) {
+          throw new Error('Please confirm your new password.');
+        }
+
+        if (newPassword !== confirmPassword) {
+          throw new Error('Passwords do not match.');
+        }
+
+        // Validate password strength
+        if (newPassword.length < 8) {
+          throw new Error('Password must be at least 8 characters long.');
+        }
+
+        if (!/[A-Z]/.test(newPassword)) {
+          throw new Error('Password must contain at least one uppercase letter.');
+        }
+
+        if (!/[a-z]/.test(newPassword)) {
+          throw new Error('Password must contain at least one lowercase letter.');
+        }
+
+        if (!/[0-9]/.test(newPassword)) {
+          throw new Error('Password must contain at least one number.');
+        }
+
+        console.log('🔄 Completing password reset with validated password...');
         const result = await completePasswordReset(userId, secret, newPassword);
         console.log('✅ Password reset result:', result);
         
@@ -138,24 +199,47 @@ const ResetPasswordPage: React.FC = () => {
                 onChange={(e) => setNewPassword(e.target.value)}
                   />
                 </div>
+
+                <div className="flex-column">
+                  <label>Confirm New Password</label>
+                </div>
+                <div className="inputForm">
+                  <svg height={20} viewBox="-64 0 512 512" width={20} xmlns="http://www.w3.org/2000/svg">
+                    <path d="m336 512h-288c-26.453125 0-48-21.523438-48-48v-224c0-26.476562 21.546875-48 48-48h288c26.453125 0 48 21.523438 48 48v224c0 26.476562-21.546875 48-48 48zm-288-288c-8.8125 0-16 7.167969-16 16v224c0 8.832031 7.1875 16 16 16h288c8.8125 0 16-7.167969 16-16v-224c0-8.832031-7.1875-16-16-16zm0 0" />
+                    <path d="m304 224c-8.832031 0-16-7.167969-16-16v-80c0-52.929688-43.070312-96-96-96s-96 43.070312-96 96v80c0 8.832031-7.167969 16-16 16s-16-7.167969-16-16v-80c0-70.59375 57.40625-128 128-128s128 57.40625 128 128v80c0 8.832031-7.167969 16-16 16zm0 0" />
+                  </svg>        
+              <input
+                type="password"
+                    className="input" 
+                    placeholder="Confirm your new password"
+                    required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+
                 <div className="mt-2 text-xs sm:text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
                   <p className="font-medium mb-1">Password requirements:</p>
                   <ul className="space-y-1">
-                    <li className="flex items-center">
-                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                    <li className={`flex items-center ${newPassword.length >= 8 ? 'text-green-600' : ''}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mr-2 ${newPassword.length >= 8 ? 'bg-green-500' : 'bg-gray-400'}`}></span>
                       At least 8 characters long
                     </li>
-                    <li className="flex items-center">
-                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                    <li className={`flex items-center ${/[A-Z]/.test(newPassword) ? 'text-green-600' : ''}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mr-2 ${/[A-Z]/.test(newPassword) ? 'bg-green-500' : 'bg-gray-400'}`}></span>
                       One uppercase letter (A-Z)
                     </li>
-                    <li className="flex items-center">
-                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                    <li className={`flex items-center ${/[a-z]/.test(newPassword) ? 'text-green-600' : ''}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mr-2 ${/[a-z]/.test(newPassword) ? 'bg-green-500' : 'bg-gray-400'}`}></span>
                       One lowercase letter (a-z)
                     </li>
-                    <li className="flex items-center">
-                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                    <li className={`flex items-center ${/[0-9]/.test(newPassword) ? 'text-green-600' : ''}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mr-2 ${/[0-9]/.test(newPassword) ? 'bg-green-500' : 'bg-gray-400'}`}></span>
                       One number (0-9)
+                    </li>
+                    <li className={`flex items-center ${newPassword && confirmPassword && newPassword === confirmPassword ? 'text-green-600' : ''}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mr-2 ${newPassword && confirmPassword && newPassword === confirmPassword ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                      Passwords match
                     </li>
                   </ul>
                 </div>

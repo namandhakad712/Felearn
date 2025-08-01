@@ -109,16 +109,28 @@ export const useStories = (): UseStoriesReturn => {
         // Extract tags from slides if available
         const tags: string[] = [];
         
-        // Create story in database with user information from auth context
-        // The function now expects (userId, title, content, images, tags, email, name, lastLogin)
-        const createdStory = await storyService.createStory(userId, title, content, images, tags, email, name, lastLogin);
-        
-        // Add slides to the story data if provided
-        if (slides && slides.length > 0) {
-          // We can't directly save slides since the service doesn't support it
-          // So we'll just add them to our local copy
-          createdStory.slides = slides;
+        // Upload images to Appwrite Storage if they are base64 strings
+        let processedImages = images;
+        if (images && images.length > 0) {
+          console.log('Uploading images to storage...');
+          try {
+            // Import appwriteService for image upload
+            const { appwriteService } = await import('../services/appwrite');
+            processedImages = await appwriteService.uploadStoryImages(images);
+            console.log('Images uploaded successfully:', processedImages.length);
+          } catch (uploadError) {
+            console.error('Failed to upload images, using original:', uploadError);
+            // Keep original images as fallback
+            processedImages = images;
+          }
         }
+        
+        // Create story in database with user information from auth context
+        // The function now expects (userId, title, content, images, tags, email, name, lastLogin, slides)
+        const createdStory = await storyService.createStory(userId, title, content, processedImages, tags, email, name, lastLogin, slides);
+        
+        // Update the story with processed images
+        createdStory.images = processedImages;
         
         // Replace optimistic story with real story
         setStories(prev => prev.map(story => 

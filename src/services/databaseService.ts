@@ -333,6 +333,21 @@ export class AppwriteDatabaseService implements DataService {
           processedDoc.tags = [];
         }
       }
+      
+      // Parse slides from string to array if it's a string
+      if (typeof processedDoc.slides === 'string') {
+        try {
+          const slidesData = JSON.parse(processedDoc.slides);
+          // Reconstruct slides with proper image URLs
+          processedDoc.slides = slidesData.map((slide: any, index: number) => ({
+            text: slide.text || '',
+            image: processedDoc.images && processedDoc.images[index] ? processedDoc.images[index] : null
+          }));
+        } catch (e) {
+          console.error('Error parsing slides JSON:', e);
+          processedDoc.slides = [];
+        }
+      }
     }
     
     // Process Error Log document
@@ -380,23 +395,20 @@ export class AppwriteDatabaseService implements DataService {
     
     // Convert images array to string if it exists
     if (processedData.images && Array.isArray(processedData.images)) {
-      // Handle large image data - limit to first 2 images and store only URLs or truncated data
-      const processedImages = processedData.images.slice(0, 2).map(img => {
-        // If it's a data URL (base64), extract just the beginning to identify the image type
-        if (typeof img === 'string' && img.startsWith('data:')) {
-          // Store just a reference or placeholder instead of the full base64 data
-          return img.substring(0, 30) + '...'; // Just store the beginning of the data URL
-        }
-        return img;
-      });
+      // Since images are now URLs from storage, we can store them directly
+      processedData.images = JSON.stringify(processedData.images);
+    }
+    
+    // Convert slides array to string if it exists
+    if (processedData.slides && Array.isArray(processedData.slides)) {
+      // Process slides to store captions with image references
+      const processedSlides = processedData.slides.map((slide, index) => ({
+        text: slide.text || '',
+        imageIndex: index, // Reference to the image in the images array
+        // Don't store the full base64 image data, just the caption and reference
+      }));
       
-      processedData.images = JSON.stringify(processedImages);
-      
-      // Ensure the stringified result is under 2048 characters
-      if (processedData.images.length > 2000) {
-        // If still too large, just store a placeholder
-        processedData.images = JSON.stringify(['image_data_too_large']);
-      }
+      processedData.slides = JSON.stringify(processedSlides);
     }
     
     // Convert tags array to string if it exists

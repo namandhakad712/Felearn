@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Story } from '../../types';
+import { Story, StorySlide } from '../../types';
 import { exportService, ExportFormat } from '../../services/export';
 
 interface ExportModalProps {
@@ -8,6 +8,7 @@ interface ExportModalProps {
   onClose: () => void;
   story?: Story;
   stories?: Story[];
+  slides?: StorySlide[];
   onExportComplete: (format: ExportFormat) => void;
 }
 
@@ -16,6 +17,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
   onClose,
   story,
   stories,
+  slides = [],
   onExportComplete,
 }) => {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf');
@@ -49,7 +51,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
       if (isMultipleStories && stories) {
         await exportService.exportMultipleStories(stories, selectedFormat, options);
       } else if (story) {
-        await exportService.exportStory(story, selectedFormat, options);
+        await exportService.exportStory(story, selectedFormat, options, slides);
       }
 
       onExportComplete(selectedFormat);
@@ -221,6 +223,17 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 <div>Content: {isMultipleStories ? `${stories.length} stories` : '1 story'}</div>
                 <div>Metadata: {includeMetadata ? 'Included' : 'Excluded'}</div>
                 <div>Images: {includeImages && selectedFormat !== 'txt' && selectedFormat !== 'json' ? 'Included' : 'Excluded'}</div>
+                {selectedFormat === 'pdf' && slides && slides.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">✨ Enhanced PDF Features:</div>
+                    <div className="text-xs space-y-0.5 mt-1">
+                      <div>• Real images with captions</div>
+                      <div>• "Felearn AI" watermarks</div>
+                      <div>• Password protected</div>
+                      <div>• Edit-locked document</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

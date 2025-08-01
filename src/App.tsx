@@ -16,17 +16,33 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const [checkingOnboarding, setCheckingOnboarding] = React.useState(true);
   const [needsOnboarding, setNeedsOnboarding] = React.useState(false);
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log('🛡️ ProtectedRoute state:', {
+      isAuthenticated,
+      isLoading,
+      user: user ? { id: user.$id, email: user.email } : null,
+      checkingOnboarding,
+      needsOnboarding,
+      currentPath: window.location.pathname
+    });
+  }, [isAuthenticated, isLoading, user, checkingOnboarding, needsOnboarding]);
+
   React.useEffect(() => {
     const checkOnboardingStatus = async () => {
+      console.log('🔍 Checking onboarding status for user:', user?.$id);
+      
       if (user && isAuthenticated) {
         try {
           // Import here to avoid circular dependency
           const { databaseService } = await import('@/services/database');
           const userDoc = await databaseService.getUserDocument(user.$id);
           
+          console.log('📄 User document:', userDoc);
+          
           if (!userDoc) {
             // User document doesn't exist, create it and require onboarding
-            console.log('User document not found, creating and requiring onboarding');
+            console.log('❌ User document not found, creating and requiring onboarding');
             try {
               const { extractNameFromEmail } = await import('@/utils/userUtils');
               await databaseService.createUserDocument(user.$id, {
@@ -40,17 +56,20 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
                 disabled: false,
                 onboardingcompleted: false
               });
+              console.log('✅ User document created');
             } catch (createError) {
-              console.error('Failed to create user document:', createError);
+              console.error('❌ Failed to create user document:', createError);
             }
             setNeedsOnboarding(true);
           } else if (!userDoc.onboardingcompleted) {
+            console.log('⚠️ User needs onboarding (onboardingcompleted: false)');
             setNeedsOnboarding(true);
           } else {
+            console.log('✅ User onboarding completed');
             setNeedsOnboarding(false);
           }
         } catch (error) {
-          console.error('Error checking onboarding status:', error);
+          console.error('❌ Error checking onboarding status:', error);
           // If we can't check, assume onboarding is needed
           setNeedsOnboarding(true);
         }
@@ -61,6 +80,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     if (isAuthenticated && user) {
       checkOnboardingStatus();
     } else {
+      console.log('⏳ Waiting for authentication or user data');
       setCheckingOnboarding(false);
     }
   }, [user, isAuthenticated]);
@@ -78,10 +98,27 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
 
   // Check if user needs onboarding (only for non-onboarding routes)
-  if (needsOnboarding && !window.location.pathname.includes('/onboarding')) {
+  // For HashRouter, check the hash instead of pathname
+  const currentPath = window.location.pathname;
+  const currentHash = window.location.hash;
+  const isOnOnboardingPage = currentHash.includes('/onboarding');
+  
+  console.log('🔄 Redirect check:', {
+    needsOnboarding,
+    currentPath,
+    currentHash,
+    isOnOnboardingPage,
+    shouldRedirect: needsOnboarding && !isOnOnboardingPage
+  });
+  
+  if (needsOnboarding && !isOnOnboardingPage) {
+    console.log('🔄 Redirecting to onboarding...');
+    console.log('🔄 Current URL:', window.location.href);
+    console.log('🔄 Current hash:', window.location.hash);
     return <Navigate to="/onboarding" replace />;
   }
 
+  console.log('✅ Rendering protected content for path:', currentPath, 'hash:', currentHash);
   return <>{children}</>;
 };
 

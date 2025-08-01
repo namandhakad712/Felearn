@@ -1,21 +1,3 @@
-Dark Veil
-Preview
-Code
-CLI
-Contribute
-installation
-npm i ogl
-usage
-import DarkVeil from './DarkVeil';
-
-<div style={{ width: '100%', height: '600px', position: 'relative' }}>
-  <DarkVeil />
-</div>
-code
-Default
-
-Tailwind
-
 import { useRef, useEffect } from "react";
 import { Renderer, Program, Mesh, Triangle, Vec2 } from "ogl";
 import "./DarkVeil.css";
@@ -92,6 +74,16 @@ void main(){
 }
 `;
 
+interface DarkVeilProps {
+  hueShift?: number;
+  noiseIntensity?: number;
+  scanlineIntensity?: number;
+  speed?: number;
+  scanlineFrequency?: number;
+  warpAmount?: number;
+  resolutionScale?: number;
+}
+
 export default function DarkVeil({
   hueShift = 0,
   noiseIntensity = 0,
@@ -100,11 +92,15 @@ export default function DarkVeil({
   scanlineFrequency = 0,
   warpAmount = 0,
   resolutionScale = 1,
-}) {
-  const ref = useRef(null);
+}: DarkVeilProps) {
+  const ref = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
     const canvas = ref.current;
+    if (!canvas) return;
+    
     const parent = canvas.parentElement;
+    if (!parent) return;
 
     const renderer = new Renderer({
       dpr: Math.min(window.devicePixelRatio, 2),
@@ -131,8 +127,8 @@ export default function DarkVeil({
     const mesh = new Mesh(gl, { geometry, program });
 
     const resize = () => {
-      const w = parent.clientWidth,
-        h = parent.clientHeight;
+      const w = parent.clientWidth;
+      const h = parent.clientHeight;
       renderer.setSize(w * resolutionScale, h * resolutionScale);
       program.uniforms.uResolution.value.set(w, h);
     };
@@ -170,16 +166,11 @@ export default function DarkVeil({
     warpAmount,
     resolutionScale,
   ]);
+
   return (
     <canvas
       ref={ref}
       className="darkveil-canvas"
     />
   );
-}
-CSS
-.darkveil-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
 }

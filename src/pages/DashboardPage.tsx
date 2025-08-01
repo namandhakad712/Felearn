@@ -7,15 +7,10 @@ import { ProfileModal } from '../components/profile';
 import { useAuth } from '../contexts/AuthContext';
 import { useStories, useToast } from '../hooks';
 import { useUserTheme } from '../hooks/useUserTheme';
-import { Story } from '../types';
-
-// Define the StorySlide interface
-interface StorySlide {
-  text: string;
-  image: string;
-}
+import { Story, StorySlide } from '../types';
 import { ToastContainer } from '../components/ui';
 import { ExportFormat } from '../services/export';
+import StoryLibraryPage from './dashboard/StoryLibraryPage';
 
 // Story Generator Component with Chat Interface
 const StoryGenerator = () => {
@@ -133,13 +128,18 @@ const StoryGenerator = () => {
           const ai = new GoogleGenerativeAI(apiKey);
           
           // Create a chat with a model that supports image generation
-          const chat = ai.chats.create({
+          const model = ai.getGenerativeModel({ 
             model: 'gemini-2.0-flash-preview-image-generation',
-            config: {
-              // responseModalities: ['text', 'image'], // Simplified for now
-            },
-            history: [],
+            generationConfig: {
+              temperature: options.temperature || 0.7,
+              maxOutputTokens: options.maxTokens || 1024,
+              responseModalities: ['IMAGE', 'TEXT'] // Specify both IMAGE and TEXT as required
+            }
           });
+          const chat = model.startChat({ history: [] });
+          
+          // Add compatibility properties to match your existing code
+          chat.history = [];
           
           // Create arrays to store the generated content
           const images = [];
@@ -165,9 +165,8 @@ const StoryGenerator = () => {
             // Wrap in try-catch to handle specific streaming errors
             let result;
             try {
-              result = await chat.sendMessageStream({
-                message: prompt + additionalInstructions,
-              });
+              result = await chat.sendMessageStream(prompt + additionalInstructions);
+              console.log('Stream result type:', typeof result, result);
             } catch (streamError) {
               console.error('Error starting stream:', streamError);
               throw streamError; // Re-throw to be caught by outer catch
@@ -176,8 +175,9 @@ const StoryGenerator = () => {
             let text = '';
             let img = null;
             
-            // Process the stream of content - exactly like in main thing/index.tsx
-            for await (const chunk of result) {
+            // Process the stream of content - check if result has stream property
+            const streamToIterate = result.stream || result;
+            for await (const chunk of streamToIterate) {
               for (const candidate of chunk.candidates) {
                 for (const part of candidate.content.parts ?? []) {
                   if (part.text) {
@@ -289,7 +289,7 @@ const StoryGenerator = () => {
             console.warn('Gemini API error:', errorMsg);
             
             // Generate fallback images using placekitten.com
-            const numImages = Math.floor(Math.random() * 3) + 2; // 2-4 images
+            const numImages = Math.floor(Math.random() * 6) + 3; // 3-8 images
             
             for (let i = 0; i < numImages; i++) {
               // Use placeholder images with different dimensions
@@ -514,6 +514,7 @@ const StoryGenerator = () => {
                 images={storyImages}
                 slides={storySlides}
                 title={selectedStory?.title}
+                isGenerating={isGenerating}
                 onSave={selectedStory ? undefined : async () => {
                   // Only show save button for unsaved stories
                   try {
@@ -554,6 +555,7 @@ const StoryGenerator = () => {
           createdAt: new Date().toISOString(),
           isPinned: false,
         } : undefined)}
+        slides={storySlides}
         onExportComplete={handleExportComplete}
       />
 
@@ -563,59 +565,7 @@ const StoryGenerator = () => {
   );
 };
 
-const StoryLibrary = () => {
-  const { stories } = useStories();
-  const [libraryFilteredStories, setLibraryFilteredStories] = useState<Story[]>([]);
-  const [librarySearchQuery, setLibrarySearchQuery] = useState('');
-  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
-
-  // Set initial filtered stories when stories load
-  React.useEffect(() => {
-    setLibraryFilteredStories(stories);
-  }, [stories]);
-
-  const handleLibraryFilterChange = React.useCallback((filteredStories: Story[]) => {
-    setLibraryFilteredStories(filteredStories);
-  }, []);
-
-  const handleLibraryFiltersChange = React.useCallback((filters: any) => {
-    setLibrarySearchQuery(filters.query || '');
-  }, []);
-
-  const handleStorySelect = React.useCallback((story: Story) => {
-    setSelectedStory(story);
-  }, []);
-
-  return (
-    <div className="p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Your Stories</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Browse, search, and manage all your created stories
-          </p>
-        </div>
-
-        {/* Search and Filter */}
-        <div className="mb-8">
-          <AdvancedSearchFilter
-            stories={stories}
-            onFilteredStoriesChange={handleLibraryFilterChange}
-            onFiltersChange={handleLibraryFiltersChange}
-          />
-        </div>
-
-        {/* Search Results */}
-        <StorySearchResults
-          stories={libraryFilteredStories}
-          searchQuery={librarySearchQuery}
-          onStorySelect={handleStorySelect}
-          selectedStoryId={selectedStory?.$id}
-        />
-      </div>
-    </div>
-  );
-};
+// Removed old StoryLibrary component - now using StoryLibraryPage
 
 const Settings = () => {
   const { user, updateUser } = useAuth();
@@ -762,7 +712,7 @@ const DashboardPage: React.FC = () => {
     <DashboardLayout>
       <Routes>
         <Route path="/" element={<StoryGenerator />} />
-        <Route path="/library" element={<StoryLibrary />} />
+        <Route path="/library" element={<StoryLibraryPage />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/test-import" element={
           <div className="p-4 md:p-6">
