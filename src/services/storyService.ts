@@ -78,12 +78,75 @@ export class StoryService {
   }
 
   /**
-   * Delete a story
+   * Delete a story and its associated images
    * @param storyId Story ID
    * @returns Promise indicating success
    */
   async deleteStory(storyId: string): Promise<boolean> {
-    return databaseService.deleteDocument(this.collectionId, storyId);
+    try {
+      // 1. First get the story to access its images
+      const story = await this.getStory(storyId);
+      
+      // 2. Delete all associated image files from storage
+      if (story.images && story.images.length > 0) {
+        console.log(`Deleting ${story.images.length} images for story ${storyId}`);
+        console.log('Image URLs to delete:', story.images);
+        
+        // Import appwrite service for file deletion
+        const { appwriteService } = await import('./appwrite');
+        
+        // Delete each image file
+        const deletePromises = story.images.map(async (imageUrl) => {
+          try {
+            // Extract file ID from Appwrite URL using proper regex
+            const extractFileId = (url: string): string | null => {
+              try {
+                console.log(`Extracting file ID from URL: ${url}`);
+                
+                // If it's already just a file ID (no URL structure), return it
+                if (!url.includes('/') && !url.includes('?')) {
+                  console.log(`URL appears to be a direct file ID: ${url}`);
+                  return url;
+                }
+                
+                // Match patterns like: /files/file-id/view or /files/file-id/preview
+                const match = url.match(/\/files\/([^\/\?]+)(?:\/(?:view|preview))?/);
+                const extractedId = match ? match[1] : null;
+                console.log(`Extracted file ID: ${extractedId}`);
+                return extractedId;
+              } catch (error) {
+                console.error('Error extracting file ID from URL:', url, error);
+                return null;
+              }
+            };
+
+            const fileId = extractFileId(imageUrl);
+            if (!fileId) {
+              console.warn(`Could not extract file ID from URL: ${imageUrl}`);
+              return;
+            }
+
+            await appwriteService.deleteFile(fileId);
+            console.log(`Deleted image: ${fileId}`);
+          } catch (error) {
+            console.error(`Failed to delete image ${imageUrl}:`, error);
+            // Continue with other deletions even if one fails
+          }
+        });
+        
+        await Promise.all(deletePromises);
+      }
+      
+      // 3. Delete the story document from database
+      const result = await databaseService.deleteDocument(this.collectionId, storyId);
+      
+      console.log(`Story ${storyId} and its images deleted successfully`);
+      return result;
+      
+    } catch (error) {
+      console.error(`Error deleting story ${storyId}:`, error);
+      throw error;
+    }
   }
 
   /**

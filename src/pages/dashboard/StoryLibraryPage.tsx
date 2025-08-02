@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Card, Button, Modal, ToastContainer } from '../../components/ui';
 import { StoryViewModes } from '../../components/story';
 import { storyService } from '../../services';
@@ -8,6 +11,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks';
 import { marked } from 'marked';
 import { createStoryFallbackImage } from '../../utils/imageUrlFixer';
+
+// Register GSAP plugins
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const StoryLibraryPage: React.FC = () => {
   const { user } = useAuth();
@@ -18,6 +24,13 @@ const StoryLibraryPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
   const [filterBy, setFilterBy] = useState<'all' | 'pinned'>('all');
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
+  
+  // GSAP refs for animations
+  const containerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
 
   // Rename modal state
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
@@ -33,6 +46,22 @@ const StoryLibraryPage: React.FC = () => {
   const [storyToView, setStoryToView] = useState<Story | null>(null);
 
 
+
+  // Close dropdown menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[id^="menu-"]') && !target.closest('button[aria-label="Story options"]')) {
+        // Close all open menus
+        document.querySelectorAll('[id^="menu-"]').forEach(menu => {
+          menu.classList.add('hidden');
+        });
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   // Fetch stories
   useEffect(() => {
@@ -409,62 +438,144 @@ const StoryLibraryPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex items-center space-x-3">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setIsSearchBarVisible(!isSearchBarVisible);
+                if (!isSearchBarVisible) {
+                  // Auto-expand search when opening
+                  setTimeout(() => setIsSearchExpanded(true), 100);
+                }
+              }}
+              className="flex items-center space-x-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span>Search</span>
+            </Button>
+            
             <Button to="/dashboard" variant="primary">
               Create New Story
             </Button>
           </div>
         </div>
 
-        {/* Filters and Search */}
-        <Card className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search stories..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 absolute left-3 top-2.5 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+        {/* Collapsible Search/Filter Bar */}
+        {isSearchBarVisible && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginBottom: 32 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 overflow-hidden"
+          >
+            <div className="flex items-center justify-between space-x-4">
+              {/* Left: Search Input */}
+              <div className="flex-shrink-0">
+                <div className={`flex items-center transition-all duration-300 ease-in-out ${
+                  isSearchExpanded || searchTerm ? 'w-64 sm:w-80' : 'w-10'
+                }`}>
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      placeholder="Search stories..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onFocus={() => setIsSearchExpanded(true)}
+                      onBlur={() => {
+                        if (!searchTerm) {
+                          setIsSearchExpanded(false);
+                        }
+                      }}
+                      className={`transition-all duration-300 ease-in-out h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm ${
+                        isSearchExpanded || searchTerm
+                          ? 'pl-10 pr-4 w-full opacity-100'
+                          : 'pl-10 pr-4 w-0 opacity-0'
+                      }`}
+                      autoFocus={isSearchBarVisible}
+                    />
+                    <button
+                      onClick={() => {
+                        if (searchTerm) {
+                          setSearchTerm('');
+                          setIsSearchExpanded(false);
+                        } else {
+                          setIsSearchExpanded(true);
+                          setTimeout(() => {
+                            const input = document.querySelector('input[placeholder="Search stories..."]') as HTMLInputElement;
+                            if (input) input.focus();
+                          }, 100);
+                        }
+                      }}
+                      className={`absolute left-0 top-0 h-full flex items-center justify-center transition-all duration-300 z-10 ${
+                        isSearchExpanded || searchTerm
+                          ? 'w-10 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-600 rounded-l-lg'
+                          : 'w-10 h-10 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm'
+                      }`}
+                      title={searchTerm ? 'Clear search' : 'Search stories'}
+                    >
+                      {searchTerm ? (
+                        <svg className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <select
-                value={filterBy}
-                onChange={(e) => setFilterBy(e.target.value as 'all' | 'pinned')}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="all">All Stories</option>
-                <option value="pinned">Pinned Only</option>
-              </select>
-            </div>
+              {/* Center: Filter Dropdown */}
+              <div className="flex-1 max-w-xs">
+                <select
+                  value={filterBy}
+                  onChange={(e) => setFilterBy(e.target.value as 'all' | 'pinned')}
+                  className="w-full h-10 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="all">All Stories</option>
+                  <option value="pinned">Pinned Only</option>
+                </select>
+              </div>
 
-            <div className="flex items-center space-x-4">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'date' | 'title')}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="date">Sort by Date</option>
-                <option value="title">Sort by Title</option>
-              </select>
+              {/* Right: Sort Dropdown */}
+              <div className="flex-1 max-w-xs">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'date' | 'title')}
+                  className="w-full h-10 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="date">Sort by Date</option>
+                  <option value="title">Sort by Title</option>
+                </select>
+              </div>
 
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {filteredStories.length} stories
-              </span>
+              {/* Far Right: Story Count & Close Button */}
+              <div className="flex items-center space-x-3 flex-shrink-0">
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                  {filteredStories.length} stories
+                </span>
+                <button
+                  onClick={() => {
+                    setIsSearchBarVisible(false);
+                    setIsSearchExpanded(false);
+                    setSearchTerm('');
+                  }}
+                  className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  title="Close search"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
-        </Card>
+          </motion.div>
+        )}
 
         {/* Stories Grid */}
         {isLoading ? (
@@ -541,30 +652,107 @@ const StoryLibraryPage: React.FC = () => {
               >
                 <Card
                   animate
-                  className="h-full flex flex-col cursor-pointer"
+                  className="h-full flex flex-col cursor-pointer relative"
                   onClick={() => openViewModes(story)}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-lg line-clamp-2">
-                      {story.title}
-                    </h3>
+                  {/* 3-Dot Menu in top-left corner */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const menuId = `menu-${story.$id}`;
+                          const menu = document.getElementById(menuId);
+                          if (menu) {
+                            menu.classList.toggle('hidden');
+                          }
+                        }}
+                        className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-colors"
+                        aria-label="Story options"
+                      >
+                        <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                        </svg>
+                      </button>
+                      
+                      {/* Dropdown Menu */}
+                      <div
+                        id={`menu-${story.$id}`}
+                        className="hidden absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-20"
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById(`menu-${story.$id}`)?.classList.add('hidden');
+                            // Export functionality - placeholder for now
+                            console.log('Export story:', story.title);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Export
+                        </button>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById(`menu-${story.$id}`)?.classList.add('hidden');
+                            openRenameModal(story);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Rename
+                        </button>
+                        
+                        <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById(`menu-${story.$id}`)?.classList.add('hidden');
+                            deleteStory(story.$id);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center"
+                        >
+                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pin button in top-right corner */}
+                  <div className="absolute top-4 right-4 z-10">
                     <button
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent card click event
+                        e.stopPropagation();
                         togglePin(story.$id, story.isPinned);
                       }}
-                      className={`ml-2 p-1 rounded ${story.isPinned
+                      className={`p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-colors ${story.isPinned
                         ? 'text-yellow-500 hover:text-yellow-600'
                         : 'text-gray-400 hover:text-gray-500'
                         }`}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M14 4v5c0 1.12.37 2.16 1 3H9c.65-.86 1-1.9 1-3V4h4zm3-2H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H18v-2c-1.66 0-3-1.34-3-3V4h1c.55 0 1-.45 1-1s-.45-1-1-1z" />
                       </svg>
                     </button>
                   </div>
 
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  <div className="flex items-start justify-between mb-3 pt-12">
+                    <h3 className="font-dosis font-semibold text-gray-900 dark:text-white text-lg line-clamp-2">
+                      {story.title}
+                    </h3>
+                  </div>
+
+                  <p className="font-ubuntu-light text-sm text-gray-500 dark:text-gray-400 mb-3">
                     {formatDate(story.createdAt)}
                   </p>
 
@@ -631,83 +819,9 @@ const StoryLibraryPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Story content */}
-                  <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 flex-1 mb-4">
-                    {story.content}
-                  </p>
 
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {story.tags && story.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="text"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click event
-                          openViewModes(story);
-                        }}
-                      >
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                        View Slides
-                      </Button>
-                      <Button
-                        variant="text"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click event
-                          openDetailModal(story);
-                        }}
-                      >
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Details
-                      </Button>
-                      <Button
-                        variant="text"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click event
-                          openRenameModal(story);
-                        }}
-                      >
-                        Rename
-                      </Button>
-                      <Button
-                        variant="text"
-                        size="sm"
-                        onClick={(e) => e.stopPropagation()} // Prevent card click event
-                      >
-                        Export
-                      </Button>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent card click event
-                        deleteStory(story.$id);
-                      }}
-                      className="text-red-500 hover:text-red-600 p-1"
-                      aria-label="Delete story"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+
                 </Card>
               </motion.div>
             ))}
@@ -722,14 +836,4 @@ const StoryLibraryPage: React.FC = () => {
           onClose={() => {
             setIsViewModesOpen(false);
             setStoryToView(null);
-          }}
-        />
-      )}
-
-      {/* Toast Notifications */}
-      <ToastContainer toasts={toasts} onClose={removeToast} />
-    </div>
-  );
-};
-
-export default StoryLibraryPage;
+   

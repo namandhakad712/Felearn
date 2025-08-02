@@ -78,10 +78,7 @@ const StoryPage = forwardRef<HTMLDivElement, { slide: StorySlide; index: number;
           </div>
         )}
         
-        {/* Slide Number Badge */}
-        <div className="story-page-badge">
-          {index + 1} / {totalPages}
-        </div>
+
       </div>
       
       {/* Caption Section */}

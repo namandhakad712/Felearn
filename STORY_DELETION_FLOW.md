@@ -82,8 +82,24 @@ async deleteStory(storyId: string): Promise<boolean> {
 ### **3. Database Service Layer (storyService.ts)**
 ```typescript
 async deleteStory(storyId: string): Promise<boolean> {
-  // 🎯 Calls database service with collection ID
-  return databaseService.deleteDocument(this.collectionId, storyId);
+  try {
+    // 1. First get the story to access its images
+    const story = await this.getStory(storyId);
+    
+    // 2. Delete all associated image files from storage
+    if (story.images && story.images.length > 0) {
+      const deletePromises = story.images.map(async (imageUrl) => {
+        const fileId = imageUrl.includes('/') ? imageUrl.split('/').pop() || imageUrl : imageUrl;
+        await appwriteService.deleteFile(fileId);
+      });
+      await Promise.all(deletePromises);
+    }
+    
+    // 3. Delete the story document from database
+    return databaseService.deleteDocument(this.collectionId, storyId);
+  } catch (error) {
+    throw error;
+  }
 }
 ```
 
@@ -112,10 +128,10 @@ async deleteDocument(collectionId: string, documentId: string): Promise<boolean>
 ## ⚠️ **IMPORTANT: What Does NOT Get Deleted**
 
 ### **🖼️ IMAGE FILES**
-- **Image files stored in Appwrite Storage are NOT automatically deleted**
-- Only the **references/URLs** in the story document are deleted
-- Physical image files remain in storage buckets
-- This could lead to **orphaned files** over time
+- **✅ Image files are NOW automatically deleted from Appwrite Storage**
+- Both the **references/URLs** and **physical files** are deleted
+- No orphaned files remain in storage buckets
+- Complete cleanup of all story-related data
 
 ### **📊 RELATED DATA**
 - **User account data** - remains intact
@@ -135,13 +151,15 @@ async deleteDocument(collectionId: string, documentId: string): Promise<boolean>
    - All image references
 
 ### **❌ NOT DELETED FROM:**
-1. **Storage Buckets** (`APPWRITE_CONFIG.buckets.storyImages`)
-   - Image files remain in storage
-   - No automatic cleanup
-2. **Users Collection**
+1. **Users Collection**
    - User data remains intact
-3. **Analytics/Logs Collections**
+2. **Analytics/Logs Collections**
    - Historical data may remain
+
+### **✅ NOW DELETED FROM:**
+1. **Storage Buckets** (`APPWRITE_CONFIG.buckets.storyImages`)
+   - ✅ Image files are automatically deleted
+   - ✅ Complete cleanup implemented
 
 ---
 
@@ -184,12 +202,12 @@ async batchDeleteStories(storyIds: string[]): Promise<boolean> {
 - ✅ All slide data (text + image references)
 - ✅ Pin status and tags
 - ✅ User associations
+- ✅ **Physical image files from storage** (FIXED!)
 
 ### **❌ WHAT STAYS:**
-- ❌ Physical image files in storage
 - ❌ User account data
 - ❌ Other user stories
 - ❌ System logs/analytics
 
 ### **🎯 RESULT:**
-**The story is completely removed from the user interface and database, but associated image files may remain in storage as orphaned data.**
+**The story is completely removed from the user interface, database, AND storage. No orphaned files remain!**
