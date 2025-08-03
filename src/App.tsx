@@ -1,5 +1,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import AuthPage from '@/pages/AuthPage';
@@ -209,6 +211,8 @@ const App: React.FC = () => {
         </Routes>
         </AuthProvider>
       </ThemeProvider>
+      <Analytics />
+      <SpeedInsights />
     </Router>
   );
 };

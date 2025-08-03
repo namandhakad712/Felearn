@@ -21,6 +21,7 @@ const StoryGenerator = () => {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [_isProfileModalOpen, _setIsProfileModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { user } = useAuth();
 
@@ -212,8 +213,8 @@ const StoryGenerator = () => {
                     }
                   }
 
-                  // If we have both text and image, create a slide
-                  if (text && img) {
+                  // If we have both text and image, create a slide (with 31 slide limit)
+                  if (text && img && slides.length < 31) {
                     // Add the new image to our arrays
                     images.push(img);
                     // Log the text before adding to slide
@@ -272,10 +273,13 @@ const StoryGenerator = () => {
               totalTokensUsed += remainingTokens;
               allGeneratedText += cleanText + ' ';
 
-              slides.push({
-                text: cleanText.length > 0 ? cleanText : "Image caption", // Provide a fallback
-                image: img
-              });
+              // Only add slide if under the 31 slide limit
+              if (slides.length < 31) {
+                slides.push({
+                  text: cleanText.length > 0 ? cleanText : "Image caption", // Provide a fallback
+                  image: img
+                });
+              }
 
               setStoryImages([...images]);
               setStorySlides([...slides]);
@@ -316,12 +320,14 @@ const StoryGenerator = () => {
 
               console.log(`Generated fallback image ${i + 1} of ${numImages}`);
 
-              // Create a slide with the image
-              images.push(imageUrl);
-              slides.push({
-                text: '', // No text as requested
-                image: imageUrl
-              });
+              // Create a slide with the image (with 31 slide limit)
+              if (slides.length < 31) {
+                images.push(imageUrl);
+                slides.push({
+                  text: '', // No text as requested
+                  image: imageUrl
+                });
+              }
 
               // Update UI in real-time
               setStoryImages([...images]);
@@ -341,6 +347,11 @@ const StoryGenerator = () => {
           totalTokensUsed += estimateTokens(prompt + additionalInstructions);
           
           console.log(`📊 Generation complete: ${slides.length} slides, ${totalTokensUsed} tokens used`);
+          
+          // Show message if slide limit was reached
+          if (slides.length >= 31) {
+            showSuccessToast('Slide Limit Reached', 'Maximum of 31 slides generated. Story is complete!');
+          }
           console.log('📊 Token breakdown:', {
             slideTokens: slides.reduce((acc, slide) => acc + estimateTokens(slide.text || ''), 0),
             promptTokens: estimateTokens(prompt + additionalInstructions),
@@ -383,8 +394,9 @@ const StoryGenerator = () => {
 
 
 
-      // Auto-save the generated story
-      try {
+      // Auto-save the generated story (only if not already saved)
+      if (!selectedStory) {
+        try {
         // Extract title from the first line of the story or use a default title
         const storyLines = response.story.split('\n');
         let title = storyLines[0].trim();
@@ -419,6 +431,7 @@ const StoryGenerator = () => {
         console.error('Failed to save story:', saveError);
         // Show error to user but still display the story
         showErrorToast('Save Error', 'Failed to save story automatically. You can try saving manually.');
+      }
       }
 
       console.log('Visual story generated successfully with', response.slides?.length || 0, 'slides');
@@ -552,15 +565,23 @@ const StoryGenerator = () => {
                 slides={storySlides}
                 title={selectedStory?.title}
                 isGenerating={isGenerating}
+                isSaving={isSaving}
                 onSave={selectedStory ? undefined : async () => {
                   // Only show save button for unsaved stories
+                  if (isSaving) return; // Prevent multiple submissions
+                  
                   try {
+                    setIsSaving(true);
                     if (generatedStory) {
                       const savedStory = await createStory('', generatedStory, storyImages, storySlides);
                       setSelectedStory(savedStory);
+                      showSuccessToast('Success', 'Story saved successfully!');
                     }
                   } catch (error) {
                     console.error('Failed to save story:', error);
+                    showErrorToast('Save Error', 'Failed to save story. Please try again.');
+                  } finally {
+                    setIsSaving(false);
                   }
                 }}
                 onExport={() => {
