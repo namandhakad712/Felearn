@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
-import { Card } from '../components/ui';
+import { Card, JellyText } from '../components/ui';
 import { ChatInterface, StoryDisplay, ExportModal, AdvancedSearchFilter, StorySearchResults, ExamplePrompts } from '../components/story';
 import { ProfileModal } from '../components/profile';
 import { useAuth } from '../contexts/AuthContext';
@@ -414,9 +414,15 @@ const StoryGenerator = () => {
             {!generatedStory && !selectedStory && (
               <>
                 <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold mb-3 text-gray-900 dark:text-white">
-                    Explain Things with Lots of Tiny Cats
-                  </h2>
+                  <div className="mb-3">
+                    <JellyText 
+                      text="Explain Things with Lots of Tiny Cats"
+                      className="text-gray-900 dark:text-white"
+                      fontSize="clamp(1.5rem, 4vw, 3rem)"
+                      fontWeight={700}
+                      fontStretch={120}
+                    />
+                  </div>
                   <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
                     Enter a concept you'd like explained with cute cat illustrations. Be as creative and detailed as you'd like!
                   </p>

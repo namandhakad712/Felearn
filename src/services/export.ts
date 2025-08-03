@@ -4,7 +4,7 @@ import { appwriteService } from './appwrite';
 import { Functions } from 'appwrite';
 import { enhancedPdfExportService } from './enhancedPdfExport';
 
-export type ExportFormat = 'pdf' | 'json' | 'txt' | 'html';
+export type ExportFormat = 'pdf';
 
 interface ExportOptions {
   includeImages?: boolean;
@@ -71,34 +71,22 @@ export class ExportService {
     try {
       console.log('Exporting story client-side:', story.title, 'as', format);
       
-      switch (format) {
-        case 'pdf':
-          // Use enhanced PDF export with real images and watermarks
-          await enhancedPdfExportService.exportStoryToPDF(story, slides, {
-            includeImages: options.includeImages !== false,
-            includeMetadata: options.includeMetadata !== false,
-            password: 'felearn2024',
-            watermarkText: 'Felearn AI',
-            watermarkOpacity: 0.3
-          });
-          break;
-        case 'json':
-          this.exportToJSON(story, options);
-          break;
-        case 'txt':
-          this.exportToTXT(story, options);
-          break;
-        case 'html':
-          this.exportToHTML(story, options);
-          break;
-        default:
-          throw new Error(`Unsupported export format: ${format}`);
+      // Only support PDF format
+      if (format === 'pdf') {
+        await enhancedPdfExportService.exportStoryToPDF(story, slides, {
+          includeImages: options.includeImages !== false,
+          includeMetadata: options.includeMetadata !== false,
+          watermarkText: 'Felearn AI',
+          watermarkOpacity: 0.3
+        });
+      } else {
+        throw new Error(`Unsupported export format: ${format}`);
       }
       
       console.log('Story exported successfully');
     } catch (error) {
       console.error('Export error:', error);
-      throw new Error(`Failed to export story as ${format.toUpperCase()}`);
+      throw error;
     }
   }
 
@@ -530,10 +518,11 @@ export class ExportService {
    */
   getAvailableFormats(): { value: ExportFormat; label: string; description: string }[] {
     return [
-      { value: 'pdf', label: 'PDF', description: 'Formatted document with images' },
-      { value: 'json', label: 'JSON', description: 'Structured data with metadata' },
-      { value: 'txt', label: 'Text', description: 'Plain text format' },
-      { value: 'html', label: 'HTML', description: 'Web page with styling' },
+      {
+        value: 'pdf',
+        label: 'PDF',
+        description: 'Standard PDF export with images and formatting'
+      }
     ];
   }
 }

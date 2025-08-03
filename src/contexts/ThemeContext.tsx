@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme } from '../hooks';
-
-type Theme = 'light' | 'dark';
+import { 
+  getStoredTheme, 
+  storeTheme, 
+  isThemeManuallySet, 
+  applyThemeToDocument,
+  type Theme 
+} from '../utils/themeUtils';
 
 interface ThemeContextType {
   theme: Theme;
@@ -14,50 +19,46 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemColorScheme = useColorScheme();
   
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Check if theme is stored in localStorage
-    const savedTheme = localStorage.getItem('theme');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    // Check if theme is stored in localStorage using utility
+    const savedTheme = getStoredTheme();
     
     // If no saved theme, use system preference
     if (!savedTheme) {
       return systemColorScheme;
     }
     
-    return (savedTheme as Theme) || 'light';
+    return savedTheme;
   });
 
+  // Custom setTheme function that ensures persistence
+  const setTheme = (newTheme: Theme, isManual: boolean = true) => {
+    console.log('🎨 Setting theme:', newTheme, 'Manual:', isManual);
+    setThemeState(newTheme);
+    storeTheme(newTheme, isManual);
+  };
+
   useEffect(() => {
-    // Update localStorage when theme changes
-    localStorage.setItem('theme', theme);
-    
-    // Add transition class for smooth theme changes
-    document.documentElement.classList.add('transition-colors', 'duration-300');
-    
-    // Update document class for Tailwind dark mode
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
-    // Remove transition after theme change to prevent transition on page load
-    const timeout = setTimeout(() => {
-      document.documentElement.classList.remove('transition-colors', 'duration-300');
-    }, 300);
-    
-    return () => clearTimeout(timeout);
+    // Apply theme to document
+    applyThemeToDocument(theme);
   }, [theme]);
 
-  // Update theme when system preference changes (if user hasn't manually set a theme)
+  // Update theme when system preference changes (only if not manually set)
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (!savedTheme) {
-      setTheme(systemColorScheme);
+    const savedTheme = getStoredTheme();
+    const manuallySet = isThemeManuallySet();
+    
+    if (!savedTheme && !manuallySet) {
+      console.log('🎨 Applying system theme:', systemColorScheme);
+      setThemeState(systemColorScheme);
+      storeTheme(systemColorScheme, false);
     }
   }, [systemColorScheme]);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    console.log('🎨 Toggling theme from', theme, 'to', newTheme);
+    setTheme(newTheme, true);
   };
 
   return (

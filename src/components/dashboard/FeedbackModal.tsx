@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { Client, Databases, ID } from 'appwrite';
@@ -125,29 +126,29 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="feedback-modal bg-black bg-opacity-50 backdrop-blur-sm">
         <motion.div
           variants={modalVariants}
           initial="hidden"
           animate="visible"
           exit="exit"
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4 text-white">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-3 text-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z" />
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Share Your Thoughts</h2>
-                  <p className="text-indigo-100 text-sm">Help us improve Felearn</p>
+                  <h2 className="text-lg font-bold">Share Your Thoughts</h2>
+                  <p className="text-indigo-100 text-xs">Help us improve Felearn</p>
                 </div>
               </div>
               <button
@@ -162,35 +163,35 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(90vh-120px)] overflow-y-auto">
+          <form onSubmit={handleSubmit} className="p-4 space-y-4">
             {/* Type Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 What would you like to share?
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleInputChange('type', 'feedback')}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                  className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                     formData.type === 'feedback'
                       ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
                       : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                       formData.type === 'feedback' ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-500'
                     }`}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                     </div>
                     <div className="text-left">
-                      <div className="font-medium">Feedback</div>
-                      <div className="text-xs opacity-70">Share your experience</div>
+                      <div className="text-sm font-medium">Feedback</div>
+                      <div className="text-xs opacity-70">Share experience</div>
                     </div>
                   </div>
                 </motion.button>
@@ -200,22 +201,22 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleInputChange('type', 'feature')}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                  className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                     formData.type === 'feature'
                       ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
                       : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
                       formData.type === 'feature' ? 'bg-purple-500 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-500'
                     }`}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
                     <div className="text-left">
-                      <div className="font-medium">Feature Request</div>
+                      <div className="text-sm font-medium">Feature Request</div>
                       <div className="text-xs opacity-70">Suggest improvements</div>
                     </div>
                   </div>
@@ -348,7 +349,8 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
           </form>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

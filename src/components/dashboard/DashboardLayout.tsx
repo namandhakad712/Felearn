@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import DashboardHeader from './DashboardHeader';
 import { ProfileModal } from '../profile';
+import { UnicornBackground, ToastContainer } from '../ui';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../hooks/useToast';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const { user } = useAuth();
+  const { toasts, removeToast, info } = useToast();
   
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -51,7 +54,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex relative">
+      {/* Interactive Background */}
+      <UnicornBackground />
+      
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
       
@@ -70,14 +76,21 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       
       {/* Main content area */}
       <div 
-        className={`flex-1 flex flex-col transition-all duration-300 ${
+        className={`flex-1 flex flex-col transition-all duration-300 relative z-10 ${
           sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
         }`}
+        style={{
+          backdropFilter: 'blur(10px) saturate(120%)',
+          WebkitBackdropFilter: 'blur(10px) saturate(120%)',
+        }}
       >
         {/* Header */}
         <DashboardHeader 
           onToggleSidebar={toggleSidebar}
           sidebarOpen={sidebarOpen}
+          onNotificationClick={() => {
+            info('υρ∂αтєѕ ση тнє ωαу 🚨🚘', '', 2000);
+          }}
         />
         
         {/* Main content */}
@@ -86,7 +99,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="h-full"
+            className="h-full relative"
+            style={{
+              background: 'rgba(255, 255, 255, 0.02)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)',
+            }}
           >
             {children}
           </motion.div>
@@ -101,6 +119,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           user={user}
         />
       )}
+      
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

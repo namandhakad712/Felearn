@@ -188,7 +188,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   });
 </script> -->
 
-    <link rel="stylesheet" href="public/assets/css/swiper-bundle.min.css" />
+    <!-- <link rel="stylesheet" href="public/assets/css/swiper-bundle.min.css" /> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
     <!-- Custom font for Felearn AI title -->
     <style>
@@ -248,6 +249,43 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     
     <!-- Email Subscription Script -->
     <script src="public/js/subscription.js"></script>
+    
+    <!-- Smart scroll to top - only for first visits -->
+    <script>
+        (function() {
+            // Check if this is the first visit to this page
+            const pageKey = 'felearn_visited_' + window.location.pathname;
+            const hasVisited = localStorage.getItem(pageKey);
+            
+            if (!hasVisited) {
+                // First visit - force scroll to top
+                if (history.scrollRestoration) {
+                    history.scrollRestoration = 'manual';
+                }
+                
+                // Immediate scroll to top
+                window.scrollTo(0, 0);
+                
+                // Also ensure it happens after page load
+                window.addEventListener('load', function() {
+                    setTimeout(function() {
+                        window.scrollTo(0, 0);
+                        // Mark as visited after ensuring we're at the top
+                        localStorage.setItem(pageKey, 'true');
+                        // Re-enable scroll restoration for future visits
+                        if (history.scrollRestoration) {
+                            history.scrollRestoration = 'auto';
+                        }
+                    }, 100);
+                });
+            } else {
+                // Subsequent visits - allow normal scroll restoration
+                if (history.scrollRestoration) {
+                    history.scrollRestoration = 'auto';
+                }
+            }
+        })();
+    </script>
 
 </head>
 
@@ -773,6 +811,201 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 .cta-s__visual g,
                 .cta-s__visual mask {
                     display: none !important;
+                }
+
+                /* Hide social icons temporarily */
+                .footer__icon--list {
+                    display: none !important;
+                }
+
+                /* Contact popup styles */
+                .contact-popup-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.4);
+                    backdrop-filter: blur(25px);
+                    -webkit-backdrop-filter: blur(25px);
+                    z-index: 9999;
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    box-sizing: border-box;
+                }
+
+                .contact-popup-modal {
+                    position: relative;
+                    background: rgba(248, 248, 248, 0.9);
+                    backdrop-filter: blur(25px);
+                    -webkit-backdrop-filter: blur(25px);
+                    border: 1px solid #DBD9DA;
+                    border-radius: 20px;
+                    max-width: 500px;
+                    width: 100%;
+                    max-height: 80vh;
+                    overflow: hidden;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+                    animation: contactPopupSlideIn 0.3s ease-out;
+                }
+
+                @keyframes contactPopupSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.95) translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                    }
+                }
+
+                .contact-popup-header {
+                    padding: 30px 30px 20px;
+                    border-bottom: 1px solid rgba(219, 217, 218, 0.5);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                }
+
+                .contact-popup-title {
+                    font-size: 24px;
+                    font-weight: 600;
+                    color: #2F3032;
+                    margin: 0;
+                    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+                }
+
+                .contact-popup-close {
+                    background: rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(219, 217, 218, 0.3);
+                    font-size: 20px;
+                    cursor: pointer;
+                    color: #2F3032;
+                    padding: 8px;
+                    border-radius: 50%;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                    font-weight: 300;
+                }
+
+                .contact-popup-close:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                    border-color: rgba(219, 217, 218, 0.5);
+                    transform: scale(1.05);
+                }
+
+                .contact-popup-content {
+                    padding: 30px;
+                    text-align: center;
+                    background: rgba(255, 255, 255, 0.05);
+                }
+
+                .contact-popup-icon {
+                    width: 60px;
+                    height: 60px;
+                    margin: 0 auto 20px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(219, 217, 218, 0.3);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    font-size: 24px;
+                    color: #2F3032;
+                }
+
+                .contact-popup-description {
+                    font-size: 16px;
+                    line-height: 1.6;
+                    color: #2F3032;
+                    margin-bottom: 25px;
+                    background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(5px);
+                    -webkit-backdrop-filter: blur(5px);
+                    padding: 20px;
+                    border-radius: 12px;
+                    border: 1px solid rgba(219, 217, 218, 0.2);
+                    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+                }
+
+                .contact-popup-email {
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #4f46e5;
+                    background: rgba(79, 70, 229, 0.1);
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(79, 70, 229, 0.2);
+                    margin-bottom: 20px;
+                    word-break: break-all;
+                }
+
+                .contact-popup-button {
+                    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+                    color: white;
+                    border: none;
+                    padding: 15px 30px;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+                }
+
+                .contact-popup-button:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+                }
+
+                /* Mobile responsive */
+                @media (max-width: 768px) {
+                    .contact-popup-overlay {
+                        padding: 15px;
+                    }
+
+                    .contact-popup-modal {
+                        margin: 0;
+                        max-height: 90vh;
+                        border-radius: 16px;
+                    }
+
+                    .contact-popup-header {
+                        padding: 20px 20px 15px;
+                    }
+
+                    .contact-popup-title {
+                        font-size: 20px;
+                    }
+
+                    .contact-popup-content {
+                        padding: 20px;
+                    }
+
+                    .contact-popup-email {
+                        font-size: 16px;
+                        padding: 12px 16px;
+                    }
+
+                    .contact-popup-button {
+                        padding: 12px 24px;
+                        font-size: 15px;
+                    }
                 }
             </style>
         </div>
@@ -9989,6 +10222,77 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     }
                 }, 2000);
             }
+        });
+    </script>
+
+    <!-- Contact Popup Modal -->
+    <div id="contact-popup-overlay" class="contact-popup-overlay" onclick="closeContactPopup()">
+        <div class="contact-popup-modal" onclick="event.stopPropagation()">
+            <div class="contact-popup-header">
+                <h2 class="contact-popup-title">Contact Us</h2>
+                <button class="contact-popup-close" onclick="closeContactPopup()">&times;</button>
+            </div>
+            <div class="contact-popup-content">
+                <div class="contact-popup-icon">
+                    ✉️
+                </div>
+                <div class="contact-popup-description">
+                    Get in touch with us! We'd love to hear from you and answer any questions you might have about Felearn AI.
+                </div>
+                <div class="contact-popup-email">
+                    felearn@zohomail.in
+                </div>
+                <button class="contact-popup-button" onclick="openMailto()">
+                    Send Email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Contact popup functionality
+        function openContactPopup() {
+            document.getElementById('contact-popup-overlay').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeContactPopup() {
+            document.getElementById('contact-popup-overlay').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function openMailto() {
+            window.location.href = 'mailto:felearn@zohomail.in?subject=Inquiry about Felearn AI&body=Hello Felearn team,%0D%0A%0D%0AI would like to know more about...';
+        }
+
+        // Close contact popup with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeContactPopup();
+            }
+        });
+
+        // Initialize contact button functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find all contact buttons and add click handlers
+            const contactButtons = document.querySelectorAll('a[href="/contact"], a[href="#contact"]');
+            contactButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openContactPopup();
+                });
+            });
+
+            // Also handle any button with "Contact" text
+            const contactLinks = document.querySelectorAll('a');
+            contactLinks.forEach(link => {
+                if (link.textContent.trim().toLowerCase() === 'contact') {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        openContactPopup();
+                    });
+                }
+            });
         });
     </script>
 

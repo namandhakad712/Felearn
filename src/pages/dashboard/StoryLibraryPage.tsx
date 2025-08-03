@@ -4,7 +4,7 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Card, Button, Modal, ToastContainer } from '../../components/ui';
-import { StoryViewModes } from '../../components/story';
+import { StoryViewModes, ExportModal } from '../../components/story';
 import { storyService } from '../../services';
 import { Story } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -44,6 +44,10 @@ const StoryLibraryPage: React.FC = () => {
   // Story view modes state
   const [isViewModesOpen, setIsViewModesOpen] = useState(false);
   const [storyToView, setStoryToView] = useState<Story | null>(null);
+
+  // Export modal state
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [storyToExport, setStoryToExport] = useState<Story | null>(null);
 
 
 
@@ -136,6 +140,62 @@ const StoryLibraryPage: React.FC = () => {
       return a.title.localeCompare(b.title);
     });
 
+  // 🎭 GSAP ANIMATIONS! 
+  useGSAP(() => {
+    // Header is now visible immediately without entrance animation
+
+    // Cards are now visible immediately without bouncy entrance animation
+    if (cardsRef.current) {
+      const cards = cardsRef.current.querySelectorAll('.story-card');
+
+      // 🔥 HOVER ANIMATIONS FOR CARDS
+      cards.forEach((card) => {
+        const cardElement = card as HTMLElement;
+        
+        cardElement.addEventListener('mouseenter', () => {
+          gsap.to(cardElement, {
+            scale: 1.05,
+            y: -10,
+            rotationY: 5,
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        });
+
+        cardElement.addEventListener('mouseleave', () => {
+          gsap.to(cardElement, {
+            scale: 1,
+            y: 0,
+            rotationY: 0,
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        });
+      });
+    }
+
+    // 🌟 SEARCH BAR ANIMATION
+    if (isSearchBarVisible) {
+      gsap.fromTo('.search-bar-container',
+        {
+          opacity: 0,
+          height: 0,
+          y: -20
+        },
+        {
+          opacity: 1,
+          height: 'auto',
+          y: 0,
+          duration: 0.6,
+          ease: "power3.out"
+        }
+      );
+    }
+
+  }, { dependencies: [filteredStories, isSearchBarVisible], scope: containerRef });
+
   const togglePin = async (storyId: string, isPinned: boolean) => {
     try {
       // Optimistic update
@@ -203,6 +263,23 @@ const StoryLibraryPage: React.FC = () => {
     });
     setStoryToView(story);
     setIsViewModesOpen(true);
+    // Scroll to top to ensure modal is visible
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openExportModal = (story: Story) => {
+    console.log('Opening export modal for story:', {
+      title: story.title,
+      slidesCount: story.slides?.length || 0,
+      slides: story.slides,
+      imagesCount: story.images?.length || 0
+    });
+    setStoryToExport(story);
+    setIsExportModalOpen(true);
+  };
+
+  const handleExportComplete = (format: string) => {
+    showSuccessToast('Export Complete', `Story exported as ${format.toUpperCase()}`);
   };
 
   const handleRename = async () => {
@@ -244,7 +321,7 @@ const StoryLibraryPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div ref={containerRef} className="p-6 max-w-7xl mx-auto">
       {/* Rename Modal */}
       <Modal
         isOpen={isRenameModalOpen}
@@ -301,7 +378,7 @@ const StoryLibraryPage: React.FC = () => {
 
             {/* Story content */}
             <div className="prose dark:prose-invert max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: marked(selectedStory.content) }} />
+              <div dangerouslySetInnerHTML={{ __html: selectedStory.content }} />
             </div>
 
             {/* Story Slides with enhanced display */}
@@ -423,11 +500,7 @@ const StoryLibraryPage: React.FC = () => {
         )}
       </Modal>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div ref={headerRef}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -464,13 +537,7 @@ const StoryLibraryPage: React.FC = () => {
 
         {/* Collapsible Search/Filter Bar */}
         {isSearchBarVisible && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginBottom: 32 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 overflow-hidden"
-          >
+          <div className="search-bar-container bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 overflow-hidden mb-8">
             <div className="flex items-center justify-between space-x-4">
               {/* Left: Search Input */}
               <div className="flex-shrink-0">
@@ -574,7 +641,7 @@ const StoryLibraryPage: React.FC = () => {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Stories Grid */}
@@ -642,17 +709,12 @@ const StoryLibraryPage: React.FC = () => {
             </div>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredStories.map((story, index) => (
-              <motion.div
-                key={story.$id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
+              <div key={story.$id} className="story-card">
                 <Card
                   animate
-                  className="h-full flex flex-col cursor-pointer relative"
+                  className="h-full flex flex-col cursor-pointer relative transform-gpu"
                   onClick={() => openViewModes(story)}
                 >
                   {/* 3-Dot Menu in top-left corner */}
@@ -684,8 +746,7 @@ const StoryLibraryPage: React.FC = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             document.getElementById(`menu-${story.$id}`)?.classList.add('hidden');
-                            // Export functionality - placeholder for now
-                            console.log('Export story:', story.title);
+                            openExportModal(story);
                           }}
                           className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
                         >
@@ -823,11 +884,11 @@ const StoryLibraryPage: React.FC = () => {
 
 
                 </Card>
-              </motion.div>
+              </div>
             ))}
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Story View Modes Modal */}
       {isViewModesOpen && storyToView && (
@@ -836,4 +897,28 @@ const StoryLibraryPage: React.FC = () => {
           onClose={() => {
             setIsViewModesOpen(false);
             setStoryToView(null);
-   
+          }}
+        />
+      )}
+
+      {/* Export Modal */}
+      {isExportModalOpen && storyToExport && (
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => {
+            setIsExportModalOpen(false);
+            setStoryToExport(null);
+          }}
+          story={storyToExport}
+          slides={storyToExport.slides || []}
+          onExportComplete={handleExportComplete}
+        />
+      )}
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
+    </div>
+  );
+};
+
+export default StoryLibraryPage;

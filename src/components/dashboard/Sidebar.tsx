@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import FeedbackModal from './FeedbackModal';
+import { gsap } from 'gsap';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,6 +20,67 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  
+  // Custom font style for the dash-title font
+  const customFontStyle = {
+    fontFamily: 'dash-title, sans-serif',
+    fontWeight: 'bold',
+  };
+  
+  // GSAP animations for sidebar
+  useEffect(() => {
+    if (sidebarRef.current) {
+      if (isOpen) {
+        // Expand animation
+        gsap.fromTo(sidebarRef.current, 
+          {
+            x: -300,
+            opacity: 0,
+            scale: 0.95,
+          },
+          {
+            x: 0,
+            opacity: 1,
+            scale: 1,
+            duration: 0.6,
+            ease: "power2.out",
+            clearProps: "scale"
+          }
+        );
+      } else {
+        // Contract animation
+        gsap.to(sidebarRef.current, {
+          x: -300,
+          opacity: 0,
+          scale: 0.95,
+          duration: 0.4,
+          ease: "power2.in"
+        });
+      }
+    }
+  }, [isOpen]);
+
+  // Stagger animation for nav items when sidebar opens
+  useEffect(() => {
+    if (isOpen && sidebarRef.current) {
+      const navItems = sidebarRef.current.querySelectorAll('.nav-item');
+      gsap.fromTo(navItems,
+        {
+          x: -50,
+          opacity: 0,
+        },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.1,
+          ease: "power2.out",
+          delay: 0.2
+        }
+      );
+    }
+  }, [isOpen]);
   
   const navItems: NavItem[] = [
     {
@@ -68,11 +130,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   };
   
   return (
-    <motion.div
-      initial={{ x: -300 }}
-      animate={{ x: isOpen ? 0 : -300 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 fixed h-full z-20 flex flex-col"
+    <div
+      ref={sidebarRef}
+      className="w-64 fixed h-full sidebar-layer flex flex-col glass-heavy-blur"
+      style={{
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+        transform: 'translateX(-300px)', // Initial position
+      }}
     >
       {/* Logo */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -80,21 +144,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <motion.span
             whileHover={{ scale: 1.05 }}
             className="text-2xl font-bold text-indigo-600 dark:text-indigo-400"
+            style={customFontStyle}
           >
-            Felearn
+            Felearn AI
           </motion.span>
         </Link>
       </div>
       
       {/* Navigation */}
-      <nav className="flex-1 py-6">
+      <nav className="flex-1 py-6 overflow-y-auto">
         <div className="space-y-1">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
               onClick={onClose}
-              className={`flex items-center px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+              className={`nav-item flex items-center px-6 py-3 text-sm font-medium transition-colors duration-200 ${
                 isActiveRoute(item.path)
                   ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-r-2 border-indigo-500'
                   : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -104,32 +169,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               {item.label}
             </Link>
           ))}
-          
-          {/* Feedback/Suggestion Button */}
-          <div className="mt-8 px-6">
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setIsFeedbackModalOpen(true)}
-                className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-lg transition-all duration-200 group"
-              >
-                <span className="mr-3 p-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-md group-hover:shadow-lg transition-shadow">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z" />
-                  </svg>
-                </span>
-                <div className="text-left">
-                  <div className="font-medium">Suggest Feature</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400">
-                    Share feedback & ideas
-                  </div>
-                </div>
-              </motion.button>
-            </div>
-          </div>
         </div>
       </nav>
+      
+      {/* Feedback/Suggestion Button - Separate section */}
+      <div className="sidebar-suggest-feature px-6 py-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsFeedbackModalOpen(true)}
+          className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/20 dark:hover:to-purple-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-lg transition-all duration-200 group"
+        >
+          <span className="mr-3 p-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-md group-hover:shadow-lg transition-shadow">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z" />
+            </svg>
+          </span>
+          <div className="text-left">
+            <div className="font-medium">Suggest Feature</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400">
+              Share feedback & ideas
+            </div>
+          </div>
+        </motion.button>
+      </div>
       
       {/* User section */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-6">
@@ -165,7 +228,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
       />
-    </motion.div>
+    </div>
   );
 };
 

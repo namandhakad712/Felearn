@@ -98,7 +98,7 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
         variants={slideVariants}
         initial="hidden"
         animate="visible"
-        className="flex-shrink-0 w-72 sm:w-80 md:w-96 mx-2 sm:mx-4"
+        className="flex-shrink-0 w-64 sm:w-72 md:w-80 lg:w-96 mx-1 sm:mx-2"
       >
         {/* Cohesive Slide Card - Image + Caption as single unit */}
         <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col">
@@ -227,10 +227,10 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
   };
 
   return (
-    <div className={`${className} relative`}>
+    <div className={`${className} relative max-w-full`}>
       {/* Horizontal Slideshow */}
-      <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
-        <div className="flex items-stretch justify-start min-w-max px-2 sm:px-4 py-6 sm:py-8 gap-2 sm:gap-4">
+      <div className="w-full overflow-x-auto overflow-y-hidden pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+        <div className="flex items-stretch justify-start px-2 sm:px-4 py-6 sm:py-8 gap-2 sm:gap-4" style={{ width: 'max-content', minWidth: '100%' }}>
           {allSlides.map((slide, index) => renderSlide(slide, index))}
         </div>
       </div>

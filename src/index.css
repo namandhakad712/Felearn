@@ -96,6 +96,15 @@ body {
         font-display: swap;
     }
 
+    /* Dash Title font for sidebar logo */
+    @font-face {
+        font-family: 'dash-title';
+        src: url('/assets/fonts/dash-title.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+    }
+
     .font-indie-flower {
         font-family: 'IndieFlower', cursive;
     }
@@ -115,6 +124,25 @@ body {
         font-size: 1.5rem;
         line-height: 1.6;
         text-align: center;
+    }
+
+    /* Flipbook page caption styling */
+    .story-page-caption {
+        font-family: 'IndieFlower', cursive !important;
+        font-size: 16px !important;
+        line-height: 1.4 !important;
+        text-align: center !important;
+        color: #1f2937 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 4 !important;
+        -webkit-box-orient: vertical !important;
+    }
+
+    /* Dark mode support for flipbook captions */
+    .dark .story-page-caption {
+        color: #f3f4f6 !important;
     }
 
     /* Ensure font loads properly */
@@ -174,4 +202,359 @@ body {
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
+}
+
+/* Glass morphism effects */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-effect-dark {
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Grain texture overlay */
+.grain-texture::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0);
+  background-size: 20px 20px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.grain-texture-dark::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0);
+  background-size: 20px 20px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Unicorn Studio canvas wrapper */
+.canvas-wrapper {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.unicorn-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Enhanced backdrop blur support */
+@supports (backdrop-filter: blur(20px)) {
+  .backdrop-blur-glass {
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+}
+
+@supports not (backdrop-filter: blur(20px)) {
+  .backdrop-blur-glass {
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .dark .backdrop-blur-glass {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Interactive background theme colors */
+.bg-interactive-light {
+  background: radial-gradient(ellipse at center, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.95) 100%);
+}
+
+.bg-interactive-dark {
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.8) 0%, rgba(2, 6, 23, 0.95) 100%);
+}/*
+ Heavy Gaussian Blur Effects - Like animated blobs */
+.heavy-blur {
+  filter: blur(60px);
+}
+
+.ultra-blur {
+  filter: blur(80px);
+}
+
+.mega-blur {
+  filter: blur(100px);
+}
+
+/* Blob-like background effects */
+.blob-bg-light {
+  background: 
+    radial-gradient(ellipse 400px 300px at 20% 30%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse 300px 400px at 80% 70%, rgba(147, 51, 234, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse 350px 250px at 50% 90%, rgba(16, 185, 129, 0.2) 0%, transparent 50%);
+  filter: blur(60px);
+}
+
+.blob-bg-dark {
+  background: 
+    radial-gradient(ellipse 400px 300px at 20% 30%, rgba(59, 130, 246, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse 300px 400px at 80% 70%, rgba(147, 51, 234, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse 350px 250px at 50% 90%, rgba(16, 185, 129, 0.15) 0%, transparent 50%);
+  filter: blur(60px);
+}
+
+/* Animated blob movement */
+@keyframes blobFloat1 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@keyframes blobFloat2 {
+  0% { transform: translate(0px, 0px) scale(1.1); }
+  33% { transform: translate(-30px, 50px) scale(1); }
+  66% { transform: translate(20px, -20px) scale(1.2); }
+  100% { transform: translate(0px, 0px) scale(1.1); }
+}
+
+@keyframes blobFloat3 {
+  0% { transform: translate(0px, 0px) scale(0.9); }
+  33% { transform: translate(50px, 30px) scale(1.1); }
+  66% { transform: translate(-30px, -40px) scale(1); }
+  100% { transform: translate(0px, 0px) scale(0.9); }
+}
+
+.blob-animate-1 {
+  animation: blobFloat1 12s ease-in-out infinite;
+}
+
+.blob-animate-2 {
+  animation: blobFloat2 15s ease-in-out infinite;
+}
+
+.blob-animate-3 {
+  animation: blobFloat3 18s ease-in-out infinite;
+}
+
+/* Enhanced glass with heavy blur */
+.glass-heavy-blur {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass-heavy-blur {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Noise overlay with heavy blur */
+.noise-heavy-blur {
+  position: relative;
+}
+
+.noise-heavy-blur::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #8C8C8C;
+  filter: url(#noiseFilter) blur(40px);
+  opacity: 0.4;
+  z-index: -1;
+}
+
+.dark .noise-heavy-blur::before {
+  background: #4a5568;
+  opacity: 0.3;
+}/* Jelly 
+Text Animation Styles */
+.jelly-text-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.jelly-text .char {
+  display: inline-block;
+  position: relative;
+  will-change: font-weight, font-stretch, transform;
+  transform-origin: center bottom;
+  text-align: center;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.jelly-text .char:hover {
+  transform: scale(1.05);
+}
+
+/* Custom cursor styles for jelly text */
+.grab-cursor * {
+  cursor: url("data:image/svg+xml,%3Csvg width='64px' height='64px' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 700'%3E%3Cpath d='M419.9949,560.0013a179.4167,179.4167,0,0,1-127.73-52.898l-46.691-46.668a81.2138,81.2138,0,0,1-23.914-57.77v-35.352a81.1643,81.1643,0,0,1,23.918-57.75l22.75-22.723v-53.504a46.6566,46.6566,0,0,1,72.613-38.7813,46.691,46.691,0,0,1,88.106,0,46.6714,46.6714,0,0,1,70,23.3323,46.6566,46.6566,0,0,1,72.613,38.7813v151.67c0,83.625-68.039,151.66-151.67,151.66Zm-151.66-240.17-6.2539,6.2539a57.9448,57.9448,0,0,0-17.082,41.254v35.352a58.0537,58.0537,0,0,0,17.078,41.254l46.691,46.668a156.1776,156.1776,0,0,0,111.21,46.059c70.77,0,128.36-57.562,128.36-128.33l.0039-151.67a23.332,23.332,0,1,0-46.664,0l-.0039,11.668a11.666,11.666,0,1,1-23.332,0v-35a23.332,23.332,0,1,0-46.664,0l-.0039,35a11.666,11.666,0,1,1-23.332,0v-58.336a23.332,23.332,0,1,0-46.664,0l-.0039,58.336a11.666,11.666,0,1,1-23.332,0v-35a23.332,23.332,0,1,0-46.664,0v58.309a.19.19,0,0,0-.0039.0469v46.645a11.666,11.666,0,1,1-23.332,0Z' fill='%23fff'/%3E%3C/svg%3E") 32 32, pointer !important;
+}
+
+/* Responsive jelly text */
+@media (max-width: 768px) {
+  .jelly-text {
+    font-size: clamp(1.2rem, 6vw, 2rem) !important;
+    letter-spacing: -0.02em !important;
+  }
+  
+  .jelly-text .char {
+    padding-top: 0.5vw !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .jelly-text {
+    font-size: clamp(1rem, 8vw, 1.5rem) !important;
+    line-height: 0.8 !important;
+  }
+}/* Z
+-index hierarchy for proper modal layering */
+.sidebar-layer {
+  z-index: 20;
+}
+
+.modal-backdrop {
+  z-index: 100;
+}
+
+.feedback-modal {
+  z-index: 150;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.story-view-modal {
+  z-index: 200;
+}
+
+/* Fix modal positioning issues */
+.modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-content {
+  position: relative;
+  max-height: 90vh;
+  max-width: 90vw;
+  overflow: hidden;
+}
+
+/* Story view modal specific positioning */
+.story-view-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0.5rem;
+  z-index: 200;
+}
+
+.story-view-modal .modal-content {
+  min-height: 60vh;
+  max-height: 95vh;
+  width: 100%;
+  max-width: 1152px; /* 6xl */
+  margin: 0 auto;
+  margin-top: 0.5rem;
+}
+
+/* Ensure modals don't go below viewport */
+@media (max-height: 600px) {
+  .modal-content {
+    max-height: 95vh;
+  }
+  
+  .story-view-modal .modal-content {
+    min-height: 50vh;
+    max-height: 95vh;
+  }
+}
+
+/* Fix sidebar suggest feature positioning */
+.sidebar-suggest-feature {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+}
+
+/* Prevent modal content from scrolling behind viewport */
+.story-view-modal .modal-content {
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.story-view-modal .modal-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Fix flipbook positioning */
+.react-pageflip {
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure proper backdrop blur hierarchy */
+.backdrop-blur-hierarchy {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Mobile modal fixes */
+@media (max-width: 768px) {
+  .modal-container {
+    padding: 0.5rem;
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+    max-width: 95vw;
+  }
+  
+  .story-view-modal .modal-content {
+    height: 95vh;
+  }
 }

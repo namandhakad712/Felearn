@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthService } from '../../services/auth';
 import { useAuth } from '../../contexts/AuthContext';
+import { DecryptedText } from '../ui';
 
 interface SecurityManagerProps {
   onSuccess: (message: string) => void;
@@ -242,7 +243,15 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
             className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6"
           >
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-              {title}
+              <DecryptedText 
+                text={title}
+                speed={35}
+                maxIterations={10}
+                characters="CONFIRM!@#$%^&*()_+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+                animateOn="view"
+                className="text-gray-900 dark:text-white"
+                encryptedClassName="text-gray-600 dark:text-gray-400"
+              />
             </h3>
             <div className="text-gray-600 dark:text-gray-400 mb-6">
               {isEmail ? (
@@ -298,6 +307,26 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
       </AnimatePresence>
     );
   };
+
+  // Handle password reset
+  const handlePasswordReset = async () => {
+    try {
+      if (user?.email) {
+        console.log('🔄 Sending password reset email to:', user.email);
+        const result = await resetPassword(user.email);
+        if (result.success) {
+          onSuccess(result.message || 'Password reset email sent. Please check your inbox.');
+        } else {
+          onError(result.message || 'Failed to send password reset email');
+        }
+      } else {
+        onError('No email address found for your account');
+      }
+    } catch (error: any) {
+      console.error('❌ Password reset error:', error);
+      onError(error.message || 'Failed to send password reset email. Please check your internet connection.');
+    }
+  };
   
   return (
     <div className="space-y-8">
@@ -307,7 +336,15 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
       {/* Email Update Section */}
       <div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          Update Email Address
+          <DecryptedText 
+            text="Update Email Address"
+            speed={30}
+            maxIterations={15}
+            characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*"
+            animateOn="view"
+            className="text-gray-900 dark:text-white"
+            encryptedClassName="text-gray-500 dark:text-gray-400"
+          />
         </h3>
         
         <form onSubmit={handleEmailUpdate} className="space-y-4">
@@ -431,7 +468,15 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
               </svg>
               <div>
                 <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                  Security Notice
+                  <DecryptedText 
+                    text="Security Notice"
+                    speed={40}
+                    maxIterations={12}
+                    characters="SECURITY!@#$%^&*()_+ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                    animateOn="view"
+                    className="text-yellow-800 dark:text-yellow-200"
+                    encryptedClassName="text-yellow-600 dark:text-yellow-400"
+                  />
                 </h4>
                 <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
                   Updating your email will automatically log you out for security reasons. You'll need to log in again with your new email address to verify it.
@@ -463,13 +508,29 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
       {/* Password Update Section */}
       <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          Change Password
+          <DecryptedText 
+            text="Change Password"
+            speed={25}
+            maxIterations={20}
+            characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()"
+            animateOn="view"
+            className="text-gray-900 dark:text-white"
+            encryptedClassName="text-gray-500 dark:text-gray-400"
+          />
         </h3>
         
         <form onSubmit={handlePasswordUpdate} className="space-y-4">
           <div>
             <label htmlFor="current-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Current Password
+              <DecryptedText 
+                text="Current Password"
+                speed={50}
+                maxIterations={8}
+                characters="PASSWORD!@#$%^&*()_+ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                animateOn="hover"
+                className="text-gray-700 dark:text-gray-300"
+                encryptedClassName="text-gray-500 dark:text-gray-500"
+              />
             </label>
             <div className="relative">
               <input
@@ -506,7 +567,15 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
           
           <div>
             <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              New Password
+              <DecryptedText 
+                text="New Password"
+                speed={45}
+                maxIterations={10}
+                characters="NEW!@#$%^&*()_+PASSWORDABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                animateOn="hover"
+                className="text-gray-700 dark:text-gray-300"
+                encryptedClassName="text-gray-500 dark:text-gray-500"
+              />
             </label>
             <div className="relative">
               <input
@@ -646,22 +715,14 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
         </p>
         <button
           type="button"
-          onClick={async () => {
-            try {
-              if (user?.email) {
-                console.log('🔄 Sending password reset email to:', user.email);
-                const result = await resetPassword(user.email);
-                if (result.success) {
-                  onSuccess(result.message || 'Password reset email sent. Please check your inbox.');
-                } else {
-                  onError(result.message || 'Failed to send password reset email');
-                }
-              } else {
-                onError('No email address found for your account');
-              }
-            } catch (error: any) {
-              console.error('❌ Password reset error:', error);
-              onError(error.message || 'Failed to send password reset email. Please check your internet connection.');
+          onClick={() => {
+            // Show confirmation dialog
+            const confirmed = window.confirm(
+              `Are you sure you want to send a password reset email to ${user?.email}?\n\nThis will allow you to reset your password using the link sent to your email address.`
+            );
+            
+            if (confirmed) {
+              handlePasswordReset();
             }
           }}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"

@@ -161,16 +161,7 @@ const AuthPage: React.FC = () => {
       {/* Content */}
       <div className="content-container">
         <StyledWrapper>
-        <div className="text-center mb-8">
-          <div className="mb-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
-              Welcome to Felearn
-            </h1>
-            <p className="text-sm sm:text-base text-white/90 mt-2 drop-shadow">
-              AI-powered storytelling with tiny cats
-            </p>
-          </div>
-        </div>
+
 
         {error && (
           <div className="mb-4 p-4 text-red-700 bg-red-100 rounded-lg">

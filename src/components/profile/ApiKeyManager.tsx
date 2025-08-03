@@ -27,24 +27,20 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
   
   // Check if user has an existing API key
   const hasExistingKey = user?.geminiKey && user.geminiKey.length > 0;
-  const [maskedExistingKey, setMaskedExistingKey] = useState('');
+  const [keyStatus, setKeyStatus] = useState<'checking' | 'available' | 'not-available'>('checking');
   
-  // Load and decrypt the existing API key
+  // Check API key status without decrypting
   useEffect(() => {
-    const loadApiKey = async () => {
-      if (hasExistingKey && user?.geminiKey) {
-        try {
-          const decryptedKey = await decryptApiKey(user.geminiKey);
-          setMaskedExistingKey(maskApiKey(decryptedKey));
-        } catch (error) {
-          console.error('Failed to decrypt API key:', error);
-          setMaskedExistingKey('••••••••');
-        }
+    const checkKeyStatus = () => {
+      if (user?.geminiKey && user.geminiKey.length > 0) {
+        setKeyStatus('available');
+      } else {
+        setKeyStatus('not-available');
       }
     };
     
-    loadApiKey();
-  }, [hasExistingKey, user?.geminiKey]);
+    checkKeyStatus();
+  }, [user?.geminiKey]);
   
   useEffect(() => {
     // Clear validation status when API key changes
@@ -165,31 +161,52 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
   return (
     <div className="space-y-6">
       {/* Current API Key Status */}
-      {hasExistingKey && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
+      <div className={`rounded-lg p-4 ${
+        keyStatus === 'available' 
+          ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+          : 'bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700'
+      }`}>
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            {keyStatus === 'available' ? (
               <svg className="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
-                API Key Configured
-              </h3>
-              <div className="mt-1 text-sm text-green-700 dark:text-green-300">
-                <p>Current key: {maskedExistingKey}</p>
-              </div>
+            ) : (
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            )}
+          </div>
+          <div className="ml-3">
+            <h3 className={`text-sm font-medium ${
+              keyStatus === 'available' 
+                ? 'text-green-800 dark:text-green-200'
+                : 'text-gray-800 dark:text-gray-200'
+            }`}>
+              API Key Status
+            </h3>
+            <div className={`mt-1 text-sm ${
+              keyStatus === 'available' 
+                ? 'text-green-700 dark:text-green-300'
+                : 'text-gray-700 dark:text-gray-300'
+            }`}>
+              <p>
+                {keyStatus === 'available' 
+                  ? '✓ Available - Ready for story generation'
+                  : '✗ Not Available - Please add your API key'
+                }
+              </p>
             </div>
           </div>
         </div>
-      )}
+      </div>
       
       {/* API Key Input */}
       <div>
         <div className="flex items-center justify-between mb-1">
           <label htmlFor="gemini-key" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {hasExistingKey ? 'New Gemini API Key' : 'Gemini API Key'}
+            {keyStatus === 'available' ? 'Update Gemini API Key' : 'Gemini API Key'}
           </label>
           <a
             href="https://ai.google.dev/tutorials/setup"
@@ -214,7 +231,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
                 validationStatus === 'invalid' ? 'border-red-500 dark:border-red-500' :
                 'border-gray-300 dark:border-gray-600'
               }`}
-              placeholder={hasExistingKey ? "Enter new API key to update" : "Enter your Gemini API key"}
+              placeholder={keyStatus === 'available' ? "Enter new API key to update" : "Enter your Gemini API key"}
             />
             
             {/* Show/Hide Toggle */}
@@ -314,7 +331,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
       
       {/* Action Buttons */}
       <div className="flex justify-between">
-        {hasExistingKey && (
+        {keyStatus === 'available' && (
           <button
             type="button"
             onClick={handleRemoveKey}
@@ -348,7 +365,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
                 </svg>
                 Saving...
               </>
-            ) : hasExistingKey ? 'Update API Key' : 'Save API Key'}
+            ) : keyStatus === 'available' ? 'Update API Key' : 'Save API Key'}
           </button>
         </div>
       </div>

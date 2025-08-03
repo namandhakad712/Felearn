@@ -20,7 +20,6 @@ const ExportModal: React.FC<ExportModalProps> = ({
   slides = [],
   onExportComplete,
 }) => {
-  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf');
   const [includeImages, setIncludeImages] = useState(true);
   const [includeMetadata, setIncludeMetadata] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -32,10 +31,16 @@ const ExportModal: React.FC<ExportModalProps> = ({
     ? `${stories.length} stories` 
     : story?.title || 'story';
 
-  const availableFormats = exportService.getAvailableFormats();
-
   const handleExport = async () => {
     if (!exportTarget) return;
+
+    console.log('ExportModal - Starting export with data:', {
+      storyTitle: story?.title,
+      slidesCount: slides?.length || 0,
+      slides: slides,
+      includeImages,
+      includeMetadata
+    });
 
     setIsExporting(true);
     setExportError(null);
@@ -49,48 +54,18 @@ const ExportModal: React.FC<ExportModalProps> = ({
       };
 
       if (isMultipleStories && stories) {
-        await exportService.exportMultipleStories(stories, selectedFormat, options);
+        await exportService.exportMultipleStories(stories, 'pdf', options);
       } else if (story) {
-        await exportService.exportStory(story, selectedFormat, options, slides);
+        await exportService.exportStory(story, 'pdf', options, slides);
       }
 
-      onExportComplete(selectedFormat);
+      onExportComplete('pdf');
       onClose();
     } catch (error: any) {
+      console.error('Export error:', error);
       setExportError(error.message || 'Export failed');
     } finally {
       setIsExporting(false);
-    }
-  };
-
-  const getFormatIcon = (format: ExportFormat) => {
-    switch (format) {
-      case 'pdf':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-        );
-      case 'json':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-          </svg>
-        );
-      case 'txt':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        );
-      case 'html':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-          </svg>
-        );
-      default:
-        return null;
     }
   };
 
@@ -102,14 +77,14 @@ const ExportModal: React.FC<ExportModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 pt-8"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+          initial={{ scale: 0.9, opacity: 0, y: -50 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: -50 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto mt-8"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -128,7 +103,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
               </button>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              Choose your preferred export format and options
+              Export your story as a PDF document
             </p>
           </div>
 
@@ -140,100 +115,52 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 Export Format
               </label>
               <div className="grid grid-cols-2 gap-3">
-                {availableFormats.map((format) => (
-                  <button
-                    key={format.value}
-                    onClick={() => setSelectedFormat(format.value)}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      selectedFormat === format.value
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className={`${
-                        selectedFormat === format.value 
-                          ? 'text-indigo-600 dark:text-indigo-400' 
-                          : 'text-gray-500 dark:text-gray-400'
-                      }`}>
-                        {getFormatIcon(format.value)}
-                      </div>
-                      <div className="text-left">
-                        <div className={`font-medium text-sm ${
-                          selectedFormat === format.value 
-                            ? 'text-indigo-900 dark:text-indigo-100' 
-                            : 'text-gray-900 dark:text-white'
-                        }`}>
-                          {format.label}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {format.description}
-                        </div>
-                      </div>
+                <button
+                  key="pdf"
+                  onClick={() => onExportComplete('pdf')}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    'pdf' === 'pdf'
+                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className={`${
+                      'pdf' === 'pdf' 
+                        ? 'text-indigo-600 dark:text-indigo-400' 
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
                     </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Export Options */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Export Options
-              </label>
-              <div className="space-y-3">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={includeMetadata}
-                    onChange={(e) => setIncludeMetadata(e.target.checked)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                    Include metadata (creation date, tags, etc.)
-                  </span>
-                </label>
-
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={includeImages}
-                    onChange={(e) => setIncludeImages(e.target.checked)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    disabled={selectedFormat === 'txt' || selectedFormat === 'json'}
-                  />
-                  <span className={`ml-2 text-sm ${
-                    selectedFormat === 'txt' || selectedFormat === 'json'
-                      ? 'text-gray-400 dark:text-gray-500'
-                      : 'text-gray-700 dark:text-gray-300'
-                  }`}>
-                    Include images {(selectedFormat === 'txt' || selectedFormat === 'json') && '(not supported)'}
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* Preview Info */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                Export Preview
-              </h4>
-              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                <div>Format: {availableFormats.find(f => f.value === selectedFormat)?.label}</div>
-                <div>Content: {isMultipleStories ? `${stories.length} stories` : '1 story'}</div>
-                <div>Metadata: {includeMetadata ? 'Included' : 'Excluded'}</div>
-                <div>Images: {includeImages && selectedFormat !== 'txt' && selectedFormat !== 'json' ? 'Included' : 'Excluded'}</div>
-                {selectedFormat === 'pdf' && slides && slides.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                    <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">✨ Enhanced PDF Features:</div>
-                    <div className="text-xs space-y-0.5 mt-1">
-                      <div>• Real images with captions</div>
-                      <div>• "Felearn AI" watermarks</div>
-                      <div>• Password protected</div>
-                      <div>• Edit-locked document</div>
+                    <div className="text-left">
+                      <div className={`font-medium text-sm ${
+                        'pdf' === 'pdf' 
+                          ? 'text-indigo-900 dark:text-indigo-100' 
+                          : 'text-gray-900 dark:text-white'
+                      }`}>
+                        PDF
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Standard PDF export
+                      </div>
                     </div>
                   </div>
-                )}
+                </button>
+              </div>
+            </div>
+
+            {/* Details Info */}
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+              𝕰𝖝𝖕𝖔𝖗𝖙 𝕯𝖊𝖙𝖆𝖎𝖑𝖘 ⇓
+              </h4>
+              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <div>Format: Portable Document Format</div>
+                <div>Content: {isMultipleStories ? `${stories.length} stories` : '1 story'}</div>
+                <div>Images: Included</div>
+                <div>File Size: ≃ 2-4 MB</div>
               </div>
             </div>
 
@@ -284,7 +211,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  Export {availableFormats.find(f => f.value === selectedFormat)?.label}
+                  Export PDF
                 </>
               )}
             </button>

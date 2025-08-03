@@ -1,8 +1,13 @@
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 import HTMLFlipBook from 'react-pageflip';
 import { Story, StorySlide } from '../../types';
 import ReactPageFlipView from './ReactPageFlipView';
+
+// Register GSAP plugins
+gsap.registerPlugin(useGSAP);
 
 interface StoryViewModesProps {
   story: Story;
@@ -97,21 +102,41 @@ FlipBookPage.displayName = 'FlipBookPage';
 
 const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('book');
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [showBookAnimation, setShowBookAnimation] = useState(true);
+  const flipBookRef = useRef<any>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const modalContainerRef = useRef<HTMLDivElement>(null);
+
+  // Ensure modal is visible when opened
+  useEffect(() => {
+    // Scroll to top of page when modal opens
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Hide book animation after 3 seconds
+    const timer = setTimeout(() => {
+      setShowBookAnimation(false);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const slides = story.slides || [];
   const hasSlides = slides.length > 0;
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    setCurrentPage((prev) => (prev + 1) % slides.length);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    setCurrentPage((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   const goToSlide = (index: number) => {
-    setCurrentSlide(index);
+    setCurrentPage(index);
   };
 
   const EmbeddedImageSlide: React.FC<{ slide: StorySlide; index: number }> = ({ slide, index }) => (
@@ -119,7 +144,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
       {/* Image Section */}
       <div className="relative w-full aspect-[4/3] bg-gray-50 dark:bg-gray-700">
         <img
-          src={slide.image}
+          src={slide.image || ''}
           alt={`Slide ${index + 1}`}
           className="w-full h-full object-cover"
           onError={(e) => {
@@ -176,8 +201,6 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
   );
 
   // Add flipbook functionality
-  const flipBookRef = React.useRef<any>(null);
-  const [zoomLevel, setZoomLevel] = React.useState(1);
   const [flipBookSize, setFlipBookSize] = React.useState({ width: 400, height: 600 });
 
   // Responsive sizing for flipbook
@@ -237,6 +260,109 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
 
   const resetZoom = () => {
     setZoomLevel(1);
+  };
+
+  // 🚀 EPIC GSAP ANIMATIONS FOR STORY VIEW!
+  useGSAP(() => {
+    // 🎭 MODAL ENTRANCE ANIMATION
+    gsap.fromTo(modalRef.current,
+      {
+        scale: 0.7,
+        opacity: 0,
+        rotationY: -15,
+        y: 50
+      },
+      {
+        scale: 1,
+        opacity: 1,
+        rotationY: 0,
+        y: 0,
+        duration: 0.8,
+        ease: "back.out(1.4)"
+      }
+    );
+
+    // 🌟 HEADER SLIDE IN
+    gsap.fromTo(headerRef.current,
+      {
+        y: -30,
+        opacity: 0
+      },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.6,
+        delay: 0.2,
+        ease: "power3.out"
+      }
+    );
+
+    // 🎨 CONTENT FADE IN
+    gsap.fromTo(contentRef.current,
+      {
+        y: 20,
+        opacity: 0
+      },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.6,
+        delay: 0.4,
+        ease: "power2.out"
+      }
+    );
+
+    // 🔥 VIEW MODE TOGGLE ANIMATIONS
+    const toggleButtons = document.querySelectorAll('.view-toggle-btn');
+    toggleButtons.forEach((btn, index) => {
+      gsap.fromTo(btn,
+        {
+          scale: 0.8,
+          opacity: 0,
+          x: -20
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          x: 0,
+          duration: 0.4,
+          delay: 0.6 + (index * 0.1),
+          ease: "back.out(1.7)"
+        }
+      );
+    });
+
+  }, { scope: modalRef });
+
+  // 🎪 VIEW MODE SWITCH ANIMATION
+  const handleViewModeChange = (newMode: ViewMode) => {
+    if (newMode !== viewMode) {
+      // Animate out current content
+      gsap.to(contentRef.current, {
+        opacity: 0,
+        scale: 0.95,
+        duration: 0.2,
+        ease: "power2.in",
+        onComplete: () => {
+          setViewMode(newMode);
+          // Animate in new content
+          gsap.fromTo(contentRef.current,
+            {
+              opacity: 0,
+              scale: 0.95,
+              y: 20
+            },
+            {
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              duration: 0.4,
+              ease: "back.out(1.4)"
+            }
+          );
+        }
+      });
+    }
   };
 
   // Render the main modal with toggle always visible
@@ -308,6 +434,10 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
             useMouseEvents={true}
             renderOnlyPageLengthChange={false}
             className="react-pageflip"
+            style={{}}
+            startPage={0}
+            showPageCorners={true}
+            disableFlipByClick={false}
           >
             {slides.map((slide, index) => (
               <FlipBookPage
@@ -324,15 +454,49 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-hidden">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden"
+    <div 
+      ref={modalContainerRef}
+      className="story-view-modal"
+      style={{ alignItems: 'flex-start', paddingTop: '0.5rem' }}
+    >
+      {/* Backdrop overlay */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[199]"
+        onClick={onClose}
+      />
+      
+      <div
+        ref={modalRef}
+        className="modal-content bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden transform-gpu z-[200] relative"
       >
+        {/* Book Animation Overlay */}
+        <AnimatePresence>
+          {showBookAnimation && viewMode === 'book' && (
+            <motion.div 
+              className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col items-center justify-center z-50"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="text-center">
+                <img 
+                  src="/videos/library-book.gif" 
+                  alt="Book Animation"
+                  className="w-48 h-48 mx-auto mb-6"
+                />
+                <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                  Book View
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-lg">
+                  Loading your story...
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div ref={headerRef} className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {story.title}
@@ -347,8 +511,8 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
             {hasSlides && (
               <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
                 <button
-                  onClick={() => setViewMode('book')}
-                  className={`p-2 rounded-md transition-colors ${
+                  onClick={() => handleViewModeChange('book')}
+                  className={`view-toggle-btn p-2 rounded-md transition-all duration-300 transform hover:scale-110 ${
                     viewMode === 'book'
                       ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                       : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -360,8 +524,8 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
                   </svg>
                 </button>
                 <button
-                  onClick={() => setViewMode('scroll')}
-                  className={`p-2 rounded-md transition-colors ${
+                  onClick={() => handleViewModeChange('scroll')}
+                  className={`view-toggle-btn p-2 rounded-md transition-all duration-300 transform hover:scale-110 ${
                     viewMode === 'scroll'
                       ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                       : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -381,7 +545,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
                 <button
                   onClick={zoomOut}
                   disabled={zoomLevel <= 0.5}
-                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="view-toggle-btn p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 active:scale-95"
                   title="Zoom Out"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -391,7 +555,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
                 
                 <button
                   onClick={resetZoom}
-                  className="px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                  className="view-toggle-btn px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-all duration-300 transform hover:scale-110 active:scale-95"
                   title="Reset Zoom"
                 >
                   {Math.round(zoomLevel * 100)}%
@@ -400,7 +564,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
                 <button
                   onClick={zoomIn}
                   disabled={zoomLevel >= 2}
-                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="view-toggle-btn p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-110 active:scale-95"
                   title="Zoom In"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -423,7 +587,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div ref={contentRef} className="flex-1 overflow-hidden">
           {viewMode === 'book' ? (
             <motion.div
               key="book"
@@ -512,7 +676,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
             </motion.div>
           )}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

@@ -8,4 +8,7 @@ export { default as Toast, ToastContainer } from './Toast';
 
 export { default as Spinner } from './Spinner';
 export { default as Modal } from './Modal';
+export { default as DecryptedText } from './DecryptedText';
+export { default as UnicornBackground } from './UnicornBackground';
+export { default as JellyText } from './JellyText';
 export { default as EnhancedImage, ResponsiveImage, StorySlideImage, StoryThumbnailImage } from './EnhancedImage';

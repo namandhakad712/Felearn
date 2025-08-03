@@ -322,6 +322,32 @@ class EncryptionService {
   }
 
   /**
+   * Clear all encryption keys (useful when keys are corrupted)
+   * @returns Promise indicating success
+   */
+  async clearAllKeys(): Promise<boolean> {
+    try {
+      // Get all key IDs from localStorage
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(this.storageKeyPrefix)) {
+          keysToRemove.push(key);
+        }
+      }
+      
+      // Remove all encryption keys
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      console.log(`Cleared ${keysToRemove.length} encryption keys`);
+      return true;
+    } catch (error) {
+      console.error('Error clearing encryption keys:', error);
+      return false;
+    }
+  }
+
+  /**
    * Check if the browser supports the required crypto APIs
    * @returns Boolean indicating support
    */

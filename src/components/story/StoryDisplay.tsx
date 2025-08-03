@@ -99,7 +99,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="mt-8 max-w-6xl mx-auto space-y-6"
+      className="mt-8 max-w-6xl mx-auto space-y-6 w-full overflow-hidden"
     >
       {/* Header with title and actions */}
       {(story || !isGenerating) && (
@@ -143,7 +143,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       )}
 
       {/* Live Slide View - Shows images as they're generated */}
-      <div className="mb-8">
+      <div className="mb-8 w-full max-w-full overflow-hidden">
         <Card className="p-0 overflow-hidden">
           {imageFixingStatus === 'fixing' && (
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
@@ -160,7 +160,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
             }))}
             images={displayImages}
             isGenerating={isGenerating}
-            className="p-6"
+            className="p-4 sm:p-6"
           />
         </Card>
       </div>
