@@ -33,6 +33,17 @@ const ResetPasswordPage: React.FC = () => {
       }
     }
     
+    // Also try parsing from hash manually (in case React Router doesn't catch it)
+    const hash = window.location.hash;
+    if (hash.includes('?')) {
+      const hashQuery = hash.split('?')[1];
+      const hashParams = new URLSearchParams(hashQuery);
+      for (const name of paramNames) {
+        const value = hashParams.get(name);
+        if (value) return value;
+      }
+    }
+    
     return null;
   };
 
@@ -41,23 +52,11 @@ const ResetPasswordPage: React.FC = () => {
   const userId = getParam(['userId', 'user', 'id', 'userID']);
   const secret = getParam(['secret', 'token', 'code', 'verification']);
   
-  // Debug: Log the parameters
+  // Parameter validation and debugging (production logging removed)
   React.useEffect(() => {
-    console.log('🔍 ResetPasswordPage loaded');
-    console.log('🔍 Full URL:', window.location.href);
-    console.log('🔍 Search params:', window.location.search);
-    console.log('🔍 Hash:', window.location.hash);
-    console.log('🔍 All URL parameters:', Object.fromEntries(searchParams.entries()));
-    console.log('🔍 Extracted parameters:', { userId, secret });
-    console.log('🔍 User authenticated:', !!user);
-    
-    // Also try to extract from main URL search params (like we did for email verification)
-    const mainSearch = window.location.search;
-    if (mainSearch) {
-      const mainParams = new URLSearchParams(mainSearch);
-      const mainUserId = mainParams.get('userId') || mainParams.get('user') || mainParams.get('id');
-      const mainSecret = mainParams.get('secret') || mainParams.get('token') || mainParams.get('code');
-      console.log('🔍 Main URL parameters:', { mainUserId, mainSecret });
+    // Show warning if user is authenticated but no reset parameters
+    if (user && !userId && !secret) {
+      // User is authenticated but no reset parameters found
     }
   }, [userId, secret, user, searchParams]);
 
@@ -99,9 +98,7 @@ const ResetPasswordPage: React.FC = () => {
           throw new Error('Password must contain at least one number.');
         }
 
-        console.log('🔄 Completing password reset with validated password...');
         const result = await completePasswordReset(userId, secret, newPassword);
-        console.log('✅ Password reset result:', result);
         
         if (result.success) {
           setSuccessMessage('Password has been reset successfully! Redirecting to login...');
@@ -166,6 +163,26 @@ const ResetPasswordPage: React.FC = () => {
           </p>
             </div>
         </div>
+
+        {/* Show helpful message if user is logged in but no reset parameters */}
+        {user && !userId && !secret && (
+          <div className="mb-4 p-4 text-blue-700 bg-blue-100 rounded-lg">
+            <h3 className="font-semibold mb-2">Already Logged In</h3>
+            <p className="text-sm">
+              You're currently logged in. If you want to change your password, you can do so from your 
+              <button 
+                onClick={() => navigate('/dashboard/settings')}
+                className="mx-1 underline hover:text-blue-800 font-medium"
+              >
+                account settings
+              </button>
+              instead of using a reset link.
+            </p>
+            <p className="text-sm mt-2">
+              If you clicked a password reset link from your email, the link might be malformed or expired.
+            </p>
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-4 text-red-700 bg-red-100 rounded-lg">

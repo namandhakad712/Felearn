@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -9,7 +8,6 @@ import { storyService } from '../../services';
 import { Story } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks';
-import { marked } from 'marked';
 import { createStoryFallbackImage } from '../../utils/imageUrlFixer';
 
 // Register GSAP plugins
@@ -71,7 +69,7 @@ const StoryLibraryPage: React.FC = () => {
   useEffect(() => {
     const fetchStories = async () => {
       if (!user) {
-        console.log('❌ No user found, cannot fetch stories');
+        // No user found, cannot fetch stories
         setIsLoading(false);
         return;
       }
@@ -79,8 +77,7 @@ const StoryLibraryPage: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        console.log('📖 Fetching stories for user:', user.$id);
-        console.log('📖 User object:', user);
+        // Fetching stories for user
 
         const result = await storyService.getUserStories(user.$id);
         console.log('✅ Stories fetch result:', result);
@@ -99,11 +96,7 @@ const StoryLibraryPage: React.FC = () => {
         });
 
         if (result.stories.length === 0) {
-          console.log('⚠️ No stories found for user. This could mean:');
-          console.log('   - User has not created any stories yet');
-          console.log('   - Stories collection is empty');
-          console.log('   - Database query is not finding user stories');
-          console.log('   - User ID mismatch in stories');
+          // No stories found for user
         }
 
         setStories(result.stories);
@@ -154,12 +147,12 @@ const StoryLibraryPage: React.FC = () => {
         
         cardElement.addEventListener('mouseenter', () => {
           gsap.to(cardElement, {
-            scale: 1.05,
-            y: -10,
-            rotationY: 5,
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
-            duration: 0.4,
-            ease: "power2.out"
+            scale: 1.08,
+            y: -15,
+            rotationY: 8,
+            boxShadow: "0 35px 60px -12px rgba(0, 0, 0, 0.5)",
+            duration: 0.15,
+            ease: "power3.out"
           });
         });
 
@@ -169,8 +162,8 @@ const StoryLibraryPage: React.FC = () => {
             y: 0,
             rotationY: 0,
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-            duration: 0.4,
-            ease: "power2.out"
+            duration: 0.12,
+            ease: "power3.out"
           });
         });
       });
@@ -182,14 +175,16 @@ const StoryLibraryPage: React.FC = () => {
         {
           opacity: 0,
           height: 0,
-          y: -20
+          y: -20,
+          scale: 0.95
         },
         {
           opacity: 1,
           height: 'auto',
           y: 0,
-          duration: 0.6,
-          ease: "power3.out"
+          scale: 1,
+          duration: 0.15,
+          ease: "back.out(2.5)"
         }
       );
     }
@@ -245,7 +240,7 @@ const StoryLibraryPage: React.FC = () => {
     setIsRenameModalOpen(true);
   };
 
-  const openDetailModal = (story: Story) => {
+  const _openDetailModal = (story: Story) => {
     console.log('Opening story detail modal:', {
       title: story.title,
       imagesCount: story.images?.length || 0,
@@ -405,7 +400,7 @@ const StoryLibraryPage: React.FC = () => {
                         <img
                           src={imageUrl}
                           alt={`Slide ${idx + 1}`}
-                          className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform duration-150"
                           onClick={() => window.open(imageUrl, '_blank')}
                           onLoad={(e) => {
                             console.log(`Modal slide ${idx + 1} loaded successfully`);
@@ -423,9 +418,9 @@ const StoryLibraryPage: React.FC = () => {
                         </div>
 
                         {/* Hover overlay */}
-                        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center cursor-pointer"
+                        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-15 transition-all duration-100 flex items-center justify-center cursor-pointer"
                           onClick={() => window.open(imageUrl, '_blank')}>
-                          <div className="opacity-0 hover:opacity-100 transition-opacity duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-1 rounded-full text-sm font-medium">
+                          <div className="opacity-0 hover:opacity-100 transition-opacity duration-100 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-1 rounded-full text-sm font-medium transform hover:scale-105">
                             View Full Size
                           </div>
                         </div>
@@ -541,7 +536,7 @@ const StoryLibraryPage: React.FC = () => {
             <div className="flex items-center justify-between space-x-4">
               {/* Left: Search Input */}
               <div className="flex-shrink-0">
-                <div className={`flex items-center transition-all duration-300 ease-in-out ${
+                <div className={`flex items-center transition-all duration-200 ease-out ${
                   isSearchExpanded || searchTerm ? 'w-64 sm:w-80' : 'w-10'
                 }`}>
                   <div className="relative w-full">
@@ -556,7 +551,7 @@ const StoryLibraryPage: React.FC = () => {
                           setIsSearchExpanded(false);
                         }
                       }}
-                      className={`transition-all duration-300 ease-in-out h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm ${
+                      className={`transition-all duration-200 ease-out h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm ${
                         isSearchExpanded || searchTerm
                           ? 'pl-10 pr-4 w-full opacity-100'
                           : 'pl-10 pr-4 w-0 opacity-0'
@@ -576,7 +571,7 @@ const StoryLibraryPage: React.FC = () => {
                           }, 100);
                         }
                       }}
-                      className={`absolute left-0 top-0 h-full flex items-center justify-center transition-all duration-300 z-10 ${
+                      className={`absolute left-0 top-0 h-full flex items-center justify-center transition-all duration-150 z-10 ${
                         isSearchExpanded || searchTerm
                           ? 'w-10 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-600 rounded-l-lg'
                           : 'w-10 h-10 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm'
@@ -632,7 +627,7 @@ const StoryLibraryPage: React.FC = () => {
                     setIsSearchExpanded(false);
                     setSearchTerm('');
                   }}
-                  className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-100 hover:scale-110"
                   title="Close search"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -729,7 +724,7 @@ const StoryLibraryPage: React.FC = () => {
                             menu.classList.toggle('hidden');
                           }
                         }}
-                        className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-colors"
+                        className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-100 hover:scale-110 hover:shadow-xl"
                         aria-label="Story options"
                       >
                         <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
@@ -796,7 +791,7 @@ const StoryLibraryPage: React.FC = () => {
                         e.stopPropagation();
                         togglePin(story.$id, story.isPinned);
                       }}
-                      className={`p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-colors ${story.isPinned
+                      className={`p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-100 hover:scale-110 hover:shadow-xl ${story.isPinned
                         ? 'text-yellow-500 hover:text-yellow-600'
                         : 'text-gray-400 hover:text-gray-500'
                         }`}
@@ -824,7 +819,7 @@ const StoryLibraryPage: React.FC = () => {
                         <img
                           src={story.images[0]}
                           alt={`${story.title} - Preview`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-150"
                           onLoad={(e) => {
                             console.log(`Preview image loaded successfully:`, story.images[0].substring(0, 50) + '...');
                             // Show green indicator for successful load
@@ -859,8 +854,8 @@ const StoryLibraryPage: React.FC = () => {
                         </div>
 
                         {/* Click to view overlay */}
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2">
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-25 transition-all duration-150 flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-all duration-150 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2 transform group-hover:scale-105">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>

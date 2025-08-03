@@ -46,10 +46,10 @@ export const useUserTheme = () => {
           const recentManualChange = isManual && (currentTime - themeTimestamp) < 5 * 60 * 1000; // 5 minutes
           
           if (!currentTheme || (!recentManualChange && currentTheme !== userSettings.theme)) {
-            console.log('🎨 Applying user theme from settings:', userSettings.theme);
+            // Applying user theme from settings
             setTheme(userSettings.theme as Theme, false); // Mark as non-manual
           } else {
-            console.log('🎨 Keeping current theme:', currentTheme, 'User prefers:', userSettings.theme);
+            // Keeping current theme
           }
         }
         

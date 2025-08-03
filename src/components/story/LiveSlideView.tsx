@@ -8,6 +8,7 @@ interface LiveSlideViewProps {
   isGenerating: boolean;
   className?: string;
   totalSlides?: number; // Expected total number of slides
+  tokens?: number; // Token count used for generation
 }
 
 const LiveSlideView: React.FC<LiveSlideViewProps> = ({
@@ -15,7 +16,8 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
   images,
   isGenerating,
   className = '',
-  totalSlides = 4 // Default to 4 slides
+  totalSlides, // No default - will be calculated dynamically
+  tokens = 0 // Token count with default value
 }) => {
   const [displayedSlides, setDisplayedSlides] = useState<StorySlide[]>([]);
 
@@ -71,16 +73,20 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
     }
   };
 
+  // Calculate dynamic total slides - show current + 1 generating if still generating
+  const dynamicTotalSlides = totalSlides || (isGenerating ? displayedSlides.length + 1 : displayedSlides.length);
+
   // Create placeholder slides for generating animation
   const createPlaceholderSlides = () => {
     const placeholders = [];
-    for (let i = displayedSlides.length; i < totalSlides; i++) {
+    // Only show one generating placeholder if still generating
+    if (isGenerating && displayedSlides.length < dynamicTotalSlides) {
       placeholders.push({
-        id: `placeholder-${i}`,
+        id: `placeholder-${displayedSlides.length}`,
         image: '',
         text: '',
         isPlaceholder: true,
-        index: i
+        index: displayedSlides.length
       });
     }
     return placeholders;
@@ -184,7 +190,7 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
             
             {/* Slide Number Badge */}
             <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
-              {index + 1} / {totalSlides}
+              {index + 1} / {dynamicTotalSlides}
             </div>
           </div>
           
@@ -241,14 +247,23 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
           <motion.div
             className="bg-blue-500 h-2 rounded-full"
             initial={{ width: 0 }}
-            animate={{ width: `${(displayedSlides.length / totalSlides) * 100}%` }}
+            animate={{ width: `${(displayedSlides.length / dynamicTotalSlides) * 100}%` }}
             transition={{ duration: 0.5 }}
           />
         </div>
         <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
-          {displayedSlides.length} / {totalSlides} slides
+          {displayedSlides.length} / {isGenerating ? '∞' : dynamicTotalSlides} slides
         </span>
       </div>
+      
+      {/* Token count display */}
+      {tokens > 0 && (
+        <div className="flex justify-center mt-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+            {tokens.toLocaleString()} tokens used
+          </span>
+        </div>
+      )}
     </div>
   );
 };

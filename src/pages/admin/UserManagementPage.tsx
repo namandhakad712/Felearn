@@ -68,11 +68,12 @@ const UserManagementPage: React.FC = () => {
         case 'createdAt':
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
-        case 'lastLogin':
+        case 'lastLogin': {
           const aTime = a.lastLogin ? new Date(a.lastLogin).getTime() : 0;
           const bTime = b.lastLogin ? new Date(b.lastLogin).getTime() : 0;
           comparison = aTime - bTime;
           break;
+        }
       }
       
       return sortDirection === 'asc' ? comparison : -comparison;

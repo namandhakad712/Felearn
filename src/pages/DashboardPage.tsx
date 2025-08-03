@@ -1,9 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
 import { Card, JellyText } from '../components/ui';
-import { ChatInterface, StoryDisplay, ExportModal, AdvancedSearchFilter, StorySearchResults, ExamplePrompts } from '../components/story';
-import { ProfileModal } from '../components/profile';
+import { ChatInterface, StoryDisplay, ExportModal, ExamplePrompts } from '../components/story';
 import { useAuth } from '../contexts/AuthContext';
 import { useStories, useToast } from '../hooks';
 import { useUserTheme } from '../hooks/useUserTheme';
@@ -21,7 +20,7 @@ const StoryGenerator = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [_isProfileModalOpen, _setIsProfileModalOpen] = useState(false);
 
   const { user } = useAuth();
 
@@ -32,18 +31,18 @@ const StoryGenerator = () => {
 
   // Use the stories hook for CRUD operations
   const {
-    stories,
-    isLoading: isLoadingStories,
+    stories: _stories,
+    isLoading: _isLoadingStories,
     error: storiesError,
     createStory,
-    updateStory,
+    updateStory: _updateStory,
     deleteStory,
     renameStory,
     togglePin,
     clearError: clearStoriesError,
   } = useStories();
 
-  const handleStorySelect = (story: Story) => {
+  const _handleStorySelect = (story: Story) => {
     setSelectedStory(story);
     setGeneratedStory(story.content);
     setStoryImages(story.images || []);
@@ -52,7 +51,7 @@ const StoryGenerator = () => {
     clearStoriesError();
   };
 
-  const handleStoryRename = async (storyId: string, newTitle: string) => {
+  const _handleStoryRename = async (storyId: string, newTitle: string) => {
     try {
       await renameStory(storyId, newTitle);
     } catch (error) {
@@ -61,7 +60,7 @@ const StoryGenerator = () => {
     }
   };
 
-  const handleStoryDelete = async (storyId: string) => {
+  const _handleStoryDelete = async (storyId: string) => {
     try {
       await deleteStory(storyId);
 
@@ -116,7 +115,7 @@ const StoryGenerator = () => {
       // Mock gemini service since the real one has issues
       const geminiService = {
         initialize: (apiKey: string) => {
-          console.log('Initializing gemini service with API key:', apiKey);
+          // Initializing gemini service
         },
         generateStory: async ({ prompt, apiKey, userId, options }: any) => {
           console.log('Generating images for prompt:', prompt);
@@ -131,7 +130,7 @@ const StoryGenerator = () => {
           const model = ai.getGenerativeModel({
             model: 'gemini-2.0-flash-preview-image-generation',
             generationConfig: {
-              maxOutputTokens: options.maxTokens || 1024,
+              maxOutputTokens: options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
               responseModalities: ['IMAGE', 'TEXT'] // Specify both IMAGE and TEXT as required
             }
           });
@@ -143,6 +142,13 @@ const StoryGenerator = () => {
           // Create arrays to store the generated content
           const images = [];
           const slides = [];
+          let totalTokensUsed = 0; // Track total tokens used
+          let allGeneratedText = ''; // Track all text for token calculation
+
+          // Token estimation function (rough estimate: ~4 characters per token)
+          const estimateTokens = (text: string): number => {
+            return Math.ceil(text.length / 4);
+          };
 
           // Use the exact same additional instructions as in main thing/index.tsx
           const additionalInstructions = `
@@ -152,7 +158,7 @@ const StoryGenerator = () => {
           Include relevant text labels, speech bubbles, or captions directly in each illustration to make them self-explanatory.
           Make sure each image tells the story visually with embedded text elements.
           No commentary, just begin your explanation.
-          Keep going until you're done.`;
+          Keep going until you've thoroughly explained the entire concept.`;
 
 
 
@@ -167,7 +173,7 @@ const StoryGenerator = () => {
             let result;
             try {
               result = await chat.sendMessageStream(prompt + additionalInstructions);
-              console.log('Stream result type:', typeof result, result);
+              // Stream result received
             } catch (streamError) {
               console.error('Error starting stream:', streamError);
               throw streamError; // Re-throw to be caught by outer catch
@@ -223,6 +229,11 @@ const StoryGenerator = () => {
                       cleanText = captionMatch[1];
                     }
 
+                    // Track tokens used
+                    const slideTokens = estimateTokens(cleanText);
+                    totalTokensUsed += slideTokens;
+                    allGeneratedText += cleanText + ' ';
+
                     slides.push({
                       text: cleanText.length > 0 ? cleanText : "Image caption", // Provide a fallback
                       image: img
@@ -255,6 +266,11 @@ const StoryGenerator = () => {
                 // Use just the quoted text as the caption
                 cleanText = captionMatch[1];
               }
+
+              // Track tokens used for remaining text
+              const remainingTokens = estimateTokens(cleanText);
+              totalTokensUsed += remainingTokens;
+              allGeneratedText += cleanText + ' ';
 
               slides.push({
                 text: cleanText.length > 0 ? cleanText : "Image caption", // Provide a fallback
@@ -318,11 +334,30 @@ const StoryGenerator = () => {
             }
           }
 
-          // Return the final set of generated images
+          // Return the final set of generated images with token tracking
+          const finalStory = allGeneratedText || slides.map(slide => slide.text).join('\n\n') || `${prompt}`;
+          
+          // Add prompt tokens to total
+          totalTokensUsed += estimateTokens(prompt + additionalInstructions);
+          
+          console.log(`📊 Generation complete: ${slides.length} slides, ${totalTokensUsed} tokens used`);
+          console.log('📊 Token breakdown:', {
+            slideTokens: slides.reduce((acc, slide) => acc + estimateTokens(slide.text || ''), 0),
+            promptTokens: estimateTokens(prompt + additionalInstructions),
+            totalCalculated: totalTokensUsed
+          });
+          
           return {
-            story: `${prompt}`, // Minimal story text
+            story: finalStory,
             images: images,
-            slides: slides
+            slides: slides,
+            tokens: totalTokensUsed, // ✅ Add token count
+            metadata: {
+              totalSlides: slides.length,
+              totalImages: images.length,
+              tokensUsed: totalTokensUsed,
+              averageTokensPerSlide: slides.length > 0 ? Math.round(totalTokensUsed / slides.length) : 0
+            }
           };
         }
       };
@@ -336,7 +371,7 @@ const StoryGenerator = () => {
         apiKey: user.geminiKey,
         userId: user.$id, // Add user ID for rate limiting
         options: {
-          maxTokens: 1024,
+          maxTokens: 11264, // ✅ INCREASED: Allows 15-20 slides
           includeImages: true, // Enable image generation for better story display
         },
       });
@@ -354,22 +389,30 @@ const StoryGenerator = () => {
         const storyLines = response.story.split('\n');
         let title = storyLines[0].trim();
 
-        // Make sure we have a valid title
+        // Make sure we have a valid title and limit its length
         if (!title || title.length < 2) {
           title = 'Tiny Cats Explain: ' + concept;
+        }
+        
+        // Limit title to 300 characters to avoid database constraint issues
+        if (title.length > 300) {
+          title = title.substring(0, 297) + '...';
         }
 
         // Log the title we're using
         console.log('Using title for story:', title);
+        console.log('Title length:', title.length);
+        console.log('Response tokens:', response.tokens);
+        console.log('Tokens being saved:', response.tokens || 0);
 
         // Create the story with the extracted title and slides
         // Pass the user's email and name if available from the auth context
         const userEmail = user?.email || 'user@example.com';
-        const userName = user?.name || 'User';
+        const _userName = user?.name || 'User';
         const userLastLogin = user?.lastLogin || new Date().toISOString();
 
         // Create story with user information
-        const savedStory = await createStory(title, response.story, response.images || [], response.slides || []);
+        const savedStory = await createStory(title, response.story, response.images || [], response.slides || [], response.tokens || 0);
         setSelectedStory(savedStory);
         console.log('Visual story saved automatically:', savedStory);
       } catch (saveError) {
@@ -562,12 +605,20 @@ const StoryGenerator = () => {
 // Removed old StoryLibrary component - now using StoryLibraryPage
 
 const Settings = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, updatePassword } = useAuth();
   const [apiKey, setApiKey] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Password change state
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
   // Initialize API key from user data
   useEffect(() => {
@@ -600,6 +651,52 @@ const Settings = () => {
       }, 3000);
     } catch (error: any) {
       setError(error.message || 'Failed to update API key');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    setPasswordError(null);
+    
+    // Validation
+    if (!currentPassword) {
+      setPasswordError('Please enter your current password');
+      return;
+    }
+    
+    if (!newPassword) {
+      setPasswordError('Please enter a new password');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+    
+    if (newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters long');
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    try {
+      await updatePassword(newPassword, currentPassword);
+      
+      setPasswordSuccess('Password updated successfully');
+      setIsChangingPassword(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setPasswordSuccess(null);
+      }, 3000);
+    } catch (error: any) {
+      setPasswordError(error.message || 'Failed to update password');
     } finally {
       setIsSaving(false);
     }
@@ -694,6 +791,90 @@ const Settings = () => {
                 </div>
               )}
             </div>
+
+            {/* Password Change Section */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                Password
+              </label>
+              {isChangingPassword ? (
+                <div className="space-y-3">
+                  <input
+                    type="password"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                  />
+                  <input
+                    type="password"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                  />
+                  <input
+                    type="password"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                  />
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handlePasswordChange}
+                      disabled={isSaving}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
+                    >
+                      {isSaving ? 'Updating...' : 'Update Password'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsChangingPassword(false);
+                        setCurrentPassword('');
+                        setNewPassword('');
+                        setConfirmPassword('');
+                        setPasswordError(null);
+                      }}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="password"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    value="••••••••••••••••"
+                    readOnly
+                  />
+                  <div className="flex items-center justify-between mt-2">
+                    <button
+                      onClick={() => setIsChangingPassword(true)}
+                      className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                    >
+                      Change Password
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Password Error message */}
+              {passwordError && (
+                <div className="mt-2 text-sm text-red-600 dark:text-red-400">
+                  {passwordError}
+                </div>
+              )}
+
+              {/* Password Success message */}
+              {passwordSuccess && (
+                <div className="mt-2 text-sm text-green-600 dark:text-green-400">
+                  {passwordSuccess}
+                </div>
+              )}
+            </div>
           </div>
         </Card>
       </div>
@@ -708,26 +889,7 @@ const DashboardPage: React.FC = () => {
         <Route path="/" element={<StoryGenerator />} />
         <Route path="/library" element={<StoryLibraryPage />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/test-import" element={
-          <div className="p-4 md:p-6">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Import Test</h2>
-              <React.Suspense fallback={
-                <div className="p-8 text-center">
-                  <div className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-white bg-indigo-500">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Loading test component...
-                  </div>
-                </div>
-              }>
-                {React.createElement(React.lazy(() => import('../components/test/ImportTest')))}
-              </React.Suspense>
-            </div>
-          </div>
-        } />
+
       </Routes>
     </DashboardLayout>
   );

@@ -1,6 +1,6 @@
 import { User } from '../types';
 import { appwriteService } from './appwrite';
-import { Query } from 'appwrite';
+// import { Query } from 'appwrite';
 
 interface UserActivity {
   type: string;

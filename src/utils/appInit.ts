@@ -17,7 +17,7 @@ export const initializeApp = async () => {
     
     // Initialize authentication session
     const sessionRestored = await initializeAuthSession();
-    console.log('Authentication session initialization result:', sessionRestored ? 'Restored' : 'No session');
+    // Authentication session initialization completed
     
     return client;
   } catch (error) {

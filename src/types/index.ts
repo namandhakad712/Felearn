@@ -32,6 +32,7 @@ export interface Story {
   createdAt: string;
   isPinned: boolean;
   tags?: string[];
+  tokens?: number; // ✅ Track tokens used for generation
 }
 
 export interface AdminLog {

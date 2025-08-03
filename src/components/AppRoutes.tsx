@@ -12,7 +12,7 @@ const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));
 
 function AppRoutes() {
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return (

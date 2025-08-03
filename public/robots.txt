@@ -1,0 +1,31 @@
+User-agent: *
+Allow: /
+
+# Allow all web crawlers to access all content
+Allow: /public/
+Allow: /assets/
+
+# Disallow sensitive areas
+Disallow: /app.html
+Disallow: /dashboard/
+Disallow: /auth/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://felearn.vercel.app/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1
+
+# Specific bot instructions
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /

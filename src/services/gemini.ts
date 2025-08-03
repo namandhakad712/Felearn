@@ -33,7 +33,7 @@ class GeminiService {
           model: "gemini-2.0-flash-preview-image-generation",
           generationConfig: {
             temperature: request.options.temperature || 0.7,
-            maxOutputTokens: request.options.maxTokens || 1024,
+            maxOutputTokens: request.options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
             responseModalities: [Modality.TEXT, Modality.IMAGE],
           }
         });
@@ -163,7 +163,7 @@ Use a fun story about lots of tiny cats as a metaphor.
 Keep sentences short but conversational, casual, and engaging.
 Generate a cute, minimal illustration for each sentence with black ink on white background.
 No commentary, just begin your explanation.
-Keep going until you're done.`;
+Keep going until you've thoroughly explained the entire concept.`;
   }
 
   private async generateImages(prompt: string, apiKey: string): Promise<string[]> {

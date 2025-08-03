@@ -11,6 +11,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<AuthResponse>;
   completePasswordReset: (userId: string, secret: string, password: string) => Promise<AuthResponse>;
+  updatePassword: (newPassword: string, oldPassword: string) => Promise<AuthResponse>;
   createOAuthSession: (provider: string) => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUser: (data: any) => Promise<void>;
@@ -25,6 +26,7 @@ export const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   resetPassword: async () => ({ success: false, message: 'AuthContext not initialized' }),
   completePasswordReset: async () => ({ success: false, message: 'AuthContext not initialized' }),
+  updatePassword: async () => ({ success: false, message: 'AuthContext not initialized' }),
   createOAuthSession: async () => { throw new Error('AuthContext not initialized'); },
   refreshUser: async () => {},
   updateUser: async () => {},
@@ -129,6 +131,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return await authService.completePasswordReset(userId, secret, password);
   };
 
+  const updatePassword = async (newPassword: string, oldPassword: string): Promise<AuthResponse> => {
+    return await authService.updatePassword(newPassword, oldPassword);
+  };
+
   const createOAuthSession = async (provider: string) => {
     return await authService.createOAuthSession(provider);
   };
@@ -177,6 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     resetPassword,
     completePasswordReset,
+    updatePassword,
     createOAuthSession,
     refreshUser,
     updateUser,

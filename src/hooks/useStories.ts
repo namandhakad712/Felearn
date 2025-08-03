@@ -7,7 +7,7 @@ interface UseStoriesReturn {
   stories: Story[];
   isLoading: boolean;
   error: string | null;
-  createStory: (title: string, content: string, images?: string[], slides?: StorySlide[]) => Promise<Story>;
+  createStory: (title: string, content: string, images?: string[], slides?: StorySlide[], tokens?: number) => Promise<Story>;
   updateStory: (storyId: string, updates: Partial<Story>) => Promise<Story>;
   deleteStory: (storyId: string) => Promise<boolean>;
   renameStory: (storyId: string, newTitle: string) => Promise<Story>;
@@ -48,7 +48,7 @@ export const useStories = (): UseStoriesReturn => {
     }
   };
 
-  const createStory = useCallback(async (title: string, content: string, images: string[] = [], slides: StorySlide[] = []): Promise<Story> => {
+  const createStory = useCallback(async (title: string, content: string, images: string[] = [], slides: StorySlide[] = [], tokens: number = 0): Promise<Story> => {
     try {
       setError(null);
       
@@ -92,6 +92,7 @@ export const useStories = (): UseStoriesReturn => {
         email: user?.email || 'user@example.com',
         name: user?.name || 'User',
         lastLogin: user?.lastLogin || new Date().toISOString(),
+        tokens: tokens || 0, // ✅ Add token count
       };
 
       // Optimistic update
@@ -126,8 +127,10 @@ export const useStories = (): UseStoriesReturn => {
         }
         
         // Create story in database with user information from auth context
-        // The function now expects (userId, title, content, images, tags, email, name, lastLogin, slides)
-        const createdStory = await storyService.createStory(userId, title, content, processedImages, tags, email, name, lastLogin, slides);
+        // The function now expects (userId, title, content, images, tags, email, name, lastLogin, slides, tokens)
+        console.log('🔄 useStories: Creating story with tokens:', tokens);
+        const createdStory = await storyService.createStory(userId, title, content, processedImages, tags, email, name, lastLogin, slides, tokens);
+        console.log('✅ useStories: Story created with tokens:', createdStory.tokens);
         
         // Update the story with processed images
         createdStory.images = processedImages;

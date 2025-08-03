@@ -1,11 +1,6 @@
 import { Account, ID, Models, OAuthProvider } from 'appwrite';
 
-// Debug: Check if OAuthProvider is imported correctly
-console.log('🔍 OAuthProvider check:', {
-  Google: OAuthProvider.Google,
-  Github: OAuthProvider.Github,
-  available: Object.keys(OAuthProvider)
-});
+// OAuthProvider validation - removed debug logging for production
 import { account } from '@/lib/appwrite';
 import { databaseService } from './database';
 import { extractNameFromEmail } from '@/utils/userUtils';
@@ -33,15 +28,13 @@ export class AuthService {
    */
   async register(email: string, password: string): Promise<AuthResponse> {
     try {
-      console.log('Starting registration process for:', email);
-      console.log('Password length:', password.length);
-      console.log('Using ID.unique():', ID.unique());
+      // Starting registration process
 
       // Skip user existence check - let Appwrite handle duplicates
 
       // Generate a simple, guaranteed valid user ID
       const userId = 'user' + Date.now().toString();
-      console.log('Generated userId:', userId, 'Length:', userId.length);
+      // Generated userId
 
       const user = await this.account.create(userId, email, password);
 
@@ -99,15 +92,10 @@ export class AuthService {
    */
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      console.log('=== LOGIN DEBUG ===');
-      console.log('Email:', email);
-      console.log('Email length:', email.length);
-      console.log('Password length:', password.length);
-      console.log('Email valid format:', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-      console.log('About to call createSession...');
+      // Login validation - debug logging removed for production
 
       // Create session using email/password
-      console.log('Calling createEmailPasswordSession with email and password...');
+      // Creating email password session
       const session = await this.account.createEmailPasswordSession(email, password);
 
       // Get user details
@@ -153,7 +141,7 @@ export class AuthService {
    */
   async verifyEmail(userId: string, secret: string): Promise<AuthResponse> {
     try {
-      console.log('🔍 Verifying email with userId:', userId, 'secret:', secret);
+      // Verifying email with userId and secret
       
       // Use the userId as-is from Appwrite's verification URL
       await this.account.updateVerification(userId, secret);
@@ -161,7 +149,7 @@ export class AuthService {
       // Try to get updated user info, but don't fail if user is not logged in
       try {
         const user = await this.account.get();
-        console.log('✅ Email verification successful for user:', user.email);
+        // Email verification successful
         return {
           success: true,
           user,
@@ -169,7 +157,7 @@ export class AuthService {
         };
       } catch (getUserError: any) {
         // If we can't get user info (user not logged in), verification still succeeded
-        console.log('✅ Email verification successful, but user not logged in');
+        // Email verification successful, but user not logged in
         return {
           success: true,
           message: 'Email verified successfully! Please log in to continue.'
@@ -186,7 +174,7 @@ export class AuthService {
           error.message?.includes('User already verified') ||
           error.message?.includes('email verification') ||
           error.type === 'user_already_verified') {
-        console.log('✅ Email already verified - treating as success');
+        // Email already verified - treating as success
         return {
           success: true,
           message: 'Your email is already verified! Please log in to continue.'
@@ -197,7 +185,7 @@ export class AuthService {
       if (error.code === 401) {
         if (error.type === 'general_unauthorized_scope') {
           // This might mean the email is already verified or there's a scope issue
-          console.log('🔍 Unauthorized scope error - checking if email is already verified');
+          // Unauthorized scope error - checking if email is already verified
           return {
             success: true,
             message: 'Your email verification is complete! Please log in to access your account.'
@@ -257,14 +245,14 @@ export class AuthService {
       console.log('🌐 OAuth URLs:', urls);
       logAppConfig(); // Debug: show current configuration
       
-      console.log('🔄 Calling createOAuth2Session...');
+      // Calling createOAuth2Session
       this.account.createOAuth2Session(
         oauthProvider,
         urls.callback, // Universal success redirect
         urls.login,    // Universal failure redirect
         ['email'] // Request email scope
       );
-      console.log('✅ OAuth session creation initiated');
+      // OAuth session creation initiated
     } catch (error) {
       console.error('❌ OAuth error:', error);
       throw error;
@@ -316,7 +304,7 @@ export class AuthService {
             } catch (createError: any) {
               // If document already exists, just update it
               if (createError.message?.includes('already exists')) {
-                console.log('User document already exists, updating instead');
+                // User document already exists, updating instead
                 await databaseService.updateUserDocument(user.$id, {
                   lastLogin: new Date().toISOString(),
                   oauthProvider: oauthProvider
@@ -410,7 +398,7 @@ export class AuthService {
     password: string
   ): Promise<AuthResponse> {
     try {
-      console.log('🔐 Completing password reset for user:', userId);
+      // Completing password reset
       
       // Use the userId as-is from Appwrite's password reset URL
       await this.account.updateRecovery(userId, secret, password);

@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme: _theme, toggleTheme: _toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   return (

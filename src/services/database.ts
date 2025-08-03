@@ -1,4 +1,4 @@
-import { Client, Databases, ID } from 'appwrite';
+import { Client, Databases } from 'appwrite';
 import { appConfig } from '@/config/app';
 import { appwriteConfig } from '../../appwrite.config';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { PageLayout, Container, Grid } from '../components/layout';
-import { Button, Card } from '../components/ui';
+import { Card } from '../components/ui';
 import { HeroSection, TestimonialsCarousel, CTASection, AuthCTASection } from '../components/sections';
 import { testimonials } from '../data/testimonials';
 

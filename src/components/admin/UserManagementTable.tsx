@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { adminService } from '../../services';
-import { Spinner, Card, Button } from '../ui';
+import { Spinner, Card } from '../ui';
 import UserDetailModal from './UserDetailModal';
-import { formatDate, getRelativeTimeString } from '../../utils/dateUtils';
 
 interface UserManagementTableProps {
   onError: (message: string) => void;
@@ -184,7 +183,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
   };
   
   // Handle select all checkbox
-  const handleSelectAll = () => {
+  const _handleSelectAll = () => {
     if (selectAll) {
       // Deselect all
       setSelectedUsers([]);
@@ -196,7 +195,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
   };
   
   // Handle individual user selection
-  const handleSelectUser = (userId: string, isSelected: boolean) => {
+  const _handleSelectUser = (userId: string, isSelected: boolean) => {
     if (isSelected) {
       setSelectedUsers(prev => [...prev, userId]);
     } else {

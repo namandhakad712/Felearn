@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { authService } from '../../services';
-import { encryptApiKey, decryptApiKey, maskApiKey } from '../../utils/encryption';
+import { encryptApiKey } from '../../utils/encryption';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ApiKeyManagerProps {
@@ -26,7 +25,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
   const [validationStatus, setValidationStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
   
   // Check if user has an existing API key
-  const hasExistingKey = user?.geminiKey && user.geminiKey.length > 0;
+  const _hasExistingKey = user?.geminiKey && user.geminiKey.length > 0;
   const [keyStatus, setKeyStatus] = useState<'checking' | 'available' | 'not-available'>('checking');
   
   // Check API key status without decrypting
@@ -152,7 +151,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
     }
   };
   
-  const handleCancel = () => {
+  const _handleCancel = () => {
     setApiKey('');
     setValidationStatus('idle');
     setApiKeyError('');

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { hybridAuthService } from '../services/hybridAuth';
+// import { hybridAuthService } from '../services/hybridAuth';
 // Removed missing imports from sessionManager
 
 /**
@@ -47,8 +47,8 @@ export const useAuthSession = (checkIntervalMs: number = 60000) => {
  * @param warningThresholdMs - How long before expiry to trigger the warning (default: 5 minutes)
  * @returns Boolean indicating if the session is about to expire
  */
-export const useSessionExpiryWarning = (warningThresholdMs: number = 5 * 60 * 1000) => {
-  const [isAboutToExpire, setIsAboutToExpire] = useState(false);
+export const useSessionExpiryWarning = (_warningThresholdMs: number = 5 * 60 * 1000) => {
+  const [_isAboutToExpire, _setIsAboutToExpire] = useState(false);
   
   // This is a placeholder implementation
   // In a real application, you would check the token expiration time

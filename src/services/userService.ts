@@ -1,4 +1,4 @@
-import { ID, Query } from 'appwrite';
+import { Query } from 'appwrite';
 import { databaseService } from './databaseService';
 import { APPWRITE_CONFIG } from '../config/appwrite';
 import { User, UserSettings } from '../types';

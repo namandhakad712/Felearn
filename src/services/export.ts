@@ -99,7 +99,7 @@ export class ExportService {
     options: ExportOptions = {}
   ): Promise<void> {
     try {
-      console.log('Exporting', stories.length, 'stories as', format);
+      // Exporting stories
       
       switch (format) {
         case 'pdf':
@@ -118,7 +118,7 @@ export class ExportService {
           throw new Error(`Unsupported export format: ${format}`);
       }
       
-      console.log('Stories exported successfully');
+      // Stories exported successfully
     } catch (error) {
       console.error('Batch export error:', error);
       throw new Error(`Failed to export stories as ${format.toUpperCase()}`);

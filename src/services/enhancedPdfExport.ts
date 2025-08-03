@@ -28,12 +28,7 @@ export class EnhancedPdfExportService {
     slides: StorySlide[] = [],
     options: PdfExportOptions = {}
   ): Promise<void> {
-    console.log('EnhancedPdfExport - Starting PDF export with data:', {
-      storyTitle: story.title,
-      slidesCount: slides.length,
-      slides: slides,
-      options
-    });
+    // Starting PDF export
 
     const {
       includeImages = true,
@@ -45,10 +40,10 @@ export class EnhancedPdfExportService {
     try {
       // Create a new PDF document
       const pdfDoc = await PDFDocument.create();
-      
+
       // Register fontkit for custom font support
       pdfDoc.registerFontkit(fontkit);
-      
+
       // Set document metadata
       pdfDoc.setTitle(story.title);
       pdfDoc.setAuthor('Felearn AI');
@@ -62,13 +57,13 @@ export class EnhancedPdfExportService {
       const titleFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const bodyFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const italicFont = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
-      
+
       // Try to load custom fonts, fallback to standard fonts if they fail
       let indieFlowerFont = titleFont; // fallback
       let dosisFont = titleFont; // fallback
       let ubuntuLightFont = bodyFont; // fallback
       let consolasFont = bodyFont; // fallback
-      
+
       try {
         // Load custom fonts using fetch
         const indieFlowerResponse = await fetch('/assets/fonts/IndieFlower-Regular.ttf');
@@ -79,7 +74,7 @@ export class EnhancedPdfExportService {
       } catch (error) {
         console.warn('Failed to load IndieFlower font, using fallback:', error);
       }
-      
+
       try {
         const dosisResponse = await fetch('/assets/fonts/Dosis-VariableFont_wght_library_title.ttf');
         if (dosisResponse.ok) {
@@ -136,7 +131,7 @@ export class EnhancedPdfExportService {
             // Create new page for each slide
             currentPage = pdfDoc.addPage(PageSizes.A4);
             yPosition = currentPage.getHeight() - this.PAGE_MARGIN;
-            
+
             const result = await this.addSlidePage(
               currentPage,
               pdfDoc,
@@ -149,7 +144,7 @@ export class EnhancedPdfExportService {
               watermarkText,
               watermarkOpacity
             );
-            
+
             currentPage = result.page;
             yPosition = result.yPosition;
           }
@@ -164,9 +159,9 @@ export class EnhancedPdfExportService {
       // Save and download the PDF (removed encryption for compatibility)
       const pdfBytes = await pdfDoc.save();
       const fileName = this.sanitizeFileName(story.title) + '_felearn.pdf';
-      
+
       this.downloadPDF(pdfBytes, fileName);
-      
+
       console.log('Enhanced PDF export completed successfully');
     } catch (error) {
       console.error('Enhanced PDF export error:', error);
@@ -209,6 +204,7 @@ export class EnhancedPdfExportService {
 
   /**
    * Add main title with Dosis font - ULTRA LARGE and centered in middle of page
+   * With fallback for long titles that overflow
    */
   private async addCustomTitleCentered(
     page: any,
@@ -219,29 +215,37 @@ export class EnhancedPdfExportService {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
     const maxWidth = pageWidth - (this.PAGE_MARGIN * 2);
-    const ultraLargeFontSize = 68; // Increased by 1.2x from 48 (48 * 1.2 = 57.6 ≈ 58)
-    
-    // Split title if too long
-    const titleLines = this.splitTextToFitWidth(title, font, ultraLargeFontSize, maxWidth);
-    
+    let fontSize = 68; // Start with ultra large font size
+
+    // Check if title fits at current font size, reduce if needed
+    const titleWidth = font.widthOfTextAtSize(title, fontSize);
+    if (titleWidth > maxWidth) {
+      // Calculate optimal font size to fit in one line if possible
+      const optimalFontSize = Math.floor((maxWidth / titleWidth) * fontSize);
+      fontSize = Math.max(optimalFontSize, 32); // Minimum font size of 32px
+    }
+
+    // Split title if still too long even at reduced size
+    const titleLines = this.splitTextToFitWidth(title, font, fontSize, maxWidth);
+
     // Calculate the middle of the page for title positioning
-    const totalTitleHeight = titleLines.length * ultraLargeFontSize * this.LINE_HEIGHT;
+    const totalTitleHeight = titleLines.length * fontSize * this.LINE_HEIGHT;
     const middleY = pageHeight / 2 + totalTitleHeight / 2; // Center vertically in middle of page
-    
+
     let currentY = middleY;
-    
+
     titleLines.forEach((line, index) => {
-      const textWidth = font.widthOfTextAtSize(line, ultraLargeFontSize);
+      const textWidth = font.widthOfTextAtSize(line, fontSize);
       const centerX = (pageWidth - textWidth) / 2; // Perfect center alignment
-      
+
       page.drawText(line, {
         x: centerX,
         y: currentY,
-        size: ultraLargeFontSize,
+        size: fontSize,
         font: font,
         color: rgb(0.1, 0.1, 0.1) // Dark color for maximum readability
       });
-      currentY -= ultraLargeFontSize * this.LINE_HEIGHT;
+      currentY -= fontSize * this.LINE_HEIGHT;
     });
 
     return currentY - 30; // Space below title
@@ -258,10 +262,10 @@ export class EnhancedPdfExportService {
   ): Promise<number> {
     const pageWidth = page.getWidth();
     const subtitleFontSize = 20; // Larger font size as in reference image
-    
+
     const textWidth = font.widthOfTextAtSize(subtitle, subtitleFontSize);
     const centerX = (pageWidth - textWidth) / 2; // Perfect center alignment
-    
+
     page.drawText(subtitle, {
       x: centerX,
       y: yPosition,
@@ -269,7 +273,7 @@ export class EnhancedPdfExportService {
       font: font,
       color: rgb(0.4, 0.4, 0.4) // Subtle gray color
     });
-    
+
     return yPosition - subtitleFontSize * this.LINE_HEIGHT - 50; // Extra space after subtitle
   }
 
@@ -284,7 +288,7 @@ export class EnhancedPdfExportService {
     const pageHeight = page.getHeight();
     const metadataFontSize = 10; // Smaller font size as in reference image
     const metadataSpacing = 12;
-    
+
     // Get current timestamp for PDF creation
     const pdfCreationTime = new Date().toLocaleString('en-US', {
       year: 'numeric',
@@ -348,21 +352,21 @@ export class EnhancedPdfExportService {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
     const maxWidth = pageWidth - (this.PAGE_MARGIN * 2);
-    
+
     const paragraphs = content.split('\n\n');
-    
+
     for (const paragraph of paragraphs) {
       if (paragraph.trim() === '') continue;
-      
+
       const lines = this.splitTextToFitWidth(paragraph, font, this.FONT_SIZE_BODY, maxWidth);
-      
+
       // Check if we need a new page
       const requiredHeight = lines.length * this.FONT_SIZE_BODY * this.LINE_HEIGHT;
       if (yPosition - requiredHeight < this.PAGE_MARGIN) {
         page = pdfDoc.addPage(PageSizes.A4);
         yPosition = pageHeight - this.PAGE_MARGIN;
       }
-      
+
       lines.forEach(line => {
         page.drawText(line, {
           x: this.PAGE_MARGIN,
@@ -373,7 +377,7 @@ export class EnhancedPdfExportService {
         });
         yPosition -= this.FONT_SIZE_BODY * this.LINE_HEIGHT;
       });
-      
+
       yPosition -= 10; // Paragraph spacing
     }
 
@@ -381,7 +385,7 @@ export class EnhancedPdfExportService {
   }
 
   /**
-   * Add a slide page with image and caption
+   * Add a slide page with responsive image and caption that stay together
    */
   private async addSlidePage(
     page: any,
@@ -395,9 +399,9 @@ export class EnhancedPdfExportService {
     watermarkText: string,
     watermarkOpacity: number
   ): Promise<{ page: any; yPosition: number }> {
-      const pageWidth = page.getWidth();
-      const pageHeight = page.getHeight();
-    
+    const pageWidth = page.getWidth();
+    const pageHeight = page.getHeight();
+
     // Add slide number at top
     page.drawText(`Slide ${slideNumber} of ${totalSlides}`, {
       x: this.PAGE_MARGIN,
@@ -408,25 +412,71 @@ export class EnhancedPdfExportService {
     });
     yPosition -= this.FONT_SIZE_SUBTITLE * this.LINE_HEIGHT + 20;
 
-    // Add image
-    if (slide.image) {
+    // 🎯 RESPONSIVE LAYOUT: Calculate space needed for both image and caption
+    let finalImageWidth = 0;
+    let finalImageHeight = 0;
+    let captionLines: string[] = [];
+    let captionHeight = 0;
+
+    // First, prepare the caption to know its height
+    if (slide.text) {
+      const caption = this.cleanCaption(slide.text);
+      const captionFontSize = 31; // ✅ Reduced to 31 for better balance
+      const maxCaptionWidth = pageWidth - (this.PAGE_MARGIN * 4);
+
+      captionLines = this.splitTextToFitWidth(
+        caption,
+        captionFont,
+        captionFontSize,
+        maxCaptionWidth
+      );
+
+      // Calculate total caption height (including spacing)
+      captionHeight = captionLines.length * captionFontSize * this.LINE_HEIGHT + 40; // +40 for spacing
+    }
+
+    // Calculate available space for image + caption
+    const availableHeight = yPosition - this.PAGE_MARGIN - 100; // Reserve space for watermark
+    const spaceForImage = availableHeight - captionHeight;
+
+    // Add image with responsive sizing
+    if (slide.image && spaceForImage > 100) { // Minimum 100px for image
       try {
         const imageBytes = await this.loadImageFromUrl(slide.image);
         if (imageBytes) {
           const image = await pdfDoc.embedPng(imageBytes);
-          const imageWidth = pageWidth - (this.PAGE_MARGIN * 2);
-          const imageHeight = (image.height / image.width) * imageWidth;
-          
+
+          // Calculate optimal image size
+          const maxImageWidth = pageWidth - (this.PAGE_MARGIN * 2);
+          const naturalImageHeight = (image.height / image.width) * maxImageWidth;
+
+          // ✅ RESPONSIVE: Adjust image size to fit with caption
+          if (naturalImageHeight <= spaceForImage) {
+            // Image fits naturally
+            finalImageWidth = maxImageWidth;
+            finalImageHeight = naturalImageHeight;
+          } else {
+            // ✅ SCALE DOWN: Reduce image size to fit with caption
+            finalImageHeight = spaceForImage;
+            finalImageWidth = (image.width / image.height) * finalImageHeight;
+
+            // Ensure image doesn't exceed page width
+            if (finalImageWidth > maxImageWidth) {
+              finalImageWidth = maxImageWidth;
+              finalImageHeight = (image.height / image.width) * finalImageWidth;
+            }
+          }
+
           // Center the image
-          const imageX = this.PAGE_MARGIN;
-      const imageY = yPosition - imageHeight;
-      
-      page.drawImage(image, {
-        x: imageX,
-        y: imageY,
-        width: imageWidth,
-        height: imageHeight
-      });
+          const imageX = (pageWidth - finalImageWidth) / 2;
+          const imageY = yPosition - finalImageHeight;
+
+          page.drawImage(image, {
+            x: imageX,
+            y: imageY,
+            width: finalImageWidth,
+            height: finalImageHeight
+          });
 
           yPosition = imageY - 30; // Space below image
         }
@@ -444,42 +494,35 @@ export class EnhancedPdfExportService {
       }
     }
 
-    // Add caption in Indie Flower style (using IndieFlower font)
-    if (slide.text) {
-      const caption = this.cleanCaption(slide.text);
-      const captionFontSize = 31; // Increased by 4.7x from 18 (18 * 4.7 = 84.6 ≈ 85)
-      const captionLines = this.splitTextToFitWidth(
-        caption, 
-        captionFont, // This is now the IndieFlower font
-        captionFontSize,
-        pageWidth - (this.PAGE_MARGIN * 2)
-      );
-      
+    // Add caption (now guaranteed to fit on same page)
+    if (slide.text && captionLines.length > 0) {
+      const captionFontSize = 18; // Consistent with calculation above
+
       // Add some space before caption
-      yPosition -= 30;
-      
-      // Center the caption text
+      yPosition -= 20;
+
+      // ✅ GUARANTEED FIT: Caption will fit because we calculated space above
       captionLines.forEach((line) => {
         const textWidth = captionFont.widthOfTextAtSize(line, captionFontSize);
         const centerX = (pageWidth - textWidth) / 2;
-        
+
         page.drawText(line, {
           x: centerX,
           y: yPosition,
           size: captionFontSize,
-          font: captionFont, // IndieFlower font
-          color: rgb(0.2, 0.2, 0.2) // Darker color for better readability
+          font: captionFont,
+          color: rgb(0.2, 0.2, 0.2)
         });
-        yPosition -= captionFontSize * this.LINE_HEIGHT;
+        yPosition -= captionFontSize * this.LINE_HEIGHT + 2;
       });
     }
 
     // Add watermark
-      page.drawText(watermarkText, {
+    page.drawText(watermarkText, {
       x: pageWidth - this.PAGE_MARGIN - 100,
       y: this.PAGE_MARGIN,
-        size: 10,
-        font: bodyFont,
+      size: 10,
+      font: bodyFont,
       color: rgb(0.8, 0.8, 0.8)
     });
 
@@ -500,16 +543,16 @@ export class EnhancedPdfExportService {
   ): Promise<void> {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
-    
+
     // Start from top of page
     let currentY = pageHeight - this.PAGE_MARGIN;
-    
+
     // ACKNOWLEDGEMENT {TITLE} - Bold, large, top-center, simple font
     const titleFontSize = 36;
     const titleText = 'ACKNOWLEDGEMENT';
     const titleWidth = bodyFont.widthOfTextAtSize(titleText, titleFontSize);
     const titleX = (pageWidth - titleWidth) / 2;
-    
+
     page.drawText(titleText, {
       x: titleX,
       y: currentY,
@@ -518,13 +561,13 @@ export class EnhancedPdfExportService {
       color: rgb(0.1, 0.1, 0.1)
     });
     currentY -= titleFontSize * this.LINE_HEIGHT + 40;
-    
+
     // A Note on Your AI-Generated Story {sub-title} - Dosis font
     const subtitleFontSize = 24;
     const subtitleText = 'A Note on Your AI-Generated Story';
     const subtitleWidth = dosisFont.widthOfTextAtSize(subtitleText, subtitleFontSize);
     const subtitleX = (pageWidth - subtitleWidth) / 2;
-    
+
     page.drawText(subtitleText, {
       x: subtitleX,
       y: currentY,
@@ -533,12 +576,12 @@ export class EnhancedPdfExportService {
       color: rgb(0.2, 0.2, 0.2)
     });
     currentY -= subtitleFontSize * this.LINE_HEIGHT + 30;
-    
+
     // This story was crafted... {text} - Consolas font
     const textFontSize = 12;
     const textContent = "This story was crafted through a creative partnership between you and the Felearn AI platform, powered by Google's Gemini model.";
     const textLines = this.splitTextToFitWidth(textContent, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-    
+
     textLines.forEach(line => {
       page.drawText(line, {
         x: this.PAGE_MARGIN,
@@ -550,7 +593,7 @@ export class EnhancedPdfExportService {
       currentY -= textFontSize * this.LINE_HEIGHT;
     });
     currentY -= 20;
-    
+
     // How This Story Was Made {heading} - Simple font
     const headingFontSize = 18;
     const headingText = 'How This Story Was Made';
@@ -562,11 +605,11 @@ export class EnhancedPdfExportService {
       color: rgb(0.1, 0.1, 0.1)
     });
     currentY -= headingFontSize * this.LINE_HEIGHT + 15;
-    
+
     // Your Concept: {text} - Consolas font
     const conceptText = "Your Concept: The core idea, characters, and learning objective for this narrative came directly from the prompt you provided.";
     const conceptLines = this.splitTextToFitWidth(conceptText, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-    
+
     conceptLines.forEach(line => {
       page.drawText(line, {
         x: this.PAGE_MARGIN,
@@ -578,11 +621,11 @@ export class EnhancedPdfExportService {
       currentY -= textFontSize * this.LINE_HEIGHT;
     });
     currentY -= 15;
-    
+
     // AI Generation: {text} - Consolas font
     const aiText = "AI Generation: Felearn AI used that concept to generate the story text and create the accompanying illustrations.";
     const aiLines = this.splitTextToFitWidth(aiText, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-    
+
     aiLines.forEach(line => {
       page.drawText(line, {
         x: this.PAGE_MARGIN,
@@ -594,7 +637,7 @@ export class EnhancedPdfExportService {
       currentY -= textFontSize * this.LINE_HEIGHT;
     });
     currentY -= 20;
-    
+
     // Content & Usage Disclaimer {heading} - Simple font
     const disclaimerHeadingText = 'Content & Usage Disclaimer';
     page.drawText(disclaimerHeadingText, {
@@ -605,11 +648,11 @@ export class EnhancedPdfExportService {
       color: rgb(0.1, 0.1, 0.1)
     });
     currentY -= headingFontSize * this.LINE_HEIGHT + 15;
-    
+
     // This document was generated... {text} - Consolas font
     const disclaimerText1 = "This document was generated for your personal and educational enjoyment. While we aim for creative and helpful content, please be aware that:";
     const disclaimerLines1 = this.splitTextToFitWidth(disclaimerText1, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-    
+
     disclaimerLines1.forEach(line => {
       page.drawText(line, {
         x: this.PAGE_MARGIN,
@@ -621,11 +664,11 @@ export class EnhancedPdfExportService {
       currentY -= textFontSize * this.LINE_HEIGHT;
     });
     currentY -= 15;
-    
+
     // The narrative is AI-generated... {text} - Consolas font
     const disclaimerText2 = "The narrative is AI-generated and may contain fictional elements or factual inaccuracies. Please verify any critical information independently.";
     const disclaimerLines2 = this.splitTextToFitWidth(disclaimerText2, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-    
+
     disclaimerLines2.forEach(line => {
       page.drawText(line, {
         x: this.PAGE_MARGIN,
@@ -637,11 +680,11 @@ export class EnhancedPdfExportService {
       currentY -= textFontSize * this.LINE_HEIGHT;
     });
     currentY -= 15;
-    
+
     // You are welcome to use... {text} - Consolas font
     const disclaimerText3 = "You are welcome to use and share this story for non-commercial purposes. Commercial use or redistribution of this content is prohibited.";
     const disclaimerLines3 = this.splitTextToFitWidth(disclaimerText3, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-    
+
     disclaimerLines3.forEach(line => {
       page.drawText(line, {
         x: this.PAGE_MARGIN,
@@ -653,13 +696,13 @@ export class EnhancedPdfExportService {
       currentY -= textFontSize * this.LINE_HEIGHT;
     });
     currentY -= 30;
-    
+
     // Generated by Felearn AI {End title} - Ubuntu Light font
     const endTitleFontSize = 16;
     const endTitleText = 'Generated by Felearn AI';
     const endTitleWidth = ubuntuLightFont.widthOfTextAtSize(endTitleText, endTitleFontSize);
     const endTitleX = (pageWidth - endTitleWidth) / 2;
-    
+
     page.drawText(endTitleText, {
       x: endTitleX,
       y: currentY,
@@ -668,18 +711,18 @@ export class EnhancedPdfExportService {
       color: rgb(0.4, 0.4, 0.4)
     });
     currentY -= endTitleFontSize * this.LINE_HEIGHT + 20;
-    
+
     // Small logo (same as front page but smaller)
     const smallLogoWidth = 139;
     const smallLogoHeight = 41;
-    
+
     try {
       const imageBytes = await this.loadImageFromUrl('/assets/felearn-logo.png');
       if (imageBytes) {
         const image = await pdfDoc.embedPng(imageBytes);
         const logoX = (pageWidth - smallLogoWidth) / 2;
         const logoY = currentY - smallLogoHeight;
-        
+
         page.drawImage(image, {
           x: logoX,
           y: logoY,
@@ -691,7 +734,7 @@ export class EnhancedPdfExportService {
     } catch (error) {
       console.warn('Failed to load small logo for acknowledgment page:', error);
     }
-    
+
     // Creation Metadata - Consolas font
     const metadataFontSize = 10;
     const currentTime = new Date().toLocaleString('en-US', {
@@ -702,7 +745,7 @@ export class EnhancedPdfExportService {
       minute: '2-digit',
       second: '2-digit'
     });
-    
+
     const metadataText = `Creation Metadata: PDF generated on ${currentTime}`;
     page.drawText(metadataText, {
       x: this.PAGE_MARGIN,
@@ -733,19 +776,93 @@ export class EnhancedPdfExportService {
 
 
   /**
-   * Clean caption text
+   * Calculate optimal layout for image and caption to fit together
    */
-  private cleanCaption(caption: string): string {
-    return caption
-      .replace(/\*\*Image \d+:\*\*/g, '')
-      .replace(/Caption:/g, '')
-      .replace(/\*\*/g, '')
-      .replace(/^["']|["']$/g, '')
-      .trim();
+  private calculateOptimalLayout(
+    availableHeight: number,
+    imageAspectRatio: number,
+    captionLines: number,
+    captionFontSize: number,
+    pageWidth: number
+  ): { imageWidth: number; imageHeight: number; fits: boolean } {
+    const maxImageWidth = pageWidth - (this.PAGE_MARGIN * 2);
+    const captionHeight = captionLines * captionFontSize * this.LINE_HEIGHT + 60; // +60 for spacing
+    const spaceForImage = availableHeight - captionHeight;
+
+    if (spaceForImage < 80) { // Minimum viable image height
+      return { imageWidth: 0, imageHeight: 0, fits: false };
+    }
+
+    // Try natural image size first
+    const naturalImageHeight = maxImageWidth / imageAspectRatio;
+
+    if (naturalImageHeight <= spaceForImage) {
+      return {
+        imageWidth: maxImageWidth,
+        imageHeight: naturalImageHeight,
+        fits: true
+      };
+    }
+
+    // Scale down to fit
+    const scaledImageHeight = spaceForImage;
+    const scaledImageWidth = scaledImageHeight * imageAspectRatio;
+
+    // Ensure width doesn't exceed page
+    if (scaledImageWidth <= maxImageWidth) {
+      return {
+        imageWidth: scaledImageWidth,
+        imageHeight: scaledImageHeight,
+        fits: true
+      };
+    }
+
+    // Width-constrained scaling
+    return {
+      imageWidth: maxImageWidth,
+      imageHeight: maxImageWidth / imageAspectRatio,
+      fits: true
+    };
   }
 
   /**
-   * Split text to fit within specified width
+   * Clean caption text with improved handling
+   */
+  private cleanCaption(caption: string): string {
+    if (!caption || typeof caption !== 'string') {
+      return 'Image caption';
+    }
+
+    let cleaned = caption
+      .replace(/\*\*Image \d+:\*\*/g, '') // Remove image markers
+      .replace(/Caption:/gi, '') // Remove caption labels
+      .replace(/\*\*/g, '') // Remove bold markers
+      .replace(/^["']|["']$/g, '') // Remove quotes
+      .replace(/^\s*-\s*/, '') // Remove leading dashes
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+
+    // Extract text from quotes if present
+    const quotedMatch = cleaned.match(/"([^"]+)"/);
+    if (quotedMatch && quotedMatch[1]) {
+      cleaned = quotedMatch[1].trim();
+    }
+
+    // Fallback if caption is empty or too short
+    if (!cleaned || cleaned.length < 3) {
+      return 'Image caption';
+    }
+
+    // Limit caption length to prevent overflow
+    if (cleaned.length > 200) {
+      cleaned = cleaned.substring(0, 197) + '...';
+    }
+
+    return cleaned;
+  }
+
+  /**
+   * Split text to fit within specified width with improved word wrapping
    */
   private splitTextToFitWidth(
     text: string,
@@ -760,20 +877,31 @@ export class EnhancedPdfExportService {
     for (const word of words) {
       const testLine = currentLine ? `${currentLine} ${word}` : word;
       const testWidth = font.widthOfTextAtSize(testLine, fontSize);
-      
+
       if (testWidth <= maxWidth) {
         currentLine = testLine;
       } else {
         if (currentLine) {
           lines.push(currentLine);
           currentLine = word;
+
+          // ✅ Check if single word is still too long
+          const singleWordWidth = font.widthOfTextAtSize(word, fontSize);
+          if (singleWordWidth > maxWidth) {
+            // Break long word into smaller parts
+            const brokenWord = this.breakLongWord(word, font, fontSize, maxWidth);
+            lines.push(...brokenWord.slice(0, -1)); // Add all but last part
+            currentLine = brokenWord[brokenWord.length - 1]; // Keep last part for next line
+          }
         } else {
-          // Word is too long, break it
-          lines.push(word);
+          // Single word is too long, break it
+          const brokenWord = this.breakLongWord(word, font, fontSize, maxWidth);
+          lines.push(...brokenWord.slice(0, -1));
+          currentLine = brokenWord[brokenWord.length - 1];
         }
       }
     }
-    
+
     if (currentLine) {
       lines.push(currentLine);
     }
@@ -782,19 +910,55 @@ export class EnhancedPdfExportService {
   }
 
   /**
+   * Break a long word into smaller parts that fit within maxWidth
+   */
+  private breakLongWord(
+    word: string,
+    font: any,
+    fontSize: number,
+    maxWidth: number
+  ): string[] {
+    const parts: string[] = [];
+    let currentPart = '';
+
+    for (let i = 0; i < word.length; i++) {
+      const testPart = currentPart + word[i];
+      const testWidth = font.widthOfTextAtSize(testPart, fontSize);
+
+      if (testWidth <= maxWidth) {
+        currentPart = testPart;
+      } else {
+        if (currentPart) {
+          parts.push(currentPart + '-'); // Add hyphen for broken words
+          currentPart = word[i];
+        } else {
+          // Even single character is too wide (shouldn't happen with normal fonts)
+          parts.push(word[i]);
+        }
+      }
+    }
+
+    if (currentPart) {
+      parts.push(currentPart);
+    }
+
+    return parts.length > 0 ? parts : [word];
+  }
+
+  /**
    * Download PDF file
    */
   private downloadPDF(pdfBytes: Uint8Array, fileName: string): void {
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     // Clean up
     setTimeout(() => URL.revokeObjectURL(url), 100);
   }

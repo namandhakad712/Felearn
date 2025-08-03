@@ -38,11 +38,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
           const { databaseService } = await import('@/services/database');
           const userDoc = await databaseService.getUserDocument(user.$id);
           
-          console.log('📄 User document:', userDoc);
+          // User document retrieved
           
           if (!userDoc) {
             // User document doesn't exist, create it and require onboarding
-            console.log('❌ User document not found, creating and requiring onboarding');
+            // User document not found, creating and requiring onboarding
             try {
               const { extractNameFromEmail } = await import('@/utils/userUtils');
               await databaseService.createUserDocument(user.$id, {

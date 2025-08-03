@@ -113,7 +113,7 @@ class AppwriteService {
       
       // Update email
       const user = await account.updateEmail(email, password);
-      console.log('Email updated successfully:', user);
+      // Email updated successfully
       return user;
     } catch (error: any) {
       console.error('Update email error:', error);
@@ -212,7 +212,7 @@ class AppwriteService {
     try {
       // Update verification URL to match the route
       const verificationUrl = window.location.origin + '/auth/verify';
-      console.log('📧 Sending verification email with URL:', verificationUrl);
+      // Sending verification email
       await account.createVerification(verificationUrl);
       return true;
     } catch (error) {
@@ -223,8 +223,7 @@ class AppwriteService {
 
   async verifyEmail(userId: string, secret: string) {
     try {
-      console.log('Starting email verification for user:', userId);
-      console.log('Verification secret:', secret);
+      // Starting email verification
       await account.updateVerification(userId, secret);
       console.log('Email verification completed successfully');
       return true;

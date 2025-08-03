@@ -1,13 +1,56 @@
 {
-  "name": "felearn",
-  "private": true,
-  "version": "0.0.0",
+  "name": "felearn-ai",
+  "private": false,
+  "version": "1.0.0",
   "type": "module",
+  "description": "Transform complex concepts into engaging visual stories featuring adorable cats. AI-powered educational platform that makes learning fun and memorable.",
+  "keywords": [
+    "ai",
+    "education",
+    "storytelling",
+    "visual-learning",
+    "cats",
+    "react",
+    "typescript",
+    "appwrite",
+    "gemini-ai"
+  ],
+  "author": {
+    "name": "Felearn AI Team",
+    "email": "team@felearn.ai",
+    "url": "https://felearn.vercel.app"
+  },
+  "license": "MIT",
+  "homepage": "https://felearn.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/felearn-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/felearn-ai/issues",
+    "email": "support@felearn.ai"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:clean": "node scripts/clean-console.js && npm run build",
+    "build:analyze": "tsc && vite build --mode analyze",
+    "build:staging": "tsc && vite build --mode staging",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "lint:prod": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 20",
+    "preview": "vite preview",
+    "preview:dist": "vite preview --port 4173",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.vite",
+    "postinstall": "npm run type-check",
+    "start": "npm run preview",
+    "deploy": "npm run build && vercel --prod",
+    "deploy:staging": "npm run build:staging && vercel"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

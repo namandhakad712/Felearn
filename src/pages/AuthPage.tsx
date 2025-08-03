@@ -82,7 +82,7 @@ const AuthPage: React.FC = () => {
             }
 
             try {
-              console.log('Attempting auto-registration for:', email);
+              // Attempting auto-registration
               // Attempt auto-registration
               const registerResult: AuthResponse = await register(email, password);
               if (registerResult.success) {

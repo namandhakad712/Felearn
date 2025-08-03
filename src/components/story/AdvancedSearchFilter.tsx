@@ -117,11 +117,12 @@ const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({
         case 'length':
           comparison = a.content.length - b.content.length;
           break;
-        case 'images':
+        case 'images': {
           const aImages = a.images?.length || 0;
           const bImages = b.images?.length || 0;
           comparison = aImages - bImages;
           break;
+        }
         case 'date':
         default:
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();

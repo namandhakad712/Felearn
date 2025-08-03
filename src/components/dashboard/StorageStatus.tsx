@@ -6,7 +6,7 @@ import { APPWRITE_CONFIG } from '../../config/appwrite';
 const StorageStatus: React.FC = () => {
   const [bucketExists, setBucketExists] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(true);
-  const [showDetails, setShowDetails] = useState(false);
+  const [_showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -27,7 +27,7 @@ const StorageStatus: React.FC = () => {
     setShowDetails(true);
     console.log('🧪 Running detailed bucket test...');
     const result = await testBucketConnection();
-    console.log('📊 Test result:', result);
+    // Test result received
   };
 
   if (isChecking) {

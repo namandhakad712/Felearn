@@ -78,21 +78,16 @@ const EmailVerificationPage: React.FC = () => {
       const fullUrl = window.location.href;
       const hashParams = window.location.hash;
       
-      console.log('🔍 Full URL:', fullUrl);
-      console.log('🔍 Hash params:', hashParams);
-      console.log('🔍 React Router params:', reactRouterParams);
-      console.log('🔍 Main URL params:', allMainParams);
-      console.log('🔍 Extracted userId:', userId);
-      console.log('🔍 Extracted secret:', secret);
+      // Extracting verification parameters
       
       // Also try to extract from hash if search params are empty
       if (Object.keys(reactRouterParams).length === 0 && hashParams) {
-        console.log('🔍 No React Router params found, checking hash for parameters...');
+        // No React Router params found, checking hash for parameters
         const hashSearch = hashParams.includes('?') ? hashParams.split('?')[1] : '';
         if (hashSearch) {
           const hashSearchParams = new URLSearchParams(hashSearch);
           const hashParamsObj = Object.fromEntries(hashSearchParams.entries());
-          console.log('🔍 Hash search params:', hashParamsObj);
+          // Hash search params found
         }
       }
       
@@ -139,10 +134,10 @@ const EmailVerificationPage: React.FC = () => {
 
       try {
         const authService = new AuthService();
-        console.log('🔍 Starting verification process...');
+        // Starting verification process
         
         const result = await authService.verifyEmail(userId, secret);
-        console.log('🔍 Verification result:', result);
+        // Verification result received
         
         if (result.success) {
           console.log('✅ Verification successful!');

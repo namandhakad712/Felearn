@@ -6,12 +6,7 @@ const client = new Client()
     .setEndpoint(appConfig.api.appwrite.endpoint)
     .setProject(appConfig.api.appwrite.project);
 
-// Debug: Log Appwrite configuration
-console.log('🔧 Appwrite Configuration:', {
-    endpoint: appConfig.api.appwrite.endpoint,
-    project: appConfig.api.appwrite.project,
-    environment: appConfig.environment
-});
+// Appwrite configuration - debug logging removed for production
 
 // Export initialized services
 export const account = new Account(client);

@@ -80,7 +80,7 @@ export const createOptimizedPreviewUrl = (
   try {
     // Build preview URL with transformations
     const baseUrl = url.split('/files/')[0];
-    const bucketId = url.match(/\/buckets\/([^\/]+)\//)?.[1];
+    const bucketId = url.match(/\/buckets\/([^/]+)\//)?.[1];
     
     if (!bucketId) {
       return url;
@@ -342,7 +342,7 @@ export const fixStoryImages = async (storyId: string): Promise<{
  * Fix images for all user stories
  */
 export const fixAllUserImages = async (userId: string): Promise<BulkFixResult> => {
-  console.log('🔧 Starting bulk image fix for user:', userId);
+  // Starting bulk image fix
   
   const result: BulkFixResult = {
     totalStories: 0,
@@ -360,14 +360,14 @@ export const fixAllUserImages = async (userId: string): Promise<BulkFixResult> =
     result.totalStories = stories.length;
     
     if (stories.length === 0) {
-      console.log('No stories found for user:', userId);
+      // No stories found for user
       return result;
     }
 
     // Fix each story
     for (let i = 0; i < stories.length; i++) {
       const story = stories[i];
-      console.log(`🔧 Processing story ${i + 1}/${stories.length}: ${story.title}`);
+      // Processing story
       
       try {
         const storyResult = await fixStoryImages(story.$id);

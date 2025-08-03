@@ -29,7 +29,7 @@ export const parseAppwriteUrl = (url: string): { bucketId?: string; fileId?: str
 
   try {
     // Pattern: /storage/buckets/{bucketId}/files/{fileId}/...
-    const match = url.match(/\/storage\/buckets\/([^\/]+)\/files\/([^\/\?]+)/);
+    const match = url.match(/\/storage\/buckets\/([^/]+)\/files\/([^/?]+)/);
     if (match) {
       return {
         bucketId: match[1],
@@ -38,7 +38,7 @@ export const parseAppwriteUrl = (url: string): { bucketId?: string; fileId?: str
     }
 
     // Alternative pattern: /v1/storage/buckets/{bucketId}/files/{fileId}/...
-    const altMatch = url.match(/\/v1\/storage\/buckets\/([^\/]+)\/files\/([^\/\?]+)/);
+    const altMatch = url.match(/\/v1\/storage\/buckets\/([^/]+)\/files\/([^/?]+)/);
     if (altMatch) {
       return {
         bucketId: altMatch[1],
@@ -215,7 +215,7 @@ export const testFileAccess = async (fileId: string): Promise<boolean> => {
  */
 export const getStorySlideImageUrl = (
   originalUrl: string,
-  slideIndex: number = 0
+  _slideIndex: number = 0
 ): string => {
   return optimizeImageUrl(originalUrl, {
     width: 800,

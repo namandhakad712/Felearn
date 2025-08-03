@@ -16,7 +16,7 @@ export const initializeAuthSession = async (): Promise<boolean> => {
     const account = new Account(client);
     
     // Try to get the current session
-    const session = await account.getSession('current');
+    const _session = await account.getSession('current');
     
     // If we get here without an error, the session exists and is valid
     console.log('Session restored successfully');

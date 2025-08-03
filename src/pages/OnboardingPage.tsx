@@ -63,7 +63,7 @@ const OnboardingPage: React.FC = () => {
   // Debug: Log component mount and user info
   React.useEffect(() => {
     console.log('🚀 OnboardingPage mounted');
-    console.log('👤 User:', user);
+    // User object available
     console.log('🔄 Current step:', currentStep);
     return () => {
       console.log('🚀 OnboardingPage unmounted');
@@ -71,14 +71,10 @@ const OnboardingPage: React.FC = () => {
   }, []);
 
   // Debug: Log when currentStep changes
-  React.useEffect(() => {
-    console.log('🔄 OnboardingPage: currentStep changed to:', currentStep);
-  }, [currentStep]);
+  // Debug: Log when currentStep changes
 
   // Debug: Log when selectedTheme changes
-  React.useEffect(() => {
-    console.log('🎨 OnboardingPage: selectedTheme changed to:', selectedTheme);
-  }, [selectedTheme]);
+  // Debug: Log when selectedTheme changes
 
   // Early return with debug info if user is not available
   if (!user) {
@@ -163,7 +159,7 @@ const OnboardingPage: React.FC = () => {
       console.log('🎯 Onboarding completed, navigating to dashboard');
       // Apply theme before navigating
       setTheme(selectedTheme);
-      console.log('🎨 Applying theme:', selectedTheme);
+      // Applying theme
       
       // Navigate to dashboard
       navigate('/dashboard');

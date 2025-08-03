@@ -1,7 +1,7 @@
 import { AppwriteException } from 'appwrite';
 import AppwriteErrorHandler, { ErrorInfo, ErrorType, ErrorSeverity } from './appwriteErrorHandler';
 import { appwriteService } from '../services/appwrite';
-import ErrorMessageFormatter from './errorMessageFormatter';
+// import ErrorMessageFormatter from './errorMessageFormatter';
 
 /**
  * Authentication Error Handler

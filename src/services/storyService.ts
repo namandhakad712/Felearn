@@ -1,4 +1,4 @@
-import { ID, Query } from 'appwrite';
+import { Query } from 'appwrite';
 import { databaseService } from './databaseService';
 import { APPWRITE_CONFIG } from '../config/appwrite';
 import { Story, StorySlide } from '../types';
@@ -30,6 +30,11 @@ export class StoryService {
    * @param content Story content
    * @param images Optional array of image URLs
    * @param tags Optional array of tags
+   * @param email User email
+   * @param name User name
+   * @param lastLogin User last login
+   * @param slides Story slides
+   * @param tokens Token count used for generation
    * @returns Promise with the created story
    */
   async createStory(
@@ -41,7 +46,8 @@ export class StoryService {
     email: string = 'user@example.com', // Default email as fallback
     name: string = 'User', // Default name as fallback
     lastLogin: string = new Date().toISOString(), // Default lastLogin as current time
-    slides: StorySlide[] = [] // Add slides parameter
+    slides: StorySlide[] = [], // Add slides parameter
+    tokens: number = 0 // Add tokens parameter
   ): Promise<Story> {
     const storyData: Partial<Story> = {
       userId,
@@ -53,14 +59,39 @@ export class StoryService {
       email, // Add required email field
       name, // Add required name field
       lastLogin, // Add required lastLogin field
+      tokens, // Add tokens to the data being saved
       createdAt: new Date().toISOString(),
       isPinned: false
     };
     
-    return databaseService.createDocument<Story>(
+    // Debug logging
+    console.log('📝 Creating story with data:', {
+      title: title,
+      titleLength: title.length,
+      tokens: tokens,
+      slidesCount: slides.length,
+      userId: userId
+    });
+    
+    // Ensure tokens is a valid number
+    if (typeof tokens !== 'number' || isNaN(tokens)) {
+      console.warn('⚠️ Invalid tokens value, setting to 0:', tokens);
+      storyData.tokens = 0;
+    }
+    
+    const createdStory = await databaseService.createDocument<Story>(
       this.collectionId,
       storyData
     );
+    
+    console.log('✅ Story created in database:', {
+      id: createdStory.$id,
+      title: createdStory.title,
+      tokens: createdStory.tokens,
+      hasTokensField: 'tokens' in createdStory
+    });
+    
+    return createdStory;
   }
 
   /**
@@ -110,7 +141,7 @@ export class StoryService {
                 }
                 
                 // Match patterns like: /files/file-id/view or /files/file-id/preview
-                const match = url.match(/\/files\/([^\/\?]+)(?:\/(?:view|preview))?/);
+                const match = url.match(/\/files\/([^/?]+)(?:\/(?:view|preview))?/);
                 const extractedId = match ? match[1] : null;
                 console.log(`Extracted file ID: ${extractedId}`);
                 return extractedId;

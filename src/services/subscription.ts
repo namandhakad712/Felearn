@@ -50,7 +50,7 @@ class SubscriptionService {
         subscriptionData
       );
 
-      console.log('Email subscribed successfully:', email);
+      // Email subscribed successfully
       return true;
     } catch (error: any) {
       console.error('Subscription error:', error);

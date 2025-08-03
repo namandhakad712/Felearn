@@ -145,9 +145,9 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
   const executeEmailUpdate = async () => {
     setIsUpdatingEmail(true);
     try {
-      console.log('🔄 Updating email to:', newEmail);
+      // Updating email
       const result = await authService.updateEmail(newEmail, emailPassword);
-      console.log('✅ Email update result:', result);
+      // Email update result received
       
       if (result.success) {
         // Clear form data
@@ -193,9 +193,9 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
   const executePasswordUpdate = async () => {
     setIsUpdatingPassword(true);
     try {
-      console.log('🔄 Updating password...');
+      // Updating password
       const result = await authService.updatePassword(newPassword, currentPassword);
-      console.log('✅ Password update result:', result);
+      // Password update completed
       
       if (result.success) {
         onSuccess(result.message || 'Password updated successfully');
@@ -312,7 +312,7 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
   const handlePasswordReset = async () => {
     try {
       if (user?.email) {
-        console.log('🔄 Sending password reset email to:', user.email);
+        // Sending password reset email
         const result = await resetPassword(user.email);
         if (result.success) {
           onSuccess(result.message || 'Password reset email sent. Please check your inbox.');
@@ -384,7 +384,7 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
                     try {
                       console.log('🔄 Sending email verification...');
                       const result = await authService.sendEmailVerification();
-                      console.log('✅ Email verification result:', result);
+                      // Email verification completed
                       
                       if (result.success) {
                         onSuccess(result.message || 'Verification email sent. Please check your inbox.');

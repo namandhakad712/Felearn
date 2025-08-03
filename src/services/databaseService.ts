@@ -79,7 +79,15 @@ export class AppwriteDatabaseService implements DataService {
         permissions
       );
       
-      return this.processDocument(document) as T;
+      const processedDocument = this.processDocument(document) as T;
+      
+      // Debug logging for stories collection
+      if (collectionId.includes('stories')) {
+        console.log('📄 Raw document from database:', document);
+        console.log('📄 Processed document:', processedDocument);
+      }
+      
+      return processedDocument;
     } catch (error) {
       console.error(`Create document error (${collectionId}):`, error);
       const errorInfo = AppwriteErrorHandler.handleDatabaseError(error);

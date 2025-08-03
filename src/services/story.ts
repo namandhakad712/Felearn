@@ -30,10 +30,10 @@ export class StoryService {
    */
   async getStories(): Promise<Story[]> {
     try {
-      console.log('Fetching user stories...');
+      // Fetching user stories
 
       const stories = await appwriteService.getStories();
-      console.log('Stories fetched successfully:', stories.length);
+      // Stories fetched successfully
 
       // Sort stories by creation date (newest first) and pinned status
       return stories.sort((a, b) => {
@@ -144,7 +144,7 @@ export class StoryService {
    */
   async searchStories(query: string): Promise<Story[]> {
     try {
-      console.log('Searching stories:', query);
+      // Searching stories
 
       const allStories = await this.getStories();
 
@@ -159,7 +159,7 @@ export class StoryService {
         (story.tags && story.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
       );
 
-      console.log('Search completed:', filteredStories.length, 'results');
+      // Search completed
       return filteredStories;
     } catch (error) {
       console.error('Error searching stories:', error);
@@ -172,7 +172,7 @@ export class StoryService {
    */
   async getFilteredStories(filter: 'all' | 'pinned' | 'recent'): Promise<Story[]> {
     try {
-      console.log('Getting filtered stories:', filter);
+      // Getting filtered stories
 
       const allStories = await this.getStories();
 
@@ -180,10 +180,11 @@ export class StoryService {
         case 'pinned':
           return allStories.filter(story => story.isPinned);
 
-        case 'recent':
+        case 'recent': {
           const weekAgo = new Date();
           weekAgo.setDate(weekAgo.getDate() - 7);
           return allStories.filter(story => new Date(story.createdAt) > weekAgo);
+        }
 
         case 'all':
         default:
@@ -200,7 +201,7 @@ export class StoryService {
    */
   async batchDeleteStories(storyIds: string[]): Promise<boolean> {
     try {
-      console.log('Batch deleting stories:', storyIds);
+      // Batch deleting stories
 
       const deletePromises = storyIds.map(id => this.deleteStory(id));
       await Promise.all(deletePromises);

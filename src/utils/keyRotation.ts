@@ -1,6 +1,6 @@
 import { encryptionService } from '../services/encryption';
 import { appwriteService } from '../services/appwrite';
-import { User } from '../types';
+// import { User } from '../types';
 import { encryptApiKey, decryptApiKey } from './encryption';
 
 /**
