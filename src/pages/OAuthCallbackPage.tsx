@@ -5,19 +5,19 @@ import { AuthService } from '@/services/auth';
 
 const OAuthCallbackPage: React.FC = () => {
   const navigate = useNavigate();
-  const { refreshUser, isAuthenticated, isLoading } = useAuth();
+  const { refreshUser, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!authLoading && isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   // Show loading while checking authentication
-  if (isLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
