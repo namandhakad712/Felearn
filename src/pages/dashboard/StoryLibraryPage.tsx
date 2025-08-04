@@ -37,7 +37,7 @@ const StoryLibraryPage: React.FC = () => {
 
   // Story detail view modal state
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  // const [selectedStory, setSelectedStory] = useState<Story | null>(null); // Removed unused variable
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
 
   // Story view modes state
   const [isViewModesOpen, setIsViewModesOpen] = useState(false);
@@ -240,16 +240,16 @@ const StoryLibraryPage: React.FC = () => {
     setIsRenameModalOpen(true);
   };
 
-  // const _openDetailModal = (story: Story) => { // Unused function
-  //   console.log('Opening story detail modal:', {
-  //     title: story.title,
-  //     imagesCount: story.images?.length || 0,
-  //     images: story.images?.map(img => img.substring(0, 50) + '...') || [],
-  //     slides: story.slides?.length || 0
-  //   });
-  //   setSelectedStory(story);
-  //   setIsDetailModalOpen(true);
-  // };
+  const openDetailModal = (story: Story) => {
+    console.log('Opening story detail modal:', {
+      title: story.title,
+      imagesCount: story.images?.length || 0,
+      images: story.images?.map(img => img.substring(0, 50) + '...') || [],
+      slides: story.slides?.length || 0
+    });
+    setSelectedStory(story);
+    setIsDetailModalOpen(true);
+  };
 
   const openViewModes = (story: Story) => {
     console.log('Opening story view modes:', {
@@ -737,6 +737,21 @@ const StoryLibraryPage: React.FC = () => {
                         id={`menu-${story.$id}`}
                         className="hidden absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-20"
                       >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById(`menu-${story.$id}`)?.classList.add('hidden');
+                            openDetailModal(story);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          View Details
+                        </button>
+                        
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
