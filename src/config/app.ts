@@ -68,12 +68,12 @@ export const appConfig: AppConfig = {
   },
   auth: {
     routes: {
-      login: '/app.html#/auth/login',
-      callback: '/app.html#/auth/callback',
-      verify: '/app.html#/auth/verify',
-      resetPassword: '/app.html#/auth/reset-password',
-      dashboard: '/app.html#/dashboard',
-      onboarding: '/app.html#/onboarding',
+      login: '/auth/login',
+      callback: '/auth/callback',
+      verify: '/auth/verify',
+      resetPassword: '/auth/reset-password',
+      dashboard: '/dashboard',
+      onboarding: '/onboarding',
     },
   },
 };

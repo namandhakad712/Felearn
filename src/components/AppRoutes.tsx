@@ -30,6 +30,15 @@ function AppRoutes() {
         <Route path="/auth/verify" element={<EmailVerificationPage />} />
         <Route path="/auth/callback" element={<OAuthCallbackPage />} />
         <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/test-oauth" element={
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">OAuth Test Page</h1>
+              <p className="text-gray-600">If you can see this, the React app is working!</p>
+              <p className="text-sm text-gray-500 mt-2">URL: {window.location.href}</p>
+            </div>
+          </div>
+        } />
         <Route 
           path="/onboarding" 
           element={

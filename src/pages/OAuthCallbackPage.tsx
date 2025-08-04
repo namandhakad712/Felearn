@@ -13,6 +13,10 @@ const OAuthCallbackPage: React.FC = () => {
     const handleCallback = async () => {
       try {
         console.log('🔄 Starting OAuth callback handling...');
+        console.log('📍 Current URL:', window.location.href);
+        console.log('📍 URL hash:', window.location.hash);
+        console.log('📍 URL pathname:', window.location.pathname);
+        console.log('📍 URL search:', window.location.search);
         
         const authService = new AuthService();
         
@@ -20,6 +24,14 @@ const OAuthCallbackPage: React.FC = () => {
         try {
           const currentUser = await authService.getCurrentUser();
           console.log('👤 Current user before callback:', currentUser ? 'Found' : 'Not found');
+          if (currentUser) {
+            console.log('👤 User details:', {
+              id: currentUser.$id,
+              email: currentUser.email,
+              name: currentUser.name,
+              emailVerification: currentUser.emailVerification
+            });
+          }
         } catch (userError) {
           console.log('❌ Error getting current user:', userError);
         }
@@ -37,6 +49,12 @@ const OAuthCallbackPage: React.FC = () => {
         }
       } catch (error: any) {
         console.error('❌ OAuth callback error:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          code: error.code,
+          type: error.type,
+          stack: error.stack
+        });
         setError(error.message || 'OAuth authentication failed');
         setTimeout(() => {
           console.log('🔄 Redirecting to login due to error...');

@@ -16,6 +16,18 @@
       "destination": "/app.html"
     },
     {
+      "source": "/auth/:type",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/onboarding",
+      "destination": "/app.html"
+    },
+    {
       "source": "/app.html",
       "destination": "/app.html"
     },

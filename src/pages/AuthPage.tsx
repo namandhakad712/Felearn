@@ -97,9 +97,9 @@ const AuthPage: React.FC = () => {
             } catch (registerError: any) {
               console.error('Auto-registration failed:', registerError);
               if (registerError.message?.includes('already exists')) {
-                setError('Account exists but password is incorrect. Please check your password.');
+                setError('An account with this email already exists. Please check your password or use "Forgot Password" to reset it.');
               } else {
-                setError(`Login failed: ${loginError.message}`);
+                setError(`Registration failed: ${registerError.message}`);
               }
             }
           } else {
