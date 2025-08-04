@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button } from '../ui';
+import { Modal } from '../ui';
 import { adminService } from '../../services';
+import { User } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
 
 interface UserDetailModalProps {

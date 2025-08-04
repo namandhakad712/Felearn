@@ -188,16 +188,16 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
     }
   };
   
-  // Handle select all checkbox
+  // Handle select all checkbox - commented out due to variable order issues
   // const _handleSelectAll = () => { // Unused function
-    if (selectAll) {
-      // Deselect all
-      setSelectedUsers([]);
-    } else {
-      // Select all visible users
-      setSelectedUsers(paginatedUsers.map(user => user.$id));
-    }
-    // setSelectAll(!selectAll);
+  //   if (selectAll) {
+  //     // Deselect all
+  //     setSelectedUsers([]);
+  //   } else {
+  //     // Select all visible users
+  //     setSelectedUsers(paginatedUsers.map(user => user.$id));
+  //   }
+  //   // setSelectAll(!selectAll);
   // }; // End of unused function
   
   // Handle individual user selection
@@ -209,7 +209,14 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
   //   }
   // }; // End of unused function
   
-  // Check if all visible users are selected
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * usersPerPage,
+    currentPage * usersPerPage
+  );
+
+  // Check if all visible users are selected - moved after paginatedUsers declaration
   useEffect(() => {
     const allSelected = paginatedUsers.length > 0 && 
       paginatedUsers.every(user => selectedUsers.includes(user.$id));
@@ -257,13 +264,6 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
       setIsExporting(false);
     }
   };
-
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * usersPerPage,
-    currentPage * usersPerPage
-  );
 
   // Render sort indicator
   const renderSortIndicator = (field: keyof User) => {
