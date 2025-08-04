@@ -543,7 +543,7 @@ const StoryGenerator = () => {
                 story={generatedStory || ''}
                 images={storyImages}
                 slides={storySlides}
-                title={selectedStory?.title}
+                title={selectedStory?.title || undefined}
                 isGenerating={isGenerating}
                 isSaving={isSaving}
                 onSave={selectedStory ? undefined : async () => {

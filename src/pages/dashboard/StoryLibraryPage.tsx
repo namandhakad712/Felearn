@@ -352,11 +352,14 @@ const StoryLibraryPage: React.FC = () => {
       {/* Story Detail Modal */}
       <Modal
         isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedStory(null);
+        }}
         title={selectedStory?.title || "Story Details"}
         size="lg"
       >
-        {selectedStory && (
+        {selectedStory ? (
           <div className="space-y-6">
             {/* Story metadata */}
             <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
@@ -485,14 +488,16 @@ const StoryLibraryPage: React.FC = () => {
                 variant="primary"
                 onClick={() => {
                   setIsDetailModalOpen(false);
-                  openRenameModal(selectedStory);
+                  if (selectedStory) {
+                    openRenameModal(selectedStory);
+                  }
                 }}
               >
                 Rename
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
       </Modal>
 
       <div ref={headerRef}>
