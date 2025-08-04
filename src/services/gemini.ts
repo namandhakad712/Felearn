@@ -20,119 +20,117 @@ class GeminiService {
 
   async generateStory(request: GeminiRequest, retries: number = 3): Promise<GeminiResponse> {
     if (!this.genAI) {
-      throw new Error('Gemini API not initialized. Please provide an API key.');
+      throw new Error('Gemini API not initialized. Please provide a valid API key.');
     }
 
-    let lastError: Error | null = null;
-
+    let lastError: any;
+    
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const startTime = Date.now();
-
-        // Create a chat model with image generation capabilities - exactly like "main thing" implementation
-        const model = this.genAI.getGenerativeModel({
+        const model = this.genAI.getGenerativeModel({ 
           model: "gemini-2.0-flash-preview-image-generation",
           generationConfig: {
-            temperature: request.options.temperature || 0.7,
-            maxOutputTokens: request.options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
-            // responseModalities: [Modality.TEXT, Modality.IMAGE], // Modality not available
-          }
+            temperature: request.temperature || 0.8,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+          },
         });
 
-        // Create a chat instance with empty history
-        const chat = model.startChat({
-          history: [],
-        });
-
-        // Send the message with our prompt and get a stream response - exactly like "main thing" implementation
-        const result = await chat.sendMessageStream(
-          request.prompt + this.additionalInstructions()
-        );
+        // Enhanced prompt with better structure
+        const enhancedPrompt = this.buildEnhancedPrompt(request);
         
-        // Process the stream to extract text and images - exactly like "main thing" implementation
-        const slides: StorySlide[] = [];
-        let text = '';
-        let img: string | null = null;
+        console.log(`🎯 Attempt ${attempt}/${retries}: Generating story with prompt length: ${enhancedPrompt.length}`);
 
-        for await (const chunk of result.stream || result) {
-          for (const candidate of chunk.candidates || []) {
-            for (const part of candidate.content?.parts || []) {
-              if (part.text) {
-                text += part.text;
-              } else if (part.inlineData) {
-                // Found an image
-                img = `data:image/png;base64,${part.inlineData.data}`;
-              }
-              
-              // If we have both text and image, create a slide
-              if (text && img) {
-                slides.push({
-                  text: text,
-                  image: img
-                });
-                
-                // Reset for next slide
-                text = '';
-                img = null;
-              }
+        const result = await model.generateContentStream(enhancedPrompt);
+        
+        const response: GeminiResponse = {
+          story: '',
+          slides: [],
+          images: [],
+          metadata: {
+            prompt: request.prompt,
+            temperature: request.temperature || 0.8,
+            model: 'gemini-2.0-flash-preview-image-generation',
+            timestamp: new Date().toISOString(),
+            attempt: attempt
+          }
+        };
+
+        let fullText = '';
+        let currentSlide = '';
+        let slideCount = 0;
+        const maxSlides = 10; // Limit slides to prevent infinite generation
+
+        for await (const chunk of result.stream) {
+          const chunkText = chunk.text();
+          fullText += chunkText;
+          currentSlide += chunkText;
+
+          // Check for slide breaks (double newlines or specific markers)
+          if (chunkText.includes('\n\n') || chunkText.includes('---')) {
+            if (currentSlide.trim() && slideCount < maxSlides) {
+              response.slides.push({
+                id: slideCount + 1,
+                content: currentSlide.trim(),
+                image: null // Will be populated later
+              });
+              slideCount++;
+              currentSlide = '';
             }
           }
         }
-        
-        // Handle any remaining text or image at the end
-        if (text || img) {
-          slides.push({
-            text: text || '',
-            image: img || ''
+
+        // Add the last slide if there's content
+        if (currentSlide.trim() && slideCount < maxSlides) {
+          response.slides.push({
+            id: slideCount + 1,
+            content: currentSlide.trim(),
+            image: null
           });
         }
 
-        // Combine all text for the story content
-        const storyText = slides.map(slide => slide.text).join('\n\n');
+        // If no slides were created, create one from the full text
+        if (response.slides.length === 0 && fullText.trim()) {
+          response.slides.push({
+            id: 1,
+            content: fullText.trim(),
+            image: null
+          });
+        }
+
+        response.story = fullText;
         
-        // Extract images for the response
-        const images = slides
-          .filter(slide => slide.image)
-          .map(slide => slide.image as string);
+        console.log(`✅ Story generated successfully on attempt ${attempt} with ${response.slides.length} slides`);
+        return response;
 
-        const endTime = Date.now();
-
-        return {
-          story: storyText,
-          images,
-          slides,
-          metadata: {
-            tokensUsed: Math.ceil(storyText.length / 4), // Rough estimate: ~4 characters per token
-            processingTime: endTime - startTime,
-          }
-        };
       } catch (error: any) {
         lastError = error;
-        console.error(`Gemini API error (attempt ${attempt}/${retries}):`, error);
-
-        // Parse error message like in "main thing" implementation
-        const errorMessage = this.parseError(error);
-
-        // Don't retry on authentication errors
-        if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
-          throw new Error('Invalid API key. Please check your Gemini API key in settings.');
-        }
-
-        // Don't retry on quota exceeded errors
-        if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
-          throw new Error('API quota exceeded. Please try again later or check your Gemini API usage.');
-        }
-
-        // Wait before retrying (exponential backoff)
-        if (attempt < retries) {
-          const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s...
-          await new Promise(resolve => setTimeout(resolve, delay));
+        console.error(`❌ Attempt ${attempt}/${retries} failed:`, error);
+        
+        // Check if it's a network error or API error
+        const isNetworkError = error.message?.includes('network') || 
+                             error.message?.includes('timeout') ||
+                             error.message?.includes('fetch');
+        
+        const isApiError = error.message?.includes('400') || 
+                          error.message?.includes('403') ||
+                          error.message?.includes('429');
+        
+        if (isApiError && attempt < retries) {
+          // Wait before retrying for API errors
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        } else if (isNetworkError && attempt < retries) {
+          // Wait longer for network errors
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        } else if (attempt === retries) {
+          // Last attempt failed, throw the error
+          throw this.parseError(error);
         }
       }
     }
 
-    // If all retries failed, throw the last error
-    throw new Error(`Failed to generate story after ${retries} attempts: ${lastError?.message || 'Unknown error'}`);
+    throw this.parseError(lastError);
   }
 
   // Parse error message like in "main thing" implementation
@@ -165,6 +163,23 @@ Keep sentences short but conversational, casual, and engaging.
 Generate a cute, minimal illustration for each sentence with black ink on white background.
 No commentary, just begin your explanation.
 Keep going until you've thoroughly explained the entire concept.`;
+  }
+
+  // Build enhanced prompt with better structure
+  private buildEnhancedPrompt(request: GeminiRequest): string {
+    const basePrompt = request.prompt;
+    const additionalInstructions = this.additionalInstructions();
+    
+    return `${basePrompt}
+
+${additionalInstructions}
+
+Please create a story with:
+- Clear, engaging narrative
+- Short, conversational sentences
+- Natural slide breaks (use "---" to separate slides)
+- Maximum 10 slides
+- Each slide should be self-contained but connected to the overall story`;
   }
 
   // private async generateImages(prompt: string, apiKey: string): Promise<string[]> {

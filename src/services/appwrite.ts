@@ -364,6 +364,74 @@ class AppwriteService {
       throw new Error('Failed to upload story images. Please try again.');
     }
   }
+
+  async listDocuments(collectionId: string, queries: string[] = []): Promise<any> {
+    try {
+      const response = await this.databases.listDocuments(
+        this.databaseId,
+        collectionId,
+        queries
+      );
+      return response;
+    } catch (error: any) {
+      console.error('Appwrite listDocuments error:', error);
+      
+      // Handle network errors with retry logic
+      if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        console.log('🔄 Retrying listDocuments due to network error...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return this.listDocuments(collectionId, queries);
+      }
+      
+      throw new Error(`Failed to fetch documents: ${error.message}`);
+    }
+  }
+
+  async createDocument(collectionId: string, documentId: string, data: any): Promise<any> {
+    try {
+      const response = await this.databases.createDocument(
+        this.databaseId,
+        collectionId,
+        documentId,
+        data
+      );
+      return response;
+    } catch (error: any) {
+      console.error('Appwrite createDocument error:', error);
+      
+      // Handle network errors with retry logic
+      if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        console.log('🔄 Retrying createDocument due to network error...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return this.createDocument(collectionId, documentId, data);
+      }
+      
+      throw new Error(`Failed to create document: ${error.message}`);
+    }
+  }
+
+  async updateDocument(collectionId: string, documentId: string, data: any): Promise<any> {
+    try {
+      const response = await this.databases.updateDocument(
+        this.databaseId,
+        collectionId,
+        documentId,
+        data
+      );
+      return response;
+    } catch (error: any) {
+      console.error('Appwrite updateDocument error:', error);
+      
+      // Handle network errors with retry logic
+      if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        console.log('🔄 Retrying updateDocument due to network error...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return this.updateDocument(collectionId, documentId, data);
+      }
+      
+      throw new Error(`Failed to update document: ${error.message}`);
+    }
+  }
 }
 
 // Export singleton instance

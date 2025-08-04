@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // import { authService } from '../../services'; // Unused import
 import { encryptApiKey } from '../../utils/encryption';
+import { validateGeminiApiKey } from '../../utils/userUtils';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ApiKeyManagerProps {
@@ -55,39 +56,19 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
       return false;
     }
     
-    // Basic format validation for Gemini API keys
-    if (!apiKey.startsWith('AIza')) {
-      setApiKeyError('Invalid API key format. Gemini API keys should start with "AIza"');
-      return false;
-    }
-    
     setIsValidating(true);
     setApiKeyError('');
     
     try {
+      // Use the same validation function as onboarding
+      const validation = await validateGeminiApiKey(apiKey);
       
-      // Proper validation by calling the models endpoint
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models', {
-        method: 'GET',
-        headers: {
-          'x-goog-api-key': apiKey
-        }
-      });
-      
-      // Check the status code to determine if the key is valid
-      if (response.status === 200) {
-        // Key is valid
+      if (validation.isValid) {
         setValidationStatus('valid');
         return true;
-      } else if (response.status === 403) {
-        // Key might be valid but lacks permissions
-        setValidationStatus('invalid');
-        setApiKeyError('API key has insufficient permissions. Make sure the Generative Language API is enabled in your Google Cloud project.');
-        return false;
       } else {
-        // Key is invalid
         setValidationStatus('invalid');
-        setApiKeyError('Invalid API key. Please check your key and try again.');
+        setApiKeyError(validation.error || 'Invalid API key');
         return false;
       }
     } catch (error: any) {

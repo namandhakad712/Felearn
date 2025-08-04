@@ -9946,6 +9946,28 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/MotionPathPlugin.min.js"></script>
+    <script>
+        // Ensure GSAP plugins are properly registered after loading
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof gsap !== 'undefined') {
+                try {
+                    // Register MotionPathPlugin if available
+                    if (typeof MotionPathPlugin !== 'undefined') {
+                        gsap.registerPlugin(MotionPathPlugin);
+                        console.log('✅ MotionPathPlugin registered successfully');
+                    }
+                    
+                    // Register ScrollTrigger if available
+                    if (typeof ScrollTrigger !== 'undefined') {
+                        gsap.registerPlugin(ScrollTrigger);
+                        console.log('✅ ScrollTrigger registered successfully');
+                    }
+                } catch (error) {
+                    console.warn('GSAP plugin registration warning:', error);
+                }
+            }
+        });
+    </script>
     <script src="https://cdn.jsdelivr.net/gh/anil-studio/premAI@main/src/script_1.4.1.js"></script>
     <!--script src="https://vplqc3-1234.csb.app/__parcel_source_root/src/script.js"></script-->
 

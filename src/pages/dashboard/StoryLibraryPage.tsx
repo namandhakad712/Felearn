@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Card, Button, Modal, ToastContainer } from '../../components/ui';
 import { StoryViewModes, ExportModal } from '../../components/story';
 import { storyService } from '../../services';
@@ -9,9 +8,7 @@ import { Story } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks';
 import { createStoryFallbackImage } from '../../utils/imageUrlFixer';
-
-// Register GSAP plugins
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+import { cleanupGSAPAnimations, safeGSAPAnimation, safeGSAPFromTo } from '../../utils/gsapUtils';
 
 const StoryLibraryPage: React.FC = () => {
   const { user } = useAuth();
@@ -63,6 +60,13 @@ const StoryLibraryPage: React.FC = () => {
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Cleanup GSAP animations on component unmount
+  useEffect(() => {
+    return () => {
+      cleanupGSAPAnimations(containerRef);
+    };
   }, []);
 
   // Fetch stories
@@ -145,8 +149,8 @@ const StoryLibraryPage: React.FC = () => {
       cards.forEach((card) => {
         const cardElement = card as HTMLElement;
         
-        cardElement.addEventListener('mouseenter', () => {
-          gsap.to(cardElement, {
+        const handleMouseEnter = () => {
+          safeGSAPAnimation(cardElement, {
             scale: 1.08,
             y: -15,
             rotationY: 8,
@@ -154,10 +158,10 @@ const StoryLibraryPage: React.FC = () => {
             duration: 0.15,
             ease: "power3.out"
           });
-        });
+        };
 
-        cardElement.addEventListener('mouseleave', () => {
-          gsap.to(cardElement, {
+        const handleMouseLeave = () => {
+          safeGSAPAnimation(cardElement, {
             scale: 1,
             y: 0,
             rotationY: 0,
@@ -165,29 +169,43 @@ const StoryLibraryPage: React.FC = () => {
             duration: 0.12,
             ease: "power3.out"
           });
-        });
+        };
+
+        cardElement.addEventListener('mouseenter', handleMouseEnter);
+        cardElement.addEventListener('mouseleave', handleMouseLeave);
+
+        // Store event listeners for cleanup
+        (cardElement as any)._gsapListeners = { handleMouseEnter, handleMouseLeave };
       });
     }
 
     // 🌟 SEARCH BAR ANIMATION
     if (isSearchBarVisible) {
-      gsap.fromTo('.search-bar-container',
-        {
-          opacity: 0,
-          height: 0,
-          y: -20,
-          scale: 0.95
-        },
-        {
-          opacity: 1,
-          height: 'auto',
-          y: 0,
-          scale: 1,
-          duration: 0.15,
-          ease: "back.out(2.5)"
-        }
-      );
+      const searchBarContainer = document.querySelector('.search-bar-container');
+      if (searchBarContainer) {
+        safeGSAPFromTo(searchBarContainer,
+          {
+            opacity: 0,
+            height: 0,
+            y: -20,
+            scale: 0.95
+          },
+          {
+            opacity: 1,
+            height: 'auto',
+            y: 0,
+            scale: 1,
+            duration: 0.15,
+            ease: "back.out(2.5)"
+          }
+        );
+      }
     }
+
+    // Cleanup function
+    return () => {
+      cleanupGSAPAnimations(containerRef);
+    };
 
   }, { dependencies: [filteredStories, isSearchBarVisible], scope: containerRef });
 

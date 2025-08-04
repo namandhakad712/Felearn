@@ -4,10 +4,8 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import HTMLFlipBook from 'react-pageflip';
 import { Story, StorySlide } from '../../types';
+import { cleanupGSAPAnimations, safeGSAPFromTo } from '../../utils/gsapUtils';
 // import ReactPageFlipView from './ReactPageFlipView'; // Unused import
-
-// Register GSAP plugins
-gsap.registerPlugin(useGSAP);
 
 interface StoryViewModesProps {
   story: Story;
@@ -263,10 +261,24 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
     setZoomLevel(1);
   };
 
+  // Cleanup GSAP animations on component unmount
+  useEffect(() => {
+    return () => {
+      cleanupGSAPAnimations(modalRef);
+      cleanupGSAPAnimations(headerRef);
+      cleanupGSAPAnimations(contentRef);
+    };
+  }, []);
+
   // 🚀 EPIC GSAP ANIMATIONS FOR STORY VIEW!
   useGSAP(() => {
+    // Check if refs exist before animating
+    if (!modalRef.current || !headerRef.current || !contentRef.current) {
+      return;
+    }
+
     // 🎭 MODAL ENTRANCE ANIMATION
-    gsap.fromTo(modalRef.current,
+    safeGSAPFromTo(modalRef.current,
       {
         scale: 0.7,
         opacity: 0,
@@ -284,7 +296,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
     );
 
     // 🌟 HEADER SLIDE IN
-    gsap.fromTo(headerRef.current,
+    safeGSAPFromTo(headerRef.current,
       {
         y: -30,
         opacity: 0
@@ -299,7 +311,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
     );
 
     // 🎨 CONTENT FADE IN
-    gsap.fromTo(contentRef.current,
+    safeGSAPFromTo(contentRef.current,
       {
         y: 20,
         opacity: 0
@@ -316,7 +328,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
     // 🔥 VIEW MODE TOGGLE ANIMATIONS
     const toggleButtons = document.querySelectorAll('.view-toggle-btn');
     toggleButtons.forEach((btn, index) => {
-      gsap.fromTo(btn,
+      safeGSAPFromTo(btn,
         {
           scale: 0.8,
           opacity: 0,
@@ -333,36 +345,46 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
       );
     });
 
+    // Cleanup function
+    return () => {
+      cleanupGSAPAnimations(modalRef);
+      cleanupGSAPAnimations(headerRef);
+      cleanupGSAPAnimations(contentRef);
+    };
+
   }, { scope: modalRef });
 
   // 🎪 VIEW MODE SWITCH ANIMATION
   const handleViewModeChange = (newMode: ViewMode) => {
-    if (newMode !== viewMode) {
+    if (newMode !== viewMode && contentRef.current) {
       // Animate out current content
-      gsap.to(contentRef.current, {
-        opacity: 0,
-        scale: 0.95,
-        duration: 0.2,
-        ease: "power2.in",
-        onComplete: () => {
-          setViewMode(newMode);
-          // Animate in new content
-          gsap.fromTo(contentRef.current,
-            {
-              opacity: 0,
-              scale: 0.95,
-              y: 20
-            },
-            {
-              opacity: 1,
-              scale: 1,
-              y: 0,
-              duration: 0.4,
-              ease: "back.out(1.4)"
-            }
-          );
+      safeGSAPFromTo(contentRef.current,
+        {},
+        {
+          opacity: 0,
+          scale: 0.95,
+          duration: 0.2,
+          ease: "power2.in",
+          onComplete: () => {
+            setViewMode(newMode);
+            // Animate in new content
+            safeGSAPFromTo(contentRef.current,
+              {
+                opacity: 0,
+                scale: 0.95,
+                y: 20
+              },
+              {
+                opacity: 1,
+                scale: 1,
+                y: 0,
+                duration: 0.4,
+                ease: "back.out(1.4)"
+              }
+            );
+          }
         }
-      });
+      );
     }
   };
 

@@ -38,8 +38,11 @@ export default defineConfig(({ mode }) => {
             // Vendor chunk for React and core libraries
             vendor: ['react', 'react-dom', 'react-router-dom'],
             
-            // UI libraries chunk
-            ui: ['framer-motion', 'styled-components'],
+            // Styled-components in its own chunk to prevent conflicts
+            styled: ['styled-components'],
+            
+            // UI libraries chunk (excluding styled-components)
+            ui: ['framer-motion'],
             
             // AI and services chunk
             ai: ['@google/generative-ai'],
@@ -99,7 +102,9 @@ export default defineConfig(({ mode }) => {
         'react-router-dom',
         'framer-motion',
         'styled-components'
-      ]
+      ],
+      // Ensure styled-components is properly deduplicated
+      force: true
     },
     
     // Define global constants

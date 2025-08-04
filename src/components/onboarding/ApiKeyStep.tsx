@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 // import { motion } from 'framer-motion'; // Unused import
 import { Button } from '../ui';
 // import { geminiService } from '../../services'; // Unused import
+import { validateGeminiApiKey } from '../../utils/userUtils';
 
 interface ApiKeyStepProps {
   onApiKeyChange: (apiKey: string) => void;
@@ -33,16 +34,15 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({
     setValidationStatus('validating');
     
     try {
-      // For development purposes, we'll accept any key with sufficient length
-      // In production, you would use the actual validation
-      const isValid = apiKey.trim().length >= 10;
+      // Use the standardized validation function
+      const validation = await validateGeminiApiKey(apiKey);
       
-      if (isValid) {
+      if (validation.isValid) {
         setValidationStatus('success');
         onApiKeyChange(apiKey);
       } else {
         setValidationStatus('error');
-        setErrorMessage('API key should be at least 10 characters long.');
+        setErrorMessage(validation.error || 'Invalid API key');
       }
     } catch (error) {
       setValidationStatus('error');
