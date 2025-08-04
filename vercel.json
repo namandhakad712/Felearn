@@ -4,6 +4,18 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/auth/callback",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/auth/verify",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/auth/reset-password",
+      "destination": "/app.html"
+    },
+    {
       "source": "/app.html",
       "destination": "/app.html"
     },
