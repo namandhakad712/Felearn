@@ -155,7 +155,7 @@ export class AdminService {
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
     const newUsers = users.filter(
-      user => new Date(user.createdAt) > oneDayAgo
+      user => user.createdAt && new Date(user.createdAt) > oneDayAgo
     ).length;
     
     // Calculate active users (logged in in the last 7 days)
@@ -230,6 +230,17 @@ export class AdminService {
    */
   async disableUser(userId: string, adminId: string): Promise<User> {
     return this.updateUserStatus(userId, true, adminId);
+  }
+
+  /**
+   * Get user activity history
+   * @param userId User ID
+   * @returns Promise with user activity
+   */
+  async getUserActivity(userId: string): Promise<any[]> {
+    // TODO: Implement user activity tracking
+    console.log('User activity tracking not implemented yet for user:', userId);
+    return [];
   }
 
   /**

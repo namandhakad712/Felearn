@@ -310,18 +310,18 @@ export class AuthLogger {
 
       // Only report to server if it's an important event
       if (this.isImportantEventString(eventType)) {
-        await appwriteService.createErrorReport({
-          type: 'frontend',
-          message: `Auth Event: ${message}`,
-          userId,
-          context: {
-            eventType,
-            ...data,
-            userAgent: navigator.userAgent,
-            url: window.location.href
-          },
-          severity: ErrorSeverity.LOW
-        });
+        // TODO: Implement error reporting
+        // await appwriteService.createErrorReport({
+        //   type: 'frontend',
+        //   message: `Auth Event: ${message}`,
+        //   userId,
+        //   context: {
+        //     eventType,
+        //     ...data,
+        //     timestamp: new Date().toISOString()
+        //   }
+        // });
+        console.log('Error reporting not implemented for auth events yet');
       }
     } catch (error) {
       // Don't let reporting errors affect the user experience
@@ -370,18 +370,20 @@ export class AuthLogger {
 
       // Only report to server if it's an important event
       if (this.isImportantEvent(eventType)) {
-        await appwriteService.createErrorReport({
-          type: 'frontend',
-          message: `Auth Event: ${message}`,
-          userId,
-          context: {
-            eventType,
-            ...data,
-            userAgent: navigator.userAgent,
-            url: window.location.href
-          },
-          severity: ErrorSeverity.LOW
-        });
+        // TODO: Implement error reporting
+        // await appwriteService.createErrorReport({
+        //   type: 'frontend',
+        //   message: `Auth Event: ${message}`,
+        //   userId,
+        //   context: {
+        //     eventType,
+        //     ...data,
+        //     userAgent: navigator.userAgent,
+        //     url: window.location.href
+        //   },
+        //   severity: ErrorSeverity.LOW
+        // });
+        console.log('Error reporting not implemented for auth events yet');
       }
     } catch (error) {
       // Don't let reporting errors affect the user experience
@@ -427,19 +429,19 @@ export class AuthLogger {
         severity = ErrorSeverity.HIGH;
       }
 
-      await appwriteService.createErrorReport({
-        type: 'frontend',
-        message: `Auth Error [${eventType}]: ${errorMessage}`,
-        userId,
-        context: {
-          eventType,
-          errorCode,
-          ...context,
-          userAgent: navigator.userAgent,
-          url: window.location.href
-        },
-        severity
-      });
+      // TODO: Implement error reporting
+      // await appwriteService.createErrorReport({
+      //   type: 'frontend',
+      //   message: `Auth Error [${eventType}]: ${errorMessage}`,
+      //   userId,
+      //   context: {
+      //     eventType,
+      //     errorCode,
+      //     ...context,
+      //     timestamp: new Date().toISOString()
+      //   }
+      // });
+      console.log('Error reporting not implemented for auth errors yet');
     } catch (error) {
       // Don't let reporting errors affect the user experience
       console.error('Failed to report authentication error:', error);
@@ -479,19 +481,18 @@ export class AuthLogger {
         return;
       }
 
-      await appwriteService.createErrorReport({
-        type: 'frontend',
-        message: `Auth Error [${operation}]: ${errorMessage}`,
-        userId: userId || '',
-        context: {
-          operation,
-          errorCode,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-          url: window.location.href
-        },
-        severity
-      });
+      // TODO: Implement error reporting
+      // await appwriteService.createErrorReport({
+      //   type: 'frontend',
+      //   message: `Auth Error [${operation}]: ${errorMessage}`,
+      //   userId: userId || '',
+      //   context: {
+      //     operation,
+      //     errorCode,
+      //     timestamp: new Date().toISOString()
+      //   }
+      // });
+      console.log('Error reporting not implemented for auth errors yet');
     } catch (error) {
       // Don't let reporting errors affect the user experience
       console.error('Failed to report authentication error:', error);

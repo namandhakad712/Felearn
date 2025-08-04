@@ -257,20 +257,19 @@ export class AuthErrorHandler {
     }
 
     try {
-      await appwriteService.createErrorReport({
-        type: 'frontend',
-        message: `Authentication error: ${errorInfo.message}`,
-        userId: userId || '',
-        context: {
-          operation,
-          errorType: errorInfo.type,
-          errorCode: errorInfo.code,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-          url: window.location.href
-        },
-        severity: errorInfo.severity
-      });
+      // TODO: Implement error reporting
+      // await appwriteService.createErrorReport({
+      //   type: 'frontend',
+      //   message: `Authentication error: ${errorInfo.message}`,
+      //   userId: userId || '',
+      //   context: {
+      //     operation,
+      //     errorType: errorInfo.type,
+      //     severity: errorInfo.severity,
+      //     timestamp: new Date().toISOString()
+      //   }
+      // });
+      console.log('Error reporting not implemented yet');
     } catch (reportError) {
       // Don't let reporting errors affect the user experience
       console.error('Failed to report authentication error:', reportError);

@@ -83,7 +83,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Created At</h4>
                 <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                  {formatDate(user.createdAt)}
+                  {user.createdAt ? formatDate(user.createdAt) : 'Unknown'}
                 </p>
               </div>
               <div>

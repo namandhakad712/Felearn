@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { UserManagementTable } from '../../components/admin';
-import { LoadingSpinner } from '../../components/';
+import { UserManagementTable, AdminLayout } from '../../components/admin';
+import { Card } from '../../components/ui';
+import { LoadingSpinner } from '../../components';
 import { adminService } from '../../services';
 import { useAuth } from '../../hooks';
 

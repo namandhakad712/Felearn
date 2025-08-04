@@ -108,22 +108,18 @@ export class AuthErrorLogger {
     additionalContext?: Record<string, any>
   ): Promise<void> {
     try {
-      await appwriteService.createErrorReport({
-        type: 'frontend',
-        message: errorInfo.message,
-        stack: this.getStackTrace(),
-        userId: userId || '',
-        context: {
-          operation,
-          errorType: errorInfo.type,
-          errorCode: errorInfo.code,
-          retryable: errorInfo.retryable,
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-          ...additionalContext
-        },
-        severity: this.mapSeverityToAppwrite(errorInfo.severity)
-      });
+      // Report critical errors to the backend
+      // TODO: Implement error reporting
+      // await appwriteService.createErrorReport({
+      //   type: 'frontend',
+      //   message: errorData.message,
+      //   userId: errorData.userId || '',
+      //   context: {
+      //     ...errorData.context,
+      //     timestamp: new Date().toISOString()
+      //   }
+      // });
+      console.log('Error reporting not implemented yet');
     } catch (reportError) {
       console.error('Failed to report error to Appwrite:', reportError);
     }
