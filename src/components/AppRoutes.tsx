@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 import LoadingSpinner from './LoadingSpinner';
-import LandingPage from '../pages/LandingPage';
 
 // Lazy load components for better performance
 const AuthPage = lazy(() => import('../pages/AuthPage'));
@@ -25,7 +24,6 @@ function AppRoutes() {
   return (
     <Suspense fallback={<LoadingSpinner fullScreen message="Loading page..." />}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
         <Route path="/auth/:type" element={<AuthPage />} />
         <Route path="/auth/verify" element={<EmailVerificationPage />} />
         <Route 
@@ -44,8 +42,9 @@ function AppRoutes() {
             </ProtectedRoute>
           } 
         />
-        {/* Removed admin routes as these components were deleted */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Redirect root to auth since landing page is handled by index.html */}
+        <Route path="/" element={<Navigate to="/auth/login" replace />} />
+        <Route path="*" element={<Navigate to="/auth/login" replace />} />
       </Routes>
     </Suspense>
   );
