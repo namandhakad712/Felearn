@@ -30,10 +30,10 @@ class GeminiService {
         const model = this.genAI.getGenerativeModel({ 
           model: "gemini-2.0-flash-preview-image-generation",
           generationConfig: {
-            temperature: request.temperature || 0.8,
+            temperature: request.options.temperature || 0.8,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 8192,
+            maxOutputTokens: request.options.maxTokens || 8192,
           },
         });
 
@@ -42,18 +42,25 @@ class GeminiService {
         
         console.log(`🎯 Attempt ${attempt}/${retries}: Generating story with prompt length: ${enhancedPrompt.length}`);
 
-        const result = await model.generateContentStream(enhancedPrompt);
+        // Create proper request structure with contents.parts
+        const requestContent = {
+          contents: [{
+            role: "user",
+            parts: [{
+              text: enhancedPrompt
+            }]
+          }]
+        };
+
+        const result = await model.generateContentStream(requestContent);
         
         const response: GeminiResponse = {
           story: '',
           slides: [],
           images: [],
           metadata: {
-            prompt: request.prompt,
-            temperature: request.temperature || 0.8,
-            model: 'gemini-2.0-flash-preview-image-generation',
-            timestamp: new Date().toISOString(),
-            attempt: attempt
+            tokensUsed: 0,
+            processingTime: 0
           }
         };
 
@@ -61,6 +68,16 @@ class GeminiService {
         let currentSlide = '';
         let slideCount = 0;
         const maxSlides = 10; // Limit slides to prevent infinite generation
+        let totalTokensUsed = 0; // Track total tokens used
+        const startTime = Date.now(); // Track processing time
+
+        // Estimate tokens for the prompt
+        const estimateTokens = (text: string): number => {
+          return Math.ceil(text.length / 4);
+        };
+
+        // Add prompt tokens to total
+        totalTokensUsed += estimateTokens(enhancedPrompt);
 
         for await (const chunk of result.stream) {
           const chunkText = chunk.text();
@@ -70,9 +87,8 @@ class GeminiService {
           // Check for slide breaks (double newlines or specific markers)
           if (chunkText.includes('\n\n') || chunkText.includes('---')) {
             if (currentSlide.trim() && slideCount < maxSlides) {
-              response.slides.push({
-                id: slideCount + 1,
-                content: currentSlide.trim(),
+              response.slides!.push({
+                text: currentSlide.trim(),
                 image: null // Will be populated later
               });
               slideCount++;
@@ -83,25 +99,27 @@ class GeminiService {
 
         // Add the last slide if there's content
         if (currentSlide.trim() && slideCount < maxSlides) {
-          response.slides.push({
-            id: slideCount + 1,
-            content: currentSlide.trim(),
+          response.slides!.push({
+            text: currentSlide.trim(),
             image: null
           });
         }
 
         // If no slides were created, create one from the full text
-        if (response.slides.length === 0 && fullText.trim()) {
-          response.slides.push({
-            id: 1,
-            content: fullText.trim(),
+        if (response.slides!.length === 0 && fullText.trim()) {
+          response.slides!.push({
+            text: fullText.trim(),
             image: null
           });
         }
 
         response.story = fullText;
         
-        console.log(`✅ Story generated successfully on attempt ${attempt} with ${response.slides.length} slides`);
+        // Update metadata with actual token count and processing time
+        response.metadata.tokensUsed = totalTokensUsed + estimateTokens(fullText);
+        response.metadata.processingTime = Date.now() - startTime; // Calculate actual processing time
+        
+        console.log(`✅ Story generated successfully on attempt ${attempt} with ${response.slides!.length} slides`);
         return response;
 
       } catch (error: any) {

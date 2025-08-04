@@ -1,19 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
+import { AuthService } from '../services/auth';
+import { Card, Button } from '../components/ui';
 import styled from 'styled-components';
 
 const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { resetPassword, completePasswordReset, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetStatus, setResetStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render reset password page if user is authenticated
+  if (isAuthenticated) {
+    return null;
+  }
 
   // Helper function to get parameter from multiple sources
   const getParam = (paramNames: string[]): string | null => {
@@ -55,14 +85,14 @@ const ResetPasswordPage: React.FC = () => {
   // Parameter validation and debugging (production logging removed)
   React.useEffect(() => {
     // Show warning if user is authenticated but no reset parameters
-    if (user && !userId && !secret) {
+    if (isAuthenticated && !userId && !secret) {
       // User is authenticated but no reset parameters found
     }
-  }, [userId, secret, user, searchParams]);
+  }, [userId, secret, isAuthenticated, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setErrorMessage('');
     setSuccessMessage('');
     setIsLoading(true);
 
@@ -98,7 +128,7 @@ const ResetPasswordPage: React.FC = () => {
           throw new Error('Password must contain at least one number.');
         }
 
-        const result = await completePasswordReset(userId, secret, newPassword);
+        const result = await AuthService.completePasswordReset(userId, secret, newPassword);
         
         if (result.success) {
           setSuccessMessage('Password has been reset successfully! Redirecting to login...');
@@ -106,7 +136,7 @@ const ResetPasswordPage: React.FC = () => {
             navigate('/auth/login');
           }, 3000);
         } else {
-          setError(result.message || 'Failed to reset password. Please try again.');
+          setErrorMessage(result.message || 'Failed to reset password. Please try again.');
         }
       } else {
         // Request password reset
@@ -114,15 +144,15 @@ const ResetPasswordPage: React.FC = () => {
           throw new Error('Please enter your email address.');
         }
 
-        const result = await resetPassword(email);
+        const result = await AuthService.resetPassword(email);
         if (result.success) {
           setSuccessMessage(result.message);
         } else {
-          setError(result.message);
+          setErrorMessage(result.message);
         }
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+      setErrorMessage(err.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -165,7 +195,7 @@ const ResetPasswordPage: React.FC = () => {
         </div>
 
         {/* Show helpful message if user is logged in but no reset parameters */}
-        {user && !userId && !secret && (
+        {isAuthenticated && !userId && !secret && (
           <div className="mb-4 p-4 text-blue-700 bg-blue-100 rounded-lg">
             <h3 className="font-semibold mb-2">Already Logged In</h3>
             <p className="text-sm">
@@ -184,9 +214,9 @@ const ResetPasswordPage: React.FC = () => {
           </div>
         )}
 
-        {error && (
+        {errorMessage && (
           <div className="mb-4 p-4 text-red-700 bg-red-100 rounded-lg">
-            {error}
+            {errorMessage}
           </div>
         )}
 

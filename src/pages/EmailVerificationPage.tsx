@@ -1,13 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { AuthService } from '@/services/auth';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { AuthService } from '../services/auth';
+import { Card, Button } from '../components/ui';
 
 const EmailVerificationPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
-  const [message, setMessage] = useState('');
-  const [isRequestingNew, setIsRequestingNew] = useState(false);
+  const [searchParams] = useSearchParams();
+  const { isAuthenticated, isLoading } = useAuth();
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render verification page if user is authenticated
+  if (isAuthenticated) {
+    return null;
+  }
 
   // Helper function to get parameter from multiple sources
   const getParam = (paramNames: string[]): string | null => {
@@ -53,22 +81,22 @@ const EmailVerificationPage: React.FC = () => {
 
   // Handler to request new verification email
   const handleRequestNewVerification = async () => {
-    setIsRequestingNew(true);
+    setIsVerifying(true);
     try {
       const authService = new AuthService();
       const result = await authService.sendEmailVerification();
       
       if (result.success) {
-        setMessage('New verification email sent! Please check your inbox and click the new verification link.');
-        setStatus('success');
+        setSuccess('New verification email sent! Please check your inbox and click the new verification link.');
+        setVerificationStatus('success');
       } else {
-        setMessage(result.message || 'Failed to send verification email. Please try again.');
+        setError(result.message || 'Failed to send verification email. Please try again.');
       }
     } catch (error: any) {
       console.error('Error requesting new verification:', error);
-      setMessage('Failed to send verification email. Please try logging in again to request a new verification email.');
+      setError('Failed to send verification email. Please try logging in again to request a new verification email.');
     } finally {
-      setIsRequestingNew(false);
+      setIsVerifying(false);
     }
   };
 
@@ -101,8 +129,8 @@ const EmailVerificationPage: React.FC = () => {
         console.log('🕐 Link expired?', now > expireDate);
         
         if (now > expireDate) {
-          setStatus('error');
-          setMessage('This verification link has expired. Please request a new verification email from your account settings.');
+          setVerificationStatus('error');
+          setError('This verification link has expired. Please request a new verification email from your account settings.');
           return;
         }
       }
@@ -122,12 +150,12 @@ const EmailVerificationPage: React.FC = () => {
         const allAvailableKeys = [...Object.keys(reactRouterParams), ...Object.keys(allMainParams)];
         const hasAnyParams = allAvailableKeys.length > 0;
         
-        setStatus('error');
+        setVerificationStatus('error');
         
         if (!hasAnyParams) {
-          setMessage('Invalid verification link. No parameters found in the URL. Please check that you clicked the correct link from your email.');
+          setError('Invalid verification link. No parameters found in the URL. Please check that you clicked the correct link from your email.');
         } else {
-          setMessage(`Invalid verification link. Missing required parameters (userId and secret). Found parameters: ${allAvailableKeys.join(', ')}. Please use the verification link from your email.`);
+          setError(`Invalid verification link. Missing required parameters (userId and secret). Found parameters: ${allAvailableKeys.join(', ')}. Please use the verification link from your email.`);
         }
         return;
       }
@@ -141,8 +169,8 @@ const EmailVerificationPage: React.FC = () => {
         
         if (result.success) {
           console.log('✅ Verification successful!');
-          setStatus('success');
-          setMessage(result.message || 'Email verified successfully! You will be redirected to the dashboard.');
+          setVerificationStatus('success');
+          setSuccess(result.message || 'Email verified successfully! You will be redirected to the dashboard.');
           
           // Redirect to dashboard after successful verification
           setTimeout(() => {
@@ -150,28 +178,28 @@ const EmailVerificationPage: React.FC = () => {
           }, 3000);
         } else {
           console.log('❌ Verification failed:', result.message);
-          setStatus('error');
+          setVerificationStatus('error');
           
           // Provide more helpful error messages based on the error
           if (result.message?.includes('invalid') || result.message?.includes('already been used')) {
-            setMessage('This verification link is invalid or has already been used. Please request a new verification email below.');
+            setError('This verification link is invalid or has already been used. Please request a new verification email below.');
           } else if (result.message?.includes('expired')) {
-            setMessage('This verification link has expired. Please request a new verification email below.');
+            setError('This verification link has expired. Please request a new verification email below.');
           } else {
-            setMessage(result.message || 'Verification failed. Please request a new verification email below.');
+            setError(result.message || 'Verification failed. Please request a new verification email below.');
           }
         }
       } catch (error: any) {
         console.error('❌ Verification error caught:', error);
-        setStatus('error');
+        setVerificationStatus('error');
         
         // Handle specific error types
         if (error.message?.includes('Invalid token') || error.message?.includes('user_invalid_token')) {
-          setMessage('This verification link is invalid or has already been used. Please request a new verification email below.');
+          setError('This verification link is invalid or has already been used. Please request a new verification email below.');
         } else if (error.message?.includes('expired')) {
-          setMessage('This verification link has expired. Please request a new verification email below.');
+          setError('This verification link has expired. Please request a new verification email below.');
         } else {
-          setMessage('Verification failed. Please request a new verification email below or try logging in again.');
+          setError('Verification failed. Please request a new verification email below or try logging in again.');
         }
       }
     };
@@ -203,7 +231,7 @@ const EmailVerificationPage: React.FC = () => {
           </div>
 
           {/* Verifying State */}
-          {status === 'verifying' && (
+          {verificationStatus === 'idle' && (
             <div className="text-center">
               <div className="relative mb-8">
                 {/* Animated spinner */}
@@ -234,7 +262,7 @@ const EmailVerificationPage: React.FC = () => {
           )}
           
           {/* Success State */}
-          {status === 'success' && (
+          {verificationStatus === 'success' && (
             <div className="text-center">
               <div className="relative mb-8">
                 {/* Success animation */}
@@ -256,7 +284,7 @@ const EmailVerificationPage: React.FC = () => {
                 🎉 Email Verified Successfully!
               </h2>
               <div className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-6">
-                <p className="text-green-800 font-medium">{message}</p>
+                <p className="text-green-800 font-medium">{success}</p>
               </div>
               
               <div className="text-sm text-gray-500 flex items-center justify-center">
@@ -269,7 +297,7 @@ const EmailVerificationPage: React.FC = () => {
           )}
           
           {/* Error State */}
-          {status === 'error' && (
+          {verificationStatus === 'error' && (
             <div className="text-center">
               <div className="relative mb-8">
                 {/* Error icon */}
@@ -285,7 +313,7 @@ const EmailVerificationPage: React.FC = () => {
               </h2>
               
               <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6">
-                <p className="text-red-800 font-medium">{message}</p>
+                <p className="text-red-800 font-medium">{error}</p>
               </div>
               
               {/* Helpful explanation with better design */}
@@ -326,10 +354,10 @@ const EmailVerificationPage: React.FC = () => {
               <div className="space-y-4">
                 <button
                   onClick={handleRequestNewVerification}
-                  disabled={isRequestingNew}
+                  disabled={isVerifying}
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 px-6 rounded-2xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  {isRequestingNew ? (
+                  {isVerifying ? (
                     <div className="flex items-center justify-center">
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
                       Sending New Link...

@@ -94,277 +94,22 @@ const StoryGenerator = () => {
     try {
       console.log('Generating story for concept:', concept);
 
-      // Mock gemini service since the real one has issues
-      const geminiService = {
-        initialize: (apiKey: string) => {
-          // Initializing gemini service
-        },
-        generateStory: async ({ prompt, apiKey, _userId, options }: any) => {
-          console.log('Generating images for prompt:', prompt);
-
-          // Import the Google Generative AI library exactly like in main thing/index.tsx
-          const { GoogleGenerativeAI } = await import('@google/generative-ai');
-
-          // Initialize the Gemini API with the user's API key
-          const genAI = new GoogleGenerativeAI(apiKey);
-
-          // Create a chat with a model that supports image generation
-          const model = genAI.getGenerativeModel({
-            model: 'gemini-2.0-flash-preview-image-generation',
-            generationConfig: {
-              maxOutputTokens: options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
-              // responseModalities: ['IMAGE', 'TEXT'] // Removed - not supported in this version
-            }
-          });
-          const chat = model.startChat({ history: [] });
-          
-          // Clear chat history before starting new generation
-          // chat.history = []; // Removed - history property doesn't exist on ChatSession
-
-          // Create arrays to store the generated content
-          const images = [];
-          const slides = [];
-          let totalTokensUsed = 0; // Track total tokens used
-          let allGeneratedText = ''; // Track all text for token calculation
-
-          // Token estimation function (rough estimate: ~4 characters per token)
-          const estimateTokens = (text: string): number => {
-            return Math.ceil(text.length / 4);
-          };
-
-          // Use the exact same additional instructions as in main thing/index.tsx
-          const additionalInstructions = `
-          Use a fun story about lots of tiny cats as a metaphor.
-          Keep sentences short but conversational, casual, and engaging.
-          Generate a cute, minimal illustration for each sentence with black ink on white background.
-          Include relevant text labels, speech bubbles, or captions directly in each illustration to make them self-explanatory.
-          Make sure each image tells the story visually with embedded text elements.
-          No commentary, just begin your explanation.
-          Keep going until you've thoroughly explained the entire concept.`;
-
-
-
-
-
-          try {
-            // Reset chat history
-            // chat.history.length = 0; // Removed - not supported in this version
-
-            // Send the message and get a streaming response
-            // Wrap in try-catch to handle specific streaming errors
-            let result;
-            try {
-              result = await chat.sendMessageStream(prompt + additionalInstructions);
-              // Stream result received
-            } catch (streamError) {
-              console.error('Error starting stream:', streamError);
-              throw streamError; // Re-throw to be caught by outer catch
-            }
-
-            let text = '';
-            let img = null;
-
-            // Process the stream of content - check if result has stream property
-            for await (const chunk of result.stream || result) {
-              for (const candidate of chunk.candidates || []) {
-                for (const part of candidate.content?.parts || []) {
-                  if (part.text) {
-                    console.log('Received text part:', typeof part.text, part.text);
-                    text += String(part.text);
-                  } else {
-                    try {
-                      const data = part.inlineData;
-                      if (data) {
-                        // Create image URL from base64 data
-                        const imageUrl = `data:image/png;base64,${data.data}`;
-                        img = imageUrl;
-                        console.log('Generated a new image');
-
-                        // Validate the base64 data
-                        if (!data.data || typeof data.data !== 'string') {
-                          console.error('Invalid image data received:', data);
-                          img = null; // Don't use invalid data
-                        }
-                      } else {
-                        console.log('no data', chunk);
-                      }
-                    } catch (e) {
-                      console.log('no data', chunk);
-                    }
-                  }
-
-                  // If we have both text and image, create a slide (with 31 slide limit)
-                  if (text && img && slides.length < 31) {
-                    // Add the new image to our arrays
-                    images.push(img);
-                    // Log the text before adding to slide
-                    console.log('Adding text to slide:', typeof text, text);
-
-                    // Process the text to extract the caption
-                    let cleanText = String(text).trim();
-
-                    // Extract the caption part (text inside quotes)
-                    const captionMatch = cleanText.match(/"([^"]+)"/);
-                    if (captionMatch && captionMatch[1]) {
-                      // Use just the quoted text as the caption
-                      cleanText = captionMatch[1];
-                    }
-
-                    // Track tokens used
-                    const slideTokens = estimateTokens(cleanText);
-                    totalTokensUsed += slideTokens;
-                    allGeneratedText += cleanText + ' ';
-
-                    slides.push({
-                      text: cleanText.length > 0 ? cleanText : "Image caption", // Provide a fallback
-                      image: img
-                    });
-
-                    // Update the UI in real-time as each image is generated
-                    setStoryImages([...images]);
-                    setStorySlides([...slides]);
-
-                    // Reset for next slide
-                    text = '';
-                    img = null;
-                  }
-                }
-              }
-            }
-
-            // Handle any remaining image - exactly like in main thing/index.tsx
-            if (img) {
-              images.push(img);
-              // Log the remaining text
-              console.log('Adding remaining text to slide:', typeof text, text);
-
-              // Process the text to extract the caption
-              let cleanText = String(text).trim();
-
-              // Extract the caption part (text inside quotes)
-              const captionMatch = cleanText.match(/"([^"]+)"/);
-              if (captionMatch && captionMatch[1]) {
-                // Use just the quoted text as the caption
-                cleanText = captionMatch[1];
-              }
-
-              // Track tokens used for remaining text
-              const remainingTokens = estimateTokens(cleanText);
-              totalTokensUsed += remainingTokens;
-              allGeneratedText += cleanText + ' ';
-
-              // Only add slide if under the 31 slide limit
-              if (slides.length < 31) {
-                slides.push({
-                  text: cleanText.length > 0 ? cleanText : "Image caption", // Provide a fallback
-                  image: img
-                });
-              }
-
-              setStoryImages([...images]);
-              setStorySlides([...slides]);
-            }
-
-          } catch (error) {
-            console.error('Error generating images with Gemini:', error);
-
-            // Parse error exactly like in main thing/index.tsx
-            const parseError = (error: string) => {
-              const regex = /{"error":(.*)}/gm;
-              const m = regex.exec(error);
-              try {
-                if (m && m[1]) {
-                  const e = m[1];
-                  const err = JSON.parse(e);
-                  return err.message;
-                }
-                return error;
-              } catch (e) {
-                return error;
-              }
-            };
-
-            // Log the error but don't throw - instead use fallback images
-            console.log('Falling back to placeholder images due to error');
-            const errorMsg = typeof error === 'string' ? parseError(error as string) : (error as Error).message || 'Unknown error';
-            console.warn('Gemini API error:', errorMsg);
-
-            // Generate fallback images using placekitten.com
-            const numImages = Math.floor(Math.random() * 6) + 3; // 3-8 images
-
-            for (let i = 0; i < numImages; i++) {
-              // Use placeholder images with different dimensions
-              const width = 400 + Math.floor(Math.random() * 50);
-              const height = 300 + Math.floor(Math.random() * 50);
-              const imageUrl = `https://placekitten.com/${width}/${height}`;
-
-              console.log(`Generated fallback image ${i + 1} of ${numImages}`);
-
-              // Create a slide with the image (with 31 slide limit)
-              if (slides.length < 31) {
-                images.push(imageUrl);
-                slides.push({
-                  text: '', // No text as requested
-                  image: imageUrl
-                });
-              }
-
-              // Update UI in real-time
-              setStoryImages([...images]);
-              setStorySlides([...slides]);
-
-              // Add a small delay between images to simulate generation
-              if (i < numImages - 1) {
-                await new Promise(resolve => setTimeout(resolve, 800));
-              }
-            }
-          }
-
-          // Return the final set of generated images with token tracking
-          const finalStory = allGeneratedText || slides.map(slide => slide.text).join('\n\n') || `${prompt}`;
-          
-          // Add prompt tokens to total
-          totalTokensUsed += estimateTokens(prompt + additionalInstructions);
-          
-          console.log(`📊 Generation complete: ${slides.length} slides, ${totalTokensUsed} tokens used`);
-          
-          // Show message if slide limit was reached
-          if (slides.length >= 31) {
-            showSuccessToast('Slide Limit Reached', 'Maximum of 31 slides generated. Story is complete!');
-          }
-          console.log('📊 Token breakdown:', {
-            slideTokens: slides.reduce((acc, slide) => acc + estimateTokens(slide.text || ''), 0),
-            promptTokens: estimateTokens(prompt + additionalInstructions),
-            totalCalculated: totalTokensUsed
-          });
-          
-          return {
-            story: finalStory,
-            images: images,
-            slides: slides,
-            tokens: totalTokensUsed, // ✅ Add token count
-            metadata: {
-              totalSlides: slides.length,
-              totalImages: images.length,
-              tokensUsed: totalTokensUsed,
-              averageTokensPerSlide: slides.length > 0 ? Math.round(totalTokensUsed / slides.length) : 0
-            }
-          };
-        }
-      };
-
-      // Initialize with user's API key
+      // Use the real gemini service
+      const { geminiService } = await import('../services/gemini');
+      
+      // Initialize the service with user's API key
       geminiService.initialize(user.geminiKey);
 
-      // Generate story
+      // Generate story with proper request structure
       const response = await geminiService.generateStory({
         prompt: concept,
         apiKey: user.geminiKey,
-        userId: user.$id, // Add user ID for rate limiting
+        userId: user.$id,
         options: {
-          maxTokens: 11264, // ✅ INCREASED: Allows 15-20 slides
-          includeImages: true, // Enable image generation for better story display
-        },
+          temperature: 0.8,
+          maxTokens: 8192,
+          includeImages: true
+        }
       });
 
       // Set the final generated content
@@ -394,17 +139,17 @@ const StoryGenerator = () => {
         // Log the title we're using
         console.log('Using title for story:', title);
         console.log('Title length:', title.length);
-        console.log('Response tokens:', response.tokens);
-        console.log('Tokens being saved:', response.tokens || 0);
-
-        // Create the story with the extracted title and slides
-        // Pass the user's email and name if available from the auth context
-        // const userEmail = user?.email || 'user@example.com'; // Removed unused variable
-        // const _userName = user?.name || 'User'; // Removed unused variable
-        // const userLastLogin = user?.lastLogin || new Date().toISOString(); // Removed unused variable
+        console.log('Response tokens:', response.metadata?.tokensUsed);
+        console.log('Tokens being saved:', response.metadata?.tokensUsed || 0);
 
         // Create story with user information
-        const savedStory = await createStory(title, response.story, response.images || [], response.slides || [], response.tokens || 0);
+        const savedStory = await createStory(
+          title, 
+          response.story, 
+          response.images || [], 
+          response.slides || [], 
+          response.metadata?.tokensUsed || 0
+        );
         setSelectedStory(savedStory);
         console.log('Visual story saved automatically:', savedStory);
       } catch (saveError) {
@@ -885,9 +630,9 @@ const DashboardPage: React.FC = () => {
     <DashboardLayout>
       <Routes>
         <Route path="/" element={<StoryGenerator />} />
-        <Route path="/library" element={<StoryLibraryPage />} />
-        <Route path="/settings" element={<Settings />} />
-
+        <Route path="library" element={<StoryLibraryPage />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="*" element={<StoryGenerator />} />
       </Routes>
     </DashboardLayout>
   );
