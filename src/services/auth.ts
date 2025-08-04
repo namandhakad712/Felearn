@@ -242,9 +242,15 @@ export class AuthService {
 
       // Create OAuth2 session with universal URLs
       const urls = getAuthUrls();
-      console.log('🌐 OAuth URLs:', urls);
+      console.log('🌐 OAuth URLs:', {
+        callback: urls.callback,
+        login: urls.login,
+        verify: urls.verify,
+        resetPassword: urls.resetPassword
+      });
       logAppConfig(); // Debug: show current configuration
       
+      console.log('🔗 Creating OAuth2 session with provider:', oauthProvider);
       // Calling createOAuth2Session
       this.account.createOAuth2Session(
         oauthProvider,
@@ -252,6 +258,7 @@ export class AuthService {
         urls.login,    // Universal failure redirect
         ['email'] // Request email scope
       );
+      console.log('✅ OAuth session creation initiated');
       // OAuth session creation initiated
     } catch (error) {
       console.error('❌ OAuth error:', error);
@@ -264,29 +271,39 @@ export class AuthService {
    */
   async handleOAuthCallback(): Promise<AuthResponse> {
     try {
+      console.log('🔄 Starting OAuth callback handling...');
+      
       const user = await this.account.get();
+      console.log('👤 User from account.get():', user ? 'Found' : 'Not found');
       
       if (user) {
+        console.log('✅ User found, processing OAuth callback...');
+        
         // Get current session to determine OAuth provider
         let oauthProvider = 'oauth';
         try {
           const session = await this.account.getSession('current');
           oauthProvider = session.provider || 'oauth';
+          console.log('🔗 Session provider:', oauthProvider);
         } catch (sessionError) {
           console.error('Could not get session info:', sessionError);
         }
 
         // Check if user document exists, create if not
         try {
+          console.log('📊 Checking user document in database...');
           let userDoc;
           try {
             userDoc = await databaseService.getUserDocument(user.$id);
+            console.log('📄 User document:', userDoc ? 'Found' : 'Not found');
           } catch (error) {
+            console.log('❌ Error getting user document:', error);
             // Document doesn't exist, userDoc will be null
             userDoc = null;
           }
 
           if (!userDoc) {
+            console.log('📝 Creating new user document...');
             // Try to create user document for OAuth user
             try {
               await databaseService.createUserDocument(user.$id, {
@@ -301,30 +318,37 @@ export class AuthService {
                 onboardingcompleted: false,
                 oauthProvider: oauthProvider
               });
+              console.log('✅ User document created successfully');
             } catch (createError: any) {
+              console.log('⚠️ Error creating user document:', createError);
               // If document already exists, just update it
               if (createError.message?.includes('already exists')) {
+                console.log('🔄 User document already exists, updating instead...');
                 // User document already exists, updating instead
                 await databaseService.updateUserDocument(user.$id, {
                   lastLogin: new Date().toISOString(),
                   oauthProvider: oauthProvider
                 });
+                console.log('✅ User document updated successfully');
               } else {
                 throw createError;
               }
             }
           } else {
+            console.log('🔄 Updating existing user document...');
             // Update last login and OAuth provider
             await databaseService.updateUserDocument(user.$id, {
               lastLogin: new Date().toISOString(),
               oauthProvider: oauthProvider
             });
+            console.log('✅ User document updated successfully');
           }
         } catch (dbError) {
-          console.error('Failed to handle OAuth user document:', dbError);
+          console.error('❌ Failed to handle OAuth user document:', dbError);
           // Continue anyway - the user can still use the app
         }
 
+        console.log('✅ OAuth callback completed successfully');
         return {
           success: true,
           user,
@@ -332,9 +356,10 @@ export class AuthService {
         };
       }
 
+      console.log('❌ No user found after OAuth callback');
       throw new Error('No user found after OAuth callback');
     } catch (error: any) {
-      console.error('OAuth callback error:', error);
+      console.error('❌ OAuth callback error:', error);
       throw error;
     }
   }

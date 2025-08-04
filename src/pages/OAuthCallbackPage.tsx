@@ -12,14 +12,34 @@ const OAuthCallbackPage: React.FC = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        console.log('🔄 Starting OAuth callback handling...');
+        
         const authService = new AuthService();
-        await authService.handleOAuthCallback();
-        await refreshUser(); // Refresh user data with merged database info
-        navigate('/dashboard');
+        
+        // Check if we have a user before handling callback
+        try {
+          const currentUser = await authService.getCurrentUser();
+          console.log('👤 Current user before callback:', currentUser ? 'Found' : 'Not found');
+        } catch (userError) {
+          console.log('❌ Error getting current user:', userError);
+        }
+        
+        const result = await authService.handleOAuthCallback();
+        console.log('✅ OAuth callback result:', result);
+        
+        if (result.success) {
+          console.log('🔄 Refreshing user data...');
+          await refreshUser(); // Refresh user data with merged database info
+          console.log('✅ User refreshed, navigating to dashboard...');
+          navigate('/dashboard');
+        } else {
+          throw new Error(result.message || 'OAuth authentication failed');
+        }
       } catch (error: any) {
-        console.error('OAuth callback error:', error);
+        console.error('❌ OAuth callback error:', error);
         setError(error.message || 'OAuth authentication failed');
         setTimeout(() => {
+          console.log('🔄 Redirecting to login due to error...');
           navigate('/auth/login');
         }, 3000);
       } finally {

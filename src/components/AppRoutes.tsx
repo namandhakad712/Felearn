@@ -7,6 +7,8 @@ import LoadingSpinner from './LoadingSpinner';
 // Lazy load components for better performance
 const AuthPage = lazy(() => import('../pages/AuthPage'));
 const EmailVerificationPage = lazy(() => import('../pages/EmailVerificationPage'));
+const OAuthCallbackPage = lazy(() => import('../pages/OAuthCallbackPage'));
+const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));
 
@@ -26,6 +28,8 @@ function AppRoutes() {
       <Routes>
         <Route path="/auth/:type" element={<AuthPage />} />
         <Route path="/auth/verify" element={<EmailVerificationPage />} />
+        <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+        <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
         <Route 
           path="/onboarding" 
           element={
