@@ -41,9 +41,9 @@ const OAuthCallbackPage: React.FC = () => {
         
         if (result.success) {
           console.log('🔄 Refreshing user data...');
-          await refreshUser(); // Refresh user data with merged database info
+        await refreshUser(); // Refresh user data with merged database info
           console.log('✅ User refreshed, navigating to dashboard...');
-          navigate('/dashboard');
+        navigate('/dashboard');
         } else {
           throw new Error(result.message || 'OAuth authentication failed');
         }

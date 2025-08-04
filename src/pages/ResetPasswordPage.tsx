@@ -171,7 +171,7 @@ const ResetPasswordPage: React.FC = () => {
             <p className="text-sm">
               You're currently logged in. If you want to change your password, you can do so from your 
               <button 
-                onClick={() => navigate('/dashboard/settings')}
+                onClick={() => navigate('/settings')}
                 className="mx-1 underline hover:text-blue-800 font-medium"
               >
                 account settings
