@@ -43,8 +43,8 @@ export class ExportService {
         })
       );
       
-      if (response.statusCode !== 200) {
-        throw new Error(`Server export failed: ${response.stderr || 'Unknown error'}`);
+      if (response.status !== 'completed') {
+        throw new Error(`Server export failed: ${response.errors || 'Unknown error'}`);
       }
       
       // The server function returns the file directly

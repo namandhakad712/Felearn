@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion'; // Unused import
 import { Button } from '../ui';
-import { geminiService } from '../../services';
+// import { geminiService } from '../../services'; // Unused import
 
 interface ApiKeyStepProps {
   onApiKeyChange: (apiKey: string) => void;

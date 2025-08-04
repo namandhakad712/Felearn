@@ -10,6 +10,15 @@ interface RateLimitConfig {
 }
 
 /**
+ * Rate limit data structure
+ */
+interface RateLimitData {
+  attempts: number;
+  windowStart: number;
+  blockedUntil: number | null;
+}
+
+/**
  * Authentication Rate Limiter
  * Prevents abuse of authentication endpoints by implementing client-side rate limiting
  */
@@ -137,7 +146,7 @@ export class AuthRateLimiter {
         AuthLogger.warn(`Rate limit triggered for ${operation}`, {
           identifier,
           attempts: data.attempts,
-          blockedUntil: new Date(data.blockedUntil).toISOString(),
+          blockedUntil: data.blockedUntil ? new Date(data.blockedUntil).toISOString() : null,
           operation
         });
       }
@@ -198,7 +207,7 @@ export class AuthRateLimiter {
         identifier,
         operation,
         blockMinutes,
-        blockedUntil: new Date(data.blockedUntil).toISOString()
+        blockedUntil: data.blockedUntil ? new Date(data.blockedUntil).toISOString() : null
       });
     } catch (error) {
       // If there's an error, just log it

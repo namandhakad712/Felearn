@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Models } from 'appwrite';
+// import { Models } from 'appwrite'; // Unused import
 import { AuthService, AuthResponse } from '@/services/auth';
+import { User } from '../types';
 
 interface AuthContextType {
-  user: Models.User<Models.Preferences> | null;
+  user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<AuthResponse>;
@@ -13,7 +14,7 @@ interface AuthContextType {
   completePasswordReset: (userId: string, secret: string, password: string) => Promise<AuthResponse>;
   updatePassword: (newPassword: string, oldPassword: string) => Promise<AuthResponse>;
   createOAuthSession: (provider: string) => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
   updateUser: (data: any) => Promise<void>;
 }
 
@@ -28,7 +29,7 @@ export const AuthContext = createContext<AuthContextType>({
   completePasswordReset: async () => ({ success: false, message: 'AuthContext not initialized' }),
   updatePassword: async () => ({ success: false, message: 'AuthContext not initialized' }),
   createOAuthSession: async () => { throw new Error('AuthContext not initialized'); },
-  refreshUser: async () => {},
+  refreshUser: async () => null,
   updateUser: async () => {},
 });
 
@@ -41,7 +42,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const authService = new AuthService();
 

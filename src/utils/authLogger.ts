@@ -497,6 +497,27 @@ export class AuthLogger {
       console.error('Failed to report authentication error:', error);
     }
   }
+
+  /**
+   * Convenience method for warning logs
+   */
+  static warn(message: string, data?: Record<string, any>): void {
+    console.warn(`[AUTH WARNING] ${message}`, data);
+  }
+
+  /**
+   * Convenience method for error logs
+   */
+  static error(message: string, error?: any, data?: Record<string, any>): void {
+    console.error(`[AUTH ERROR] ${message}`, error, data);
+  }
+
+  /**
+   * Convenience method for debug logs
+   */
+  static debug(message: string, data?: Record<string, any>): void {
+    console.debug(`[AUTH DEBUG] ${message}`, data);
+  }
 }
 
 export default AuthLogger;

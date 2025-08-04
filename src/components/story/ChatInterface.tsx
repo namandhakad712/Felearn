@@ -14,7 +14,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   isLoading = false,
   placeholder = "Write a story about a magical cat who can travel through time...",
   maxLength = 1000,
-  userId
+  // userId // Unused parameter
 }) => {
   const [message, setMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);

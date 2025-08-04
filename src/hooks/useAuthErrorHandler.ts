@@ -38,7 +38,7 @@ export const useAuthErrorHandler = () => {
       setErrorData(displayData);
       
       // Log the error
-      await AuthErrorHandler.handleError(error, operation);
+      AuthErrorHandler.handleAuthError(error, operation);
       
       return undefined;
     }

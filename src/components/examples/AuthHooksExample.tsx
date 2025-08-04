@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  useAuth, 
+  // useAuth, // Unused import
   useAuthState, 
   useLogin, 
   useLogout, 
@@ -15,7 +15,7 @@ import {
  */
 const AuthHooksExample: React.FC = () => {
   // Basic auth hook
-  const auth = useAuth();
+  // const auth = useAuth(); // Unused variable
   
   // Auth state hooks
   const { user, isAuthenticated, isLoading } = useAuthState();

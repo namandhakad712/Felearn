@@ -161,7 +161,7 @@ const SecurityManager: React.FC<SecurityManagerProps> = ({ onSuccess, onError })
         // Wait a moment for user to see the message, then logout
         setTimeout(async () => {
           try {
-            const { useAuth } = await import('../../contexts/AuthContext');
+            // const { useAuth } = await import('../../contexts/AuthContext'); // Unused import
             // We can't use useAuth hook here, so we'll use the authService directly
             await authService.logout();
             // Redirect to main website page

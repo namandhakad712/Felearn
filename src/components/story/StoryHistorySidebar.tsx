@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+// import { useMemo } from 'react'; // Unused import
 import { motion, AnimatePresence } from 'framer-motion';
 import { Story } from '../../types';
 import AdvancedSearchFilter, { SearchFilters } from './AdvancedSearchFilter';

@@ -30,7 +30,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       y: 0,
       transition: { 
         duration: 0.8,
-        ease: "easeOut"
+        ease: "easeOut" as const
       }
     }
   };
@@ -43,7 +43,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       transition: { 
         duration: 0.8,
         delay: 0.2,
-        ease: "easeOut"
+        ease: "easeOut" as const
       }
     }
   };
@@ -56,7 +56,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       transition: { 
         duration: 0.5,
         repeat: Infinity,
-        repeatType: "reverse" 
+        repeatType: "reverse" as const
       }
     }
   };

@@ -240,16 +240,16 @@ const StoryLibraryPage: React.FC = () => {
     setIsRenameModalOpen(true);
   };
 
-  const _openDetailModal = (story: Story) => {
-    console.log('Opening story detail modal:', {
-      title: story.title,
-      imagesCount: story.images?.length || 0,
-      images: story.images?.map(img => img.substring(0, 50) + '...') || [],
-      slides: story.slides?.length || 0
-    });
-    setSelectedStory(story);
-    setIsDetailModalOpen(true);
-  };
+  // const _openDetailModal = (story: Story) => { // Unused function
+  //   console.log('Opening story detail modal:', {
+  //     title: story.title,
+  //     imagesCount: story.images?.length || 0,
+  //     images: story.images?.map(img => img.substring(0, 50) + '...') || [],
+  //     slides: story.slides?.length || 0
+  //   });
+  //   setSelectedStory(story);
+  //   setIsDetailModalOpen(true);
+  // };
 
   const openViewModes = (story: Story) => {
     console.log('Opening story view modes:', {

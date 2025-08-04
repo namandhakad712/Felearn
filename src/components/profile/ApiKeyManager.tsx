@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { authService } from '../../services';
+// import { authService } from '../../services'; // Unused import
 import { encryptApiKey } from '../../utils/encryption';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -25,7 +25,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
   const [validationStatus, setValidationStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
   
   // Check if user has an existing API key
-  const _hasExistingKey = user?.geminiKey && user.geminiKey.length > 0;
+  // const _hasExistingKey = user?.geminiKey && user.geminiKey.length > 0; // Unused variable
   const [keyStatus, setKeyStatus] = useState<'checking' | 'available' | 'not-available'>('checking');
   
   // Check API key status without decrypting
@@ -151,11 +151,11 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
     }
   };
   
-  const _handleCancel = () => {
-    setApiKey('');
-    setValidationStatus('idle');
-    setApiKeyError('');
-  };
+  // const _handleCancel = () => { // Unused function
+  //   setApiKey('');
+  //   setValidationStatus('idle');
+  //   setApiKeyError('');
+  // };
   
   return (
     <div className="space-y-6">

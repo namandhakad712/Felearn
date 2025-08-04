@@ -8,7 +8,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  ChartOptions,
+  ChartOptions
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 

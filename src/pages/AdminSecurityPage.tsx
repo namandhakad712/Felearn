@@ -1,5 +1,5 @@
 import React from 'react';
-import { AdminLayout } from '../components/admin/layout';
+// import { AdminLayout } from '../components/admin/layout'; // File does not exist
 import { KeyManagement, ErrorReportingTester } from '../components/admin';
 import { Card } from '../components/ui';
 
@@ -8,7 +8,7 @@ import { Card } from '../components/ui';
  */
 const AdminSecurityPage: React.FC = () => {
   return (
-    <AdminLayout>
+    <div className="admin-layout-placeholder">
       <div className="p-6">
         <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
           Security Management
@@ -142,7 +142,7 @@ const AdminSecurityPage: React.FC = () => {
           </div>
         </Card>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 

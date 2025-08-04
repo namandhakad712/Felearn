@@ -79,11 +79,14 @@ export class DatabaseService {
    */
   async updateUserDocument(userId: string, userData: Partial<UserDocument>): Promise<UserDocument> {
     try {
+      // Filter out document keys that shouldn't be updated
+      const { $id, $createdAt, $updatedAt, $permissions, $collectionId, $databaseId, ...updateData } = userData;
+      
       const document = await databases.updateDocument(
         this.databaseId,
         this.usersCollectionId,
         userId,
-        userData
+        updateData
       );
 
       return document as UserDocument;

@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin';
 import { Card } from '../../components/ui';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion'; // Unused import
 import { adminService } from '../../services/admin';
 import { analyticsService } from '../../services/analytics';
 import { AdminLog } from '../../types';
 import { LineChart, BarChart, HeatmapCalendar } from '../../components/admin/charts';
-import { UserManagementPage } from '.';
+// import { UserManagementPage } from '.'; // Unused import
 
 /**
  * Helper function to format a timestamp as a relative time string (e.g., "5 minutes ago")

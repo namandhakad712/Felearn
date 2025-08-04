@@ -1,16 +1,59 @@
 export interface User {
+  // Appwrite User base properties
   $id: string;
+  $createdAt: string;
+  $updatedAt: string;
+  name: string;
+  registration: string;
+  status: boolean;
+  labels: string[];
+  passwordUpdate: string;
   email: string;
-  name?: string;
-  bio?: string;
-  oauthProvider?: string;
-  geminiKey: string; // encrypted
-  createdAt: string;
-  lastLogin?: string; // Added back as it's in the Appwrite schema
-  settings: UserSettings | string; // Can be object in memory or string in database
+  phone: string;
+  emailVerification: boolean;
+  phoneVerification: boolean;
+  mfa: boolean;
+  prefs: Record<string, any>;
+  targets: any[];
+  accessedAt: string;
+  
+  // Extended properties required by the application
+  geminiKey?: string; // encrypted API key
+  isAdmin?: boolean; // admin privileges
+  settings?: UserSettings | string; // user preferences (can be object in memory or string in database)
+  lastLogin?: string; // last login timestamp
+  createdAt?: string; // creation timestamp (for compatibility)
+  bio?: string; // user bio
+  oauthProvider?: string; // OAuth provider used
+  disabled?: boolean; // account status
+}
+
+// Extended User interface that includes Appwrite User properties
+// Note: Models namespace will be available after fixing imports
+export interface ExtendedUser {
+  // Appwrite User properties
+  $id: string;
+  $createdAt: string;
+  $updatedAt: string;
+  name: string;
+  registration: string;
+  status: boolean;
+  labels: string[];
+  passwordUpdate: string;
+  email: string;
+  phone: string;
+  emailVerification: boolean;
+  phoneVerification: boolean;
+  mfa: boolean;
+  prefs: Record<string, any>;
+  targets: any[];
+  accessedAt: string;
+  
+  // Extended properties
+  geminiKey?: string;
   isAdmin?: boolean;
-  emailVerification?: boolean; // Whether the email has been verified
-  disabled?: boolean; // Whether the user account is disabled
+  settings?: UserSettings | string;
+  lastLogin?: string;
 }
 
 export interface UserSettings {

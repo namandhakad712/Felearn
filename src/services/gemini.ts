@@ -1,4 +1,5 @@
-import { GoogleGenerativeAI, Modality } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+// Note: Modality export doesn't exist in current version
 import { GeminiRequest, GeminiResponse, StorySlide } from '../types';
 import { marked } from 'marked';
 
@@ -34,7 +35,7 @@ class GeminiService {
           generationConfig: {
             temperature: request.options.temperature || 0.7,
             maxOutputTokens: request.options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
-            responseModalities: [Modality.TEXT, Modality.IMAGE],
+            // responseModalities: [Modality.TEXT, Modality.IMAGE], // Modality not available
           }
         });
 

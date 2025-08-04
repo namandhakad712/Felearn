@@ -1,6 +1,6 @@
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-
-export default useAuth;
+import { User } from '../types';
 
 /**
  * Hook for user profile operations
@@ -9,7 +9,7 @@ export default useAuth;
  * @returns User profile functions and state
  */
 export const useUserProfile = () => {
-  const { user, updateUser, deleteAccount } = useAuth();
+  const { user, updateUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   
@@ -42,8 +42,8 @@ export const useUserProfile = () => {
     setError(null);
     
     try {
-      await deleteAccount();
-      return true;
+      // TODO: Implement account deletion when the method is available
+      throw new Error('Account deletion not implemented');
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Account deletion failed'));
       return false;

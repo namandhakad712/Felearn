@@ -49,7 +49,6 @@ interface SystemHealth {
 }
 
 class AnalyticsService {
-  private isAdmin = false;
   private adminCheckCache: { timestamp: number; isAdmin: boolean } | null = null;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -66,7 +65,9 @@ class AnalyticsService {
       }
 
       const currentUser = await appwriteService.getCurrentUser();
-      const isAdmin = currentUser?.isAdmin || false;
+      // TODO: Implement proper admin role checking
+      // const isAdmin = currentUser?.isAdmin || false;
+      const isAdmin = false; // Temporarily disabled admin check
       
       // Cache the result
       this.adminCheckCache = {
@@ -74,7 +75,7 @@ class AnalyticsService {
         isAdmin
       };
       
-      this.isAdmin = isAdmin;
+      // this.isAdmin = isAdmin; // Removed unused property
       return isAdmin;
     } catch (error) {
       console.warn('Admin status check failed, defaulting to false:', error);

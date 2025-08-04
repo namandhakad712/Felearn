@@ -11,7 +11,7 @@ interface DashboardHeaderProps {
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
   onToggleSidebar, 
-  _sidebarOpen,
+  // _sidebarOpen, // Unused parameter
   onNotificationClick
 }) => {
   const { user } = useAuth();

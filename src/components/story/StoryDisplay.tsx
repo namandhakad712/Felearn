@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, Carousel } from '../ui';
+import { Card } from '../ui';
+// import { Carousel } from '../ui'; // Unused import
 import LiveSlideView from './LiveSlideView';
 import { StorySlide } from '../../types';
 import { fixSingleImageUrl, createStoryFallbackImage } from '../../utils/imageUrlFixer';
@@ -63,12 +64,12 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   // Extract title from story if not provided
   const storyLines = story.split('\n').filter(line => line.trim());
   const extractedTitle = title || storyLines[0] || 'Untitled Story';
-  const storyContent = title ? story : storyLines.slice(1).join('\n');
+  // const storyContent = title ? story : storyLines.slice(1).join('\n'); // Unused variable
 
-  const handleImageClick = (index: number) => {
-    setSelectedImageIndex(index);
-    setIsImageModalOpen(true);
-  };
+  // const handleImageClick = (index: number) => { // Unused function
+  //   setSelectedImageIndex(index);
+  //   setIsImageModalOpen(true);
+  // };
 
   const nextImage = () => {
     setSelectedImageIndex((prev) => (prev + 1) % displayImages.length);

@@ -45,7 +45,7 @@ const JellyText: React.FC<JellyTextProps> = ({
     if (!textRef.current || isInitialized) return;
 
     const textElement = textRef.current;
-    const characters = text.split('').map((char, index) => {
+    const characters = text.split('').map((char) => {
       const span = document.createElement('span');
       span.textContent = char === ' ' ? '\u00A0' : char; // Non-breaking space
       span.className = 'char';
@@ -99,7 +99,7 @@ const JellyText: React.FC<JellyTextProps> = ({
   const initEvents = () => {
     if (!containerRef.current) return;
 
-    const container = containerRef.current;
+    // const container = containerRef.current; // Unused variable
 
     // Mouse up event
     const handleMouseUp = (e: MouseEvent) => {

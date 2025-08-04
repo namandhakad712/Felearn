@@ -47,24 +47,24 @@ export { useStories };
 // Create a mock useToast hook to prevent import errors
 export const useToast = () => {
   return {
-    success: (title: string, message?: string, duration?: number) => {
+    success: (title: string, message?: string, _duration?: number) => {
       console.log('Toast Success:', title, message);
       alert(`${title}${message ? `\n${message}` : ''}`);
     },
-    error: (title: string, message?: string, duration?: number) => {
+    error: (title: string, message?: string, _duration?: number) => {
       console.error('Toast Error:', title, message);
       alert(`Error: ${title}${message ? `\n${message}` : ''}`);
     },
-    info: (title: string, message?: string, duration?: number) => {
+    info: (title: string, message?: string, _duration?: number) => {
       console.info('Toast Info:', title, message);
       alert(`Info: ${title}${message ? `\n${message}` : ''}`);
     },
-    warning: (title: string, message?: string, duration?: number) => {
+    warning: (title: string, message?: string, _duration?: number) => {
       console.warn('Toast Warning:', title, message);
       alert(`Warning: ${title}${message ? `\n${message}` : ''}`);
     },
     toasts: [],
-    removeToast: (id: string) => {}
+    removeToast: (_id: string) => {}
   };
 };
 

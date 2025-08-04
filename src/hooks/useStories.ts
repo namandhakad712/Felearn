@@ -53,7 +53,7 @@ export const useStories = (): UseStoriesReturn => {
       setError(null);
       
       // Simple validation since storyService.validateStoryData doesn't exist
-      const validateStoryData = (title: string, content: string) => {
+      const validateStoryData = (_title: string, content: string) => {
         const errors = [];
         if (!content || content.trim() === '') {
           errors.push('Story content is required');

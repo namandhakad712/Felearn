@@ -19,7 +19,7 @@ interface DashboardMetricsProps {
 export const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   dateRange,
   isLoading,
-  _onRefresh,
+  // _onRefresh, // Unused parameter
 }) => {
   const [metrics, setMetrics] = useState<MetricsData>({
     newUsers: 0,

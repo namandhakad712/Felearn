@@ -4,7 +4,7 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import HTMLFlipBook from 'react-pageflip';
 import { Story, StorySlide } from '../../types';
-import ReactPageFlipView from './ReactPageFlipView';
+// import ReactPageFlipView from './ReactPageFlipView'; // Unused import
 
 // Register GSAP plugins
 gsap.registerPlugin(useGSAP);
@@ -18,7 +18,8 @@ type ViewMode = 'book' | 'scroll';
 
 // Page component for flipbook
 const FlipBookPage = forwardRef<HTMLDivElement, { slide: StorySlide; index: number; totalPages: number }>((props, ref) => {
-  const { slide, index, totalPages } = props;
+  const { slide, index } = props;
+  // const totalPages = props.totalPages; // Unused variable
 
   return (
     <div className="story-page" ref={ref}>
@@ -102,7 +103,7 @@ FlipBookPage.displayName = 'FlipBookPage';
 
 const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('book');
-  const [currentPage, setCurrentPage] = useState(0);
+  // const [currentPage, setCurrentPage] = useState(0); // Unused state
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showBookAnimation, setShowBookAnimation] = useState(true);
   const flipBookRef = useRef<any>(null);
@@ -127,17 +128,17 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
   const slides = story.slides || [];
   const hasSlides = slides.length > 0;
 
-  const nextSlide = () => {
-    setCurrentPage((prev) => (prev + 1) % slides.length);
-  };
+  // const nextSlide = () => { // Unused function
+  //   setCurrentPage((prev) => (prev + 1) % slides.length);
+  // };
 
-  const prevSlide = () => {
-    setCurrentPage((prev) => (prev - 1 + slides.length) % slides.length);
-  };
+  // const prevSlide = () => { // Unused function
+  //   setCurrentPage((prev) => (prev - 1 + slides.length) % slides.length);
+  // };
 
-  const goToSlide = (index: number) => {
-    setCurrentPage(index);
-  };
+  // const goToSlide = (index: number) => { // Unused function
+  //   setCurrentPage(index);
+  // };
 
   const EmbeddedImageSlide: React.FC<{ slide: StorySlide; index: number }> = ({ slide, index }) => (
     <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -243,11 +244,11 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
     }
   };
 
-  const goToPage = (pageNum: number) => {
-    if (flipBookRef.current) {
-      flipBookRef.current.pageFlip().turnToPage(pageNum);
-    }
-  };
+  // const goToPage = (pageNum: number) => { // Unused function
+  //   if (flipBookRef.current) {
+  //     flipBookRef.current.pageFlip().turnToPage(pageNum);
+  //   }
+  // };
 
   // Zoom methods
   const zoomIn = () => {

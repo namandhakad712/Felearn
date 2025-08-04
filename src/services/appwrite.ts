@@ -1,4 +1,4 @@
-import { Client, Account, Storage, ID } from 'appwrite';
+import { Client, Account, Storage, ID, OAuthProvider } from 'appwrite';
 import { APPWRITE_CONFIG } from '../config/appwrite';
 
 // Initialize Appwrite client
@@ -16,7 +16,7 @@ class AppwriteService {
   async login(email: string, password: string) {
     try {
       // Create email password session
-      const session = await account.createEmailSession(email, password);
+      const session = await account.createEmailPasswordSession(email, password);
       
       // Get user details
       const user = await account.get();
@@ -47,7 +47,7 @@ class AppwriteService {
   }
 
   async loginWithOAuth(
-    provider: string,
+    provider: OAuthProvider,
     successUrl: string = window.location.origin + '/app.html#/onboarding',
     failureUrl: string = window.location.origin + '/app.html#/auth/login'
   ) {

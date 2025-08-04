@@ -183,7 +183,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
   };
   
   // Handle select all checkbox
-  const _handleSelectAll = () => {
+  // const _handleSelectAll = () => { // Unused function
     if (selectAll) {
       // Deselect all
       setSelectedUsers([]);
@@ -191,17 +191,17 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
       // Select all visible users
       setSelectedUsers(paginatedUsers.map(user => user.$id));
     }
-    setSelectAll(!selectAll);
-  };
+    // setSelectAll(!selectAll);
+  // }; // End of unused function
   
   // Handle individual user selection
-  const _handleSelectUser = (userId: string, isSelected: boolean) => {
-    if (isSelected) {
-      setSelectedUsers(prev => [...prev, userId]);
-    } else {
-      setSelectedUsers(prev => prev.filter(id => id !== userId));
-    }
-  };
+  // const _handleSelectUser = (userId: string, isSelected: boolean) => { // Unused function
+  //   if (isSelected) {
+  //     setSelectedUsers(prev => [...prev, userId]);
+  //   } else {
+  //     setSelectedUsers(prev => prev.filter(id => id !== userId));
+  //   }
+  // }; // End of unused function
   
   // Check if all visible users are selected
   useEffect(() => {

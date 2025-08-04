@@ -25,17 +25,16 @@ export class AuthErrorDisplay {
    * @returns Formatted error display data
    */
   static getErrorDisplayData(error: unknown, operation: string): ErrorDisplayData {
-    const errorInfo = AuthErrorHandler.getErrorInfo(error, operation);
+    // TODO: Replace with proper AuthErrorHandler methods when available
+    const message = AuthErrorHandler.handleAuthError(error, operation);
     
     return {
-      message: errorInfo.message,
-      helpText: AuthErrorHandler.getHelpText(error, operation),
-      suggestions: AuthErrorHandler.getActionSuggestions(error, operation),
-      isRetryable: errorInfo.retryable,
-      retryDelay: AuthErrorHandler.isRetryable(error, operation) 
-        ? AuthErrorHandler.getRetryDelay(error, operation) 
-        : undefined,
-      severity: this.mapSeverity(errorInfo.severity)
+      message: message,
+      helpText: AuthErrorHandler.getRecommendedAction(error),
+      suggestions: [AuthErrorHandler.getRecommendedAction(error)],
+      isRetryable: !AuthErrorHandler.isNetworkError(error),
+      retryDelay: AuthErrorHandler.isRateLimitError(error) ? 60000 : 5000,
+      severity: AuthErrorHandler.isNetworkError(error) ? 'warning' : 'error'
     };
   }
 
@@ -86,23 +85,25 @@ export class AuthErrorDisplay {
    * @returns Icon name for UI display
    */
   static getErrorIcon(error: unknown, operation: string): string {
-    const errorInfo = AuthErrorHandler.getErrorInfo(error, operation);
+    // TODO: Replace with proper AuthErrorHandler methods when available
+    // const errorInfo = AuthErrorHandler.getErrorInfo(error, operation);
     
-    switch (errorInfo.type) {
-      case ErrorType.AUTHENTICATION:
+    // Simplified icon logic based on error type
+    if (AuthErrorHandler.isNetworkError(error)) {
+      return 'wifi-off';
+    } else if (AuthErrorHandler.isRateLimitError(error)) {
+      return 'clock';
+    }
+    
+    // Default icon based on operation
+    switch (operation) {
+      case 'login':
+      case 'register':
         return 'lock';
-      case ErrorType.AUTHORIZATION:
-        return 'shield';
-      case ErrorType.VALIDATION:
-        return 'form';
-      case ErrorType.NETWORK:
-        return 'wifi-off';
-      case ErrorType.SERVER:
-        return 'server';
-      case ErrorType.RATE_LIMIT:
-        return 'clock';
-      case ErrorType.NOT_FOUND:
-        return 'search';
+      case 'logout':
+        return 'log-out';
+      case 'password_reset':
+        return 'key';
       default:
         return 'alert-circle';
     }

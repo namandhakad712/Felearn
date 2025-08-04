@@ -10,7 +10,8 @@ interface ReactPageFlipViewProps {
 
 // Page component using forwardRef as required by react-pageflip
 const StoryPage = forwardRef<HTMLDivElement, { slide: StorySlide; index: number; totalPages: number }>((props, ref) => {
-  const { slide, index, totalPages } = props;
+  const { slide, index } = props;
+  // const totalPages = props.totalPages; // Unused variable
 
 
 
@@ -133,19 +134,19 @@ const ReactPageFlipView: React.FC<ReactPageFlipViewProps> = ({ story, onClose })
 
 
   // Event handlers
-  const onFlip = useCallback((e: any) => {
+  const onFlip = useCallback((_e: any) => {
     // Page flipped
   }, []);
 
-  const onChangeOrientation = useCallback((orientation: string) => {
+  const onChangeOrientation = useCallback((_orientation: string) => {
     // Orientation changed
   }, []);
 
-  const onChangeState = useCallback((state: string) => {
+  const onChangeState = useCallback((_state: string) => {
     // State changed
   }, []);
 
-  const onInit = useCallback((data: any) => {
+  const onInit = useCallback((_data: any) => {
     // FlipBook initialized
   }, []);
 

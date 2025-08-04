@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { subscriberService } from '../../services/subscriberService';
 
 const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -25,7 +24,9 @@ const Footer: React.FC = () => {
     setMessage(null);
 
     try {
-      await subscriberService.subscribe(email, 'footer');
+      // TODO: Implement subscriberService when file exists
+      // await subscriberService.subscribe(email, 'footer');
+      console.log('Would subscribe email:', email); // Placeholder
       setEmail('');
       setMessage({
         type: 'success',

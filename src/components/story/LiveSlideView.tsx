@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+// import { AnimatePresence } from 'framer-motion'; // Unused import
 import { StorySlide } from '../../types';
 
 interface LiveSlideViewProps {
@@ -13,7 +14,7 @@ interface LiveSlideViewProps {
 
 const LiveSlideView: React.FC<LiveSlideViewProps> = ({
   slides,
-  images,
+  // images, // Unused parameter
   isGenerating,
   className = '',
   totalSlides, // No default - will be calculated dynamically
@@ -37,7 +38,7 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
       scale: 1, 
       x: 0,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100,
         damping: 15,
         duration: 0.6
@@ -56,7 +57,7 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
       transition: {
         duration: 2,
         repeat: Infinity,
-        ease: "easeInOut"
+        ease: "easeInOut" as const
       }
     }
   };
@@ -68,7 +69,7 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
       transition: {
         repeat: Infinity,
         duration: 1.5,
-        ease: "linear"
+        ease: "linear" as const
       }
     }
   };
