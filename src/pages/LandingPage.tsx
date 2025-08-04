@@ -48,11 +48,7 @@ const LandingPage: React.FC = () => {
               {/* Feature 1 */}
               <Card
                 animate
-                as={motion.div}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                viewport={{ once: true }}
+                className="transform transition-all duration-500"
               >
                 <div className="h-14 w-14 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -68,11 +64,7 @@ const LandingPage: React.FC = () => {
               {/* Feature 2 */}
               <Card
                 animate
-                as={motion.div}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                viewport={{ once: true }}
+                className="transform transition-all duration-500"
               >
                 <div className="h-14 w-14 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -88,11 +80,7 @@ const LandingPage: React.FC = () => {
               {/* Feature 3 */}
               <Card
                 animate
-                as={motion.div}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                viewport={{ once: true }}
+                className="transform transition-all duration-500"
               >
                 <div className="h-14 w-14 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -67,7 +67,7 @@ export class DatabaseService {
         }
       );
 
-      return document as UserDocument;
+      return document as unknown as UserDocument;
     } catch (error) {
       console.error('Create user document error:', error);
       throw error;
@@ -89,7 +89,7 @@ export class DatabaseService {
         updateData
       );
 
-      return document as UserDocument;
+      return document as unknown as UserDocument;
     } catch (error) {
       console.error('Update user document error:', error);
       throw error;
@@ -107,7 +107,7 @@ export class DatabaseService {
         userId
       );
 
-      return document as UserDocument;
+      return document as unknown as UserDocument;
     } catch (error) {
       console.error('Get user document error:', error);
       return null;

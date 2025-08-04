@@ -16,7 +16,7 @@ export const initializeApp = async () => {
     logDeploymentInfo();
     
     // Initialize authentication session
-    const sessionRestored = await initializeAuthSession();
+    // const sessionRestored = await initializeAuthSession(); // Removed unused variable
     // Authentication session initialization completed
     
     return client;

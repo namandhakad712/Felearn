@@ -172,26 +172,26 @@ const OnboardingPage: React.FC = () => {
     }
   };
 
-  const handleSkip = async () => {
-    try {
-      await updateUser({
-        onboardingcompleted: true,
-        settings: JSON.stringify({
-          theme: selectedTheme,
-          notifications: true,
-          autoSave: true,
-          language: 'en'
-        })
-      });
+  // const handleSkip = async () => {
+  //   try {
+  //     await updateUser({
+  //       onboardingcompleted: true,
+  //       settings: JSON.stringify({
+  //         theme: selectedTheme,
+  //         notifications: true,
+  //         autoSave: true,
+  //         language: 'en'
+  //       })
+  //     });
       
-      // Just navigate - theme will be applied by dashboard
-      navigate('/dashboard');
+  //     // Just navigate - theme will be applied by dashboard
+  //     navigate('/dashboard');
       
-    } catch (error) {
-      console.error('Failed to update onboarding status:', error);
-      navigate('/dashboard'); // Navigate anyway
-    }
-  };
+  //   } catch (error) {
+  //     console.error('Failed to update onboarding status:', error);
+  //     navigate('/dashboard'); // Navigate anyway
+  //   }
+  // };
 
   console.log('🎨 OnboardingPage render called, currentStep:', currentStep);
 

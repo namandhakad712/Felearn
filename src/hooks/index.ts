@@ -23,8 +23,8 @@ export {
 // Create a mock useAuthPersistence hook to prevent import errors
 export const useAuthPersistence = () => ({
   persistenceType: 'LOCAL',
-  setPersistence: async () => true,
-  setAuthPersistence: async () => true,
+  setPersistence: async (_type: string) => true,
+  setAuthPersistence: async (_type: string) => true,
   isLoading: false,
   error: null
 });

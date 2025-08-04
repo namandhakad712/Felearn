@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { usePasswordReset } from '../../hooks';
-import { AuthErrorDisplay } from '../../utils/authErrorDisplay';
+import { AuthErrorDisplay, ErrorDisplayData } from '../../utils/authErrorDisplay';
 
 interface PasswordResetFormProps {
   onSuccess?: () => void;
-  onError?: (error: Error) => void;
+  onError?: (error: ErrorDisplayData) => void;
 }
 
 /**

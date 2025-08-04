@@ -75,7 +75,7 @@ const EmailVerificationPage: React.FC = () => {
   useEffect(() => {
     const handleVerification = async () => {
       // Debug: Log all URL parameters
-      const fullUrl = window.location.href;
+      // const fullUrl = window.location.href; // Removed unused variable
       const hashParams = window.location.hash;
       
       // Extracting verification parameters
@@ -86,7 +86,7 @@ const EmailVerificationPage: React.FC = () => {
         const hashSearch = hashParams.includes('?') ? hashParams.split('?')[1] : '';
         if (hashSearch) {
           const hashSearchParams = new URLSearchParams(hashSearch);
-          const hashParamsObj = Object.fromEntries(hashSearchParams.entries());
+          // const hashParamsObj = Object.fromEntries(hashSearchParams.entries()); // Removed unused variable
           // Hash search params found
         }
       }

@@ -47,7 +47,7 @@ export const useUserTheme = () => {
           
           if (!currentTheme || (!recentManualChange && currentTheme !== userSettings.theme)) {
             // Applying user theme from settings
-            setTheme(userSettings.theme as Theme, false); // Mark as non-manual
+            setTheme(userSettings.theme as Theme); // Mark as non-manual
           } else {
             // Keeping current theme
           }

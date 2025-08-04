@@ -12,11 +12,11 @@ interface RateLimitConfig {
 /**
  * Rate limit data structure
  */
-interface RateLimitData {
-  attempts: number;
-  windowStart: number;
-  blockedUntil: number | null;
-}
+// interface RateLimitData {
+//   attempts: number;
+//   windowStart: number;
+//   blockedUntil: number | null;
+// }
 
 /**
  * Authentication Rate Limiter
@@ -115,7 +115,11 @@ export class AuthRateLimiter {
       const config = this.getConfig(operation);
       
       // Get current data or initialize
-      let data = {
+      let data: {
+        attempts: number;
+        windowStart: number;
+        blockedUntil: number | null;
+      } = {
         attempts: 0,
         windowStart: now,
         blockedUntil: null

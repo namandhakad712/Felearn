@@ -25,7 +25,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
   const [isExporting, setIsExporting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  // const [selectAll, setSelectAll] = useState(false); // Removed unused variable
   
   const usersPerPage = 10;
 
@@ -565,7 +565,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
                 {/* Page numbers */}
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   // Show pages around current page
-                  let pageNum;
+                  let pageNum: number;
                   if (totalPages <= 5) {
                     pageNum = i + 1;
                   } else if (currentPage <= 3) {

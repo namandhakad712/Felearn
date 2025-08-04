@@ -37,7 +37,7 @@ const StoryLibraryPage: React.FC = () => {
 
   // Story detail view modal state
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  // const [selectedStory, setSelectedStory] = useState<Story | null>(null); // Removed unused variable
 
   // Story view modes state
   const [isViewModesOpen, setIsViewModesOpen] = useState(false);
@@ -405,10 +405,10 @@ const StoryLibraryPage: React.FC = () => {
                           onLoad={(e) => {
                             console.log(`Modal slide ${idx + 1} loaded successfully`);
                           }}
-                          onError={(e) => {
+                          onError={(_e) => {
                             console.error(`Modal slide ${idx + 1} failed to load:`, imageUrl.substring(0, 50) + '...');
-                            (e.target as HTMLImageElement).src = createStoryFallbackImage(selectedStory.title, idx + 1, 800, 600);
-                            (e.target as HTMLImageElement).alt = `Slide ${idx + 1} unavailable`;
+                            // (e.target as HTMLImageElement).src = createStoryFallbackImage(selectedStory.title, idx + 1, 800, 600);
+                            // (e.target as HTMLImageElement).alt = `Slide ${idx + 1} unavailable`;
                           }}
                         />
 
@@ -705,7 +705,7 @@ const StoryLibraryPage: React.FC = () => {
           </Card>
         ) : (
           <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredStories.map((story, index) => (
+            {filteredStories.map((story, _index) => (
               <div key={story.$id} className="story-card">
                 <Card
                   animate
@@ -828,10 +828,10 @@ const StoryLibraryPage: React.FC = () => {
                               indicator.className = 'w-2 h-2 rounded-full bg-green-500 opacity-100';
                             }
                           }}
-                          onError={(e) => {
+                          onError={(_e) => {
                             console.error(`Preview image failed to load:`, story.images[0].substring(0, 50) + '...');
-                            (e.target as HTMLImageElement).src = createStoryFallbackImage(story.title, undefined, 400, 200);
-                            (e.target as HTMLImageElement).alt = 'Story preview unavailable';
+                            // (e.target as HTMLImageElement).src = createStoryFallbackImage(story.title, undefined, 400, 200);
+                            // (e.target as HTMLImageElement).alt = 'Story preview unavailable';
                             // Show red indicator for failed load
                             const indicator = document.getElementById(`status-${story.$id}`);
                             if (indicator) {

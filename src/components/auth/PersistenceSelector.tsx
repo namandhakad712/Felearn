@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAuthPersistence } from '../../hooks';
+import { ErrorDisplayData } from '../../utils/authErrorDisplay';
 
 interface PersistenceSelectorProps {
   onSuccess?: () => void;
-  onError?: (error: Error) => void;
+  onError?: (error: ErrorDisplayData) => void;
 }
 
 /**

@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface MagicURLLoginProps {
-  onSuccess?: () => void;
+  // onSuccess?: () => void; // Removed unused prop
 }
 
-const MagicURLLogin: React.FC<MagicURLLoginProps> = ({ onSuccess }) => {
+const MagicURLLogin: React.FC<MagicURLLoginProps> = ({ /* onSuccess */ }) => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sent' | 'error'>('idle');

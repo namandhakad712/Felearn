@@ -123,7 +123,10 @@ const StorySlideshow: React.FC<StorySlideshowProps> = ({ slides, className = '' 
                     if (textContent.indexOf('*') === -1 && textContent.indexOf('#') === -1) {
                       return <div className="text-xl">{textContent}</div>;
                     } else {
-                      return <div dangerouslySetInnerHTML={{ __html: marked.parse(textContent) }} />;
+                      // Handle both string and Promise return types from marked.parse
+                      const parsedContent = marked.parse(textContent);
+                      const htmlContent = typeof parsedContent === 'string' ? parsedContent : textContent;
+                      return <div dangerouslySetInnerHTML={{ __html: htmlContent }} />;
                     }
                   } catch (error) {
                     console.error('Error parsing markdown:', error);

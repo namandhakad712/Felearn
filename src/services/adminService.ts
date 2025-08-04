@@ -1,4 +1,4 @@
-import { ID, Query } from 'appwrite';
+import { Query } from 'appwrite';
 import { databaseService } from './databaseService';
 import { APPWRITE_CONFIG } from '../config/appwrite';
 import { AdminLog, User } from '../types';
@@ -200,10 +200,10 @@ export class AdminService {
 
   /**
    * Get dashboard stats (alias for getAdminMetrics for backward compatibility)
-   * @param dateRange Optional date range filter (currently unused but kept for compatibility)
+   * @param _dateRange Optional date range filter (currently unused but kept for compatibility)
    * @returns Promise with dashboard stats
    */
-  async getDashboardStats(dateRange?: string): Promise<{
+  async getDashboardStats(_dateRange?: string): Promise<{
     totalUsers: number;
     newUsers: number;
     activeUsers: number;

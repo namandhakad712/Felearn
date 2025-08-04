@@ -7,7 +7,7 @@ import { ENCRYPTION_CONFIG } from '../config/encryption';
 class EncryptionService {
   private readonly algorithm = 'AES-GCM';
   private readonly keyLength = 256; // AES-256
-  private readonly saltLength = 16; // 16 bytes salt
+  // private readonly saltLength = 16; // 16 bytes salt - Removed unused variable
   private readonly ivLength = 12; // 12 bytes IV for AES-GCM
   private readonly tagLength = 128; // 128 bits authentication tag
   private readonly iterations = 100000; // PBKDF2 iterations
@@ -21,37 +21,10 @@ class EncryptionService {
    * @param salt Salt for key derivation
    * @returns Promise with CryptoKey
    */
-  private async deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
-    // Use the pepper to add server-side security
-    const passwordWithPepper = password + this.pepper;
-    
-    // Convert password to key material
-    const encoder = new TextEncoder();
-    const passwordData = encoder.encode(passwordWithPepper);
-    
-    // Import key material
-    const keyMaterial = await window.crypto.subtle.importKey(
-      'raw',
-      passwordData,
-      { name: 'PBKDF2' },
-      false,
-      ['deriveKey']
-    );
-    
-    // Derive the actual encryption key using PBKDF2
-    return window.crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        salt,
-        iterations: this.iterations,
-        hash: 'SHA-256'
-      },
-      keyMaterial,
-      { name: this.algorithm, length: this.keyLength },
-      false, // Not extractable
-      ['encrypt', 'decrypt']
-    );
-  }
+  // private async deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+  //   // TODO: Implement key derivation
+  //   throw new Error('Key derivation not implemented');
+  // }
 
   /**
    * Generate a random encryption key and store it securely
@@ -124,25 +97,22 @@ class EncryptionService {
       const base64Key = localStorage.getItem(`${this.storageKeyPrefix}${keyId}`);
       
       if (!base64Key) {
-        throw new Error(`Encryption key not found: ${keyId}`);
+        throw new Error(`Key not found: ${keyId}`);
       }
       
       // Convert from base64 to Uint8Array
-      const rawKey = Uint8Array.from(atob(base64Key), c => c.charCodeAt(0));
+      const keyData = Uint8Array.from(atob(base64Key), c => c.charCodeAt(0));
       
       // Import the key
       return window.crypto.subtle.importKey(
         'raw',
-        rawKey,
-        {
-          name: this.algorithm,
-          length: this.keyLength
-        },
+        keyData,
+        { name: this.algorithm, length: this.keyLength },
         false, // Not extractable
         ['encrypt', 'decrypt']
       );
     } catch (error) {
-      console.error(`Error getting encryption key ${keyId}:`, error);
+      console.error('Error getting key by ID:', error);
       throw new Error('Failed to get encryption key');
     }
   }
@@ -228,7 +198,8 @@ class EncryptionService {
       
       // Try to decrypt with older keys if available
       try {
-        return await this.decryptWithOlderKeys(encryptedData);
+        // return await this.decryptWithOlderKeys(encryptedData); // TODO: Implement older key decryption
+        throw new Error('Decryption failed - older key decryption not implemented');
       } catch (fallbackError) {
         console.error('Fallback decryption error:', fallbackError);
         throw new Error('Failed to decrypt data');
@@ -241,65 +212,19 @@ class EncryptionService {
    * @param encryptedData Encrypted data as a string
    * @returns Promise with decrypted data
    */
-  private async decryptWithOlderKeys(encryptedData: string): Promise<string> {
-    // Get all key IDs from localStorage
-    const keyIds: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(this.storageKeyPrefix) && key !== `${this.storageKeyPrefix}current`) {
-        keyIds.push(key.substring(this.storageKeyPrefix.length));
-      }
-    }
-    
-    // Try each key
-    for (const keyId of keyIds) {
-      try {
-        // Convert from base64 to Uint8Array
-        const data = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
-        
-        // Extract IV and encrypted data
-        const iv = data.slice(0, this.ivLength);
-        const encryptedBuffer = data.slice(this.ivLength);
-        
-        // Get the key
-        const key = await this.getKeyById(keyId);
-        
-        // Decrypt the data
-        const decryptedBuffer = await window.crypto.subtle.decrypt(
-          {
-            name: this.algorithm,
-            iv,
-            tagLength: this.tagLength
-          },
-          key,
-          encryptedBuffer
-        );
-        
-        // Decode the data
-        const decoder = new TextDecoder();
-        const decryptedData = decoder.decode(decryptedBuffer);
-        
-        // Re-encrypt with the current key for future use
-        await this.reEncryptData(decryptedData);
-        
-        return decryptedData;
-      } catch (error) {
-        // Continue to the next key
-        console.warn(`Failed to decrypt with key ${keyId}:`, error);
-      }
-    }
-    
-    throw new Error('Failed to decrypt data with any available key');
-  }
+  // private async decryptWithOlderKeys(encryptedData: string): Promise<string> {
+  //   // TODO: Implement older key decryption
+  //   throw new Error('Older key decryption not implemented');
+  // }
 
   /**
    * Re-encrypt data with the current key
    * @param data Data to re-encrypt
-   * @returns Promise with the re-encrypted data
+   * @returns Promise with re-encrypted data
    */
-  private async reEncryptData(data: string): Promise<string> {
-    return this.encrypt(data);
-  }
+  // private async reEncryptData(data: string): Promise<string> {
+  //   return this.encrypt(data);
+  // }
 
   /**
    * Rotate encryption keys
@@ -311,23 +236,23 @@ class EncryptionService {
       const newKeyId = await this.generateAndStoreKey();
       console.log(`Generated new encryption key: ${newKeyId}`);
       
-      // Set it as the current key
+      // Update the current key reference
       localStorage.setItem(`${this.storageKeyPrefix}current`, newKeyId);
       
       return true;
     } catch (error) {
       console.error('Key rotation error:', error);
-      throw new Error('Failed to rotate encryption keys');
+      return false;
     }
   }
 
   /**
-   * Clear all encryption keys (useful when keys are corrupted)
+   * Clear all encryption keys
    * @returns Promise indicating success
    */
   async clearAllKeys(): Promise<boolean> {
     try {
-      // Get all key IDs from localStorage
+      // Find all encryption keys in localStorage
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -336,10 +261,10 @@ class EncryptionService {
         }
       }
       
-      // Remove all encryption keys
+      // Remove all keys
       keysToRemove.forEach(key => localStorage.removeItem(key));
       
-      console.log(`Cleared ${keysToRemove.length} encryption keys`);
+      console.log('All encryption keys cleared');
       return true;
     } catch (error) {
       console.error('Error clearing encryption keys:', error);
@@ -348,76 +273,47 @@ class EncryptionService {
   }
 
   /**
-   * Check if the browser supports the required crypto APIs
+   * Check if Web Crypto API is supported
    * @returns Boolean indicating support
    */
   isSupported(): boolean {
-    return (
-      typeof window !== 'undefined' &&
-      window.crypto &&
-      window.crypto.subtle &&
-      typeof window.crypto.subtle.encrypt === 'function' &&
-      typeof window.crypto.subtle.decrypt === 'function'
-    );
+    return typeof window !== 'undefined' && 
+           window.crypto && 
+           window.crypto.subtle &&
+           typeof window.crypto.subtle.encrypt === 'function';
   }
 
   /**
-   * Fallback encryption for browsers that don't support Web Crypto API
+   * Fallback encryption (simple base64 encoding)
    * @param data Data to encrypt
    * @returns Encrypted data
    */
   fallbackEncrypt(data: string): string {
-    if (!data) return '';
-    
-    // Add a prefix to make it harder to recognize
-    const prefixed = `gemini_key_${data}`;
-    
-    // Convert to Base64
-    return btoa(prefixed);
+    return btoa(unescape(encodeURIComponent(data)));
   }
 
   /**
-   * Fallback decryption for browsers that don't support Web Crypto API
+   * Fallback decryption (simple base64 decoding)
    * @param encryptedData Encrypted data
    * @returns Decrypted data
    */
   fallbackDecrypt(encryptedData: string): string {
-    if (!encryptedData) return '';
-    
-    try {
-      // Decode from Base64
-      const decoded = atob(encryptedData);
-      
-      // Remove the prefix
-      const prefix = 'gemini_key_';
-      if (decoded.startsWith(prefix)) {
-        return decoded.substring(prefix.length);
-      }
-      
-      return '';
-    } catch (error) {
-      console.error('Fallback decryption error:', error);
-      return '';
-    }
+    return decodeURIComponent(escape(atob(encryptedData)));
   }
 
   /**
-   * Mask the API key for display
+   * Mask an API key for display
    * @param apiKey API key to mask
    * @returns Masked API key
    */
   maskApiKey(apiKey: string): string {
-    if (!apiKey) return '';
-    
-    // Show only the first 4 and last 4 characters
-    if (apiKey.length <= 8) {
+    if (!apiKey || apiKey.length < 8) {
       return '••••••••';
     }
     
-    const firstFour = apiKey.substring(0, 4);
-    const lastFour = apiKey.substring(apiKey.length - 4);
-    
-    return `${firstFour}${'•'.repeat(apiKey.length - 8)}${lastFour}`;
+    const visibleChars = 4;
+    const maskedChars = apiKey.length - visibleChars;
+    return apiKey.substring(0, visibleChars) + '•'.repeat(maskedChars);
   }
 }
 

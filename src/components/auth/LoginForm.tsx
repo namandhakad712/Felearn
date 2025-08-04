@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { useLogin } from '../../hooks';
 import { AuthErrorDisplay } from '../../utils/authErrorDisplay';
 
+import { ErrorDisplayData } from '../../utils/authErrorDisplay';
+
 interface LoginFormProps {
   onSuccess?: () => void;
-  onError?: (error: Error) => void;
+  onError?: (error: ErrorDisplayData) => void;
   showForgotPassword?: boolean;
 }
 

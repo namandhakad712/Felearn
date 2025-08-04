@@ -1,4 +1,4 @@
-import { Account, ID, Models, OAuthProvider } from 'appwrite';
+import { Account, Models, OAuthProvider } from 'appwrite';
 
 // OAuthProvider validation - removed debug logging for production
 import { account } from '@/lib/appwrite';

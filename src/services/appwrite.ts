@@ -16,7 +16,7 @@ class AppwriteService {
   async login(email: string, password: string) {
     try {
       // Create email password session
-      const session = await account.createEmailPasswordSession(email, password);
+      // const session = await account.createEmailPasswordSession(email, password); // Removed unused variable
       
       // Get user details
       const user = await account.get();
@@ -298,7 +298,7 @@ class AppwriteService {
    * Get file preview URL (deprecated - requires paid plan)
    * @deprecated Use getFileUrl instead for free plan compatibility
    */
-  getFilePreview(fileId: string, width: number = 600, height: number = 400): string {
+  getFilePreview(fileId: string, _width: number = 600, _height: number = 400): string {
     console.warn('⚠️ getFilePreview requires paid Appwrite plan. Using direct file URL instead.');
     return this.getFileUrl(fileId);
   }

@@ -1,6 +1,6 @@
 import { appwriteService } from './appwrite';
-import { storyService } from './story';
-import { databaseService } from './database';
+// import { storyService } from './story'; // Removed unused import
+// import { databaseService } from './database'; // Removed unused import
 
 // Enhanced interfaces for better type safety
 interface DailyData {
@@ -64,7 +64,7 @@ class AnalyticsService {
         return this.adminCheckCache.isAdmin;
       }
 
-      const currentUser = await appwriteService.getCurrentUser();
+      // const currentUser = await appwriteService.getCurrentUser(); // Removed unused variable
       // TODO: Implement proper admin role checking
       // const isAdmin = currentUser?.isAdmin || false;
       const isAdmin = false; // Temporarily disabled admin check

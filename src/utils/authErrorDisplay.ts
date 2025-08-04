@@ -34,7 +34,7 @@ export class AuthErrorDisplay {
       suggestions: [AuthErrorHandler.getRecommendedAction(error)],
       isRetryable: !AuthErrorHandler.isNetworkError(error),
       retryDelay: AuthErrorHandler.isRateLimitError(error) ? 60000 : 5000,
-      severity: AuthErrorHandler.isNetworkError(error) ? 'warning' : 'error'
+      severity: AuthErrorHandler.isNetworkError(error) ? 'medium' : 'high'
     };
   }
 
@@ -43,20 +43,20 @@ export class AuthErrorDisplay {
    * @param severity Internal error severity
    * @returns Display severity
    */
-  private static mapSeverity(severity: string): 'low' | 'medium' | 'high' | 'critical' {
-    switch (severity) {
-      case 'LOW':
-        return 'low';
-      case 'MEDIUM':
-        return 'medium';
-      case 'HIGH':
-        return 'high';
-      case 'CRITICAL':
-        return 'critical';
-      default:
-        return 'medium';
-    }
-  }
+  // private static mapSeverity(severity: string): 'low' | 'medium' | 'high' | 'critical' {
+  //   switch (severity) {
+  //     case 'LOW':
+  //       return 'low';
+  //     case 'MEDIUM':
+  //       return 'medium';
+  //     case 'HIGH':
+  //       return 'high';
+  //     case 'CRITICAL':
+  //       return 'critical';
+  //     default:
+  //       return 'medium';
+  //   }
+  // }
 
   /**
    * Get CSS class for error severity

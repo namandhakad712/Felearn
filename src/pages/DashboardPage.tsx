@@ -43,48 +43,50 @@ const StoryGenerator = () => {
     clearError: clearStoriesError,
   } = useStories();
 
-  const _handleStorySelect = (story: Story) => {
-    setSelectedStory(story);
-    setGeneratedStory(story.content);
-    setStoryImages(story.images || []);
-    setStorySlides(story.slides || []);
-    setError(null);
-    clearStoriesError();
-  };
+  // const _handleStorySelect = (story: Story) => {
+  //   setSelectedStory(story);
+  //   setGeneratedStory(story.content);
+  //   setStoryImages(story.images || []);
+  //   setStorySlides(story.slides || []);
+  //   setError(null);
+  //   clearStoriesError();
+  // };
 
-  const _handleStoryRename = async (storyId: string, newTitle: string) => {
-    try {
-      await renameStory(storyId, newTitle);
-    } catch (error) {
-      console.error('Failed to rename story:', error);
-      // Error is handled by the hook
-    }
-  };
+  // const _handleStoryRename = async (storyId: string, newTitle: string) => {
+  //   try {
+  //     await renameStory(storyId, newTitle);
+  //   } catch (error) {
+  //     console.error('Failed to rename story:', error);
+  //     // Error is handled by the hook
+  //   }
+  // };
 
-  const _handleStoryDelete = async (storyId: string) => {
-    try {
-      await deleteStory(storyId);
+  // const _handleStoryDelete = async (storyId: string) => {
+  //   try {
+  //     await deleteStory(storyId);
 
-      // Clear selected story if it was deleted
-      if (selectedStory?.$id === storyId) {
-        setSelectedStory(null);
-        setGeneratedStory(null);
-        setStoryImages([]);
-      }
-    } catch (error) {
-      console.error('Failed to delete story:', error);
-      // Error is handled by the hook
-    }
-  };
+  //     // Clear selected story if it was deleted
+  //     if (selectedStory?.$id === storyId) {
+  //       setSelectedStory(null);
+  //       setGeneratedStory(null);
+  //       setStoryImages([]);
+  //       setError(null);
+  //       clearStoriesError();
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to delete story:', error);
+  //     // Error is handled by the hook
+  //   }
+  // };
 
-  const handleStoryPin = async (storyId: string, isPinned: boolean) => {
-    try {
-      await togglePin(storyId, isPinned);
-    } catch (error) {
-      console.error('Failed to toggle pin:', error);
-      // Error is handled by the hook
-    }
-  };
+  // const handleStoryPin = async (storyId: string, isPinned: boolean) => {
+  //   try {
+  //     await togglePin(storyId, isPinned);
+  //   } catch (error) {
+  //     console.error('Failed to toggle pin:', error);
+  //     // Error is handled by the hook
+  //   }
+  // };
 
 
 
@@ -118,7 +120,7 @@ const StoryGenerator = () => {
         initialize: (apiKey: string) => {
           // Initializing gemini service
         },
-        generateStory: async ({ prompt, apiKey, userId, options }: any) => {
+        generateStory: async ({ prompt, apiKey, _userId, options }: any) => {
           console.log('Generating images for prompt:', prompt);
 
           // Import the Google Generative AI library exactly like in main thing/index.tsx
@@ -132,13 +134,13 @@ const StoryGenerator = () => {
             model: 'gemini-2.0-flash-preview-image-generation',
             generationConfig: {
               maxOutputTokens: options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
-              responseModalities: ['IMAGE', 'TEXT'] // Specify both IMAGE and TEXT as required
+              // responseModalities: ['IMAGE', 'TEXT'] // Removed - not supported in this version
             }
           });
           const chat = model.startChat({ history: [] });
 
           // Add compatibility properties to match your existing code
-          chat.history = [];
+          // chat.history = []; // Removed - not supported in this version
 
           // Create arrays to store the generated content
           const images = [];
@@ -167,7 +169,7 @@ const StoryGenerator = () => {
 
           try {
             // Reset chat history
-            chat.history.length = 0;
+            // chat.history.length = 0; // Removed - not supported in this version
 
             // Send the message and get a streaming response
             // Wrap in try-catch to handle specific streaming errors
@@ -186,7 +188,7 @@ const StoryGenerator = () => {
             // Process the stream of content - check if result has stream property
             const streamToIterate = result.stream || result;
             for await (const chunk of streamToIterate) {
-              for (const candidate of chunk.candidates) {
+              for (const candidate of chunk.candidates || []) {
                 for (const part of candidate.content.parts ?? []) {
                   if (part.text) {
                     console.log('Received text part:', typeof part.text, part.text);
@@ -419,9 +421,9 @@ const StoryGenerator = () => {
 
         // Create the story with the extracted title and slides
         // Pass the user's email and name if available from the auth context
-        const userEmail = user?.email || 'user@example.com';
-        const _userName = user?.name || 'User';
-        const userLastLogin = user?.lastLogin || new Date().toISOString();
+        // const userEmail = user?.email || 'user@example.com'; // Removed unused variable
+        // const _userName = user?.name || 'User'; // Removed unused variable
+        // const userLastLogin = user?.lastLogin || new Date().toISOString(); // Removed unused variable
 
         // Create story with user information
         const savedStory = await createStory(title, response.story, response.images || [], response.slides || [], response.tokens || 0);
@@ -612,6 +614,9 @@ const StoryGenerator = () => {
           images: storyImages,
           createdAt: new Date().toISOString(),
           isPinned: false,
+          email: user?.email || '',
+          name: user?.name || '',
+          lastLogin: user?.lastLogin || new Date().toISOString(),
         } : undefined)}
         slides={storySlides}
         onExportComplete={handleExportComplete}

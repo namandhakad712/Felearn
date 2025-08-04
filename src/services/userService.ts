@@ -146,7 +146,7 @@ export class UserService {
     // Combine results and remove duplicates
     const combinedResults = [...nameResults, ...emailResults];
     const uniqueResults = combinedResults.filter((user, index, self) =>
-      index === self.findIndex(u => u.$id === user.$id)
+      index === self.findIndex((u: any) => u.$id === user.$id)
     );
     
     return uniqueResults.slice(0, limit);

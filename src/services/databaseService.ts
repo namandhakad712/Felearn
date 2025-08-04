@@ -1,4 +1,4 @@
-import { Databases, ID, Query, Models } from 'appwrite';
+import { Databases, ID, Query } from 'appwrite';
 import { appwriteClient } from './appwrite';
 import { APPWRITE_CONFIG } from '../config/appwrite';
 import AppwriteErrorHandler from '../utils/appwriteErrorHandler';
@@ -410,9 +410,9 @@ export class AppwriteDatabaseService implements DataService {
     // Convert slides array to string if it exists
     if (processedData.slides && Array.isArray(processedData.slides)) {
       // Process slides to store captions with image references
-      const processedSlides = processedData.slides.map((slide, index) => ({
+      const processedSlides = processedData.slides.map((slide, _index) => ({
         text: slide.text || '',
-        imageIndex: index, // Reference to the image in the images array
+        imageIndex: _index, // Reference to the image in the images array
         // Don't store the full base64 image data, just the caption and reference
       }));
       

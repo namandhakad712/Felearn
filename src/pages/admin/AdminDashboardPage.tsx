@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin';
 import { Card } from '../../components/ui';
-// import { motion } from 'framer-motion'; // Unused import
 import { adminService } from '../../services';
 import { analyticsService } from '../../services/analytics';
 import { AdminLog } from '../../types';
 import { LineChart, BarChart, HeatmapCalendar } from '../../components/admin/charts';
-// import { UserManagementPage } from '.'; // Unused import
 
 /**
  * Helper function to format a timestamp as a relative time string (e.g., "5 minutes ago")
@@ -81,7 +79,12 @@ const AdminDashboardPage: React.FC = () => {
       
       // Fetch stats from admin service
       const dashboardStats = await adminService.getDashboardStats(dateRange);
-      setStats(dashboardStats);
+      setStats({
+        newUsers: dashboardStats.newUsers,
+        storyCount: 0, // TODO: Implement story count
+        apiErrors: dashboardStats.errorCount,
+        activeUsers: dashboardStats.activeUsers,
+      });
       
       // Fetch recent logs
       const logs = await adminService.getRecentLogs(5);

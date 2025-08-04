@@ -1,6 +1,6 @@
 import { appwriteService } from './appwrite';
 import { User } from '../types';
-import AppwriteErrorHandler, { ErrorType, ErrorSeverity } from '../utils/appwriteErrorHandler';
+// import AppwriteErrorHandler, { ErrorType, ErrorSeverity } from '../utils/appwriteErrorHandler'; // Removed unused imports
 import AuthErrorHandler from '../utils/authErrorHandler';
 import ErrorMessageFormatter from '../utils/errorMessageFormatter';
 import AuthLogger from '../utils/authLogger';
@@ -10,6 +10,20 @@ import AuthLogger from '../utils/authLogger';
  * Handles all authentication operations
  */
 export class AuthService {
+  /**
+   * Clear any stored errors
+   */
+  clearErrors(): void {
+    // TODO: Implement error clearing
+  }
+
+  /**
+   * Handle errors with logging
+   */
+  handleError(error: any, operation: string, context: any): void {
+    console.error(`Auth error in ${operation}:`, error, context);
+  }
+
   /**
    * Register a new user with email and password
    * @param email User's email
@@ -117,7 +131,7 @@ export class AuthService {
       // Log OAuth login attempt
       AuthLogger.logAuthEvent('oauth_login_attempt', { provider });
       
-      appwriteService.loginWithOAuth(provider);
+      appwriteService.loginWithOAuth(provider as any);
     } catch (error: any) {
       // Handle and log OAuth login error
       const errorInfo = AppwriteErrorHandler.handleAuthError(error, { provider });

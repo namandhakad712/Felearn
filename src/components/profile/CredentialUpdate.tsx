@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { authService } from '../../services';
+// import { authService } from '../../services'; // Removed unused import
 import { useAuth } from '../../contexts/AuthContext';
 
 interface CredentialUpdateProps {
   type: 'email' | 'password';
-  onSuccess: (message: string) => void;
+  // onSuccess: (message: string) => void; // Removed unused prop
   onError: (message: string) => void;
   onCancel: () => void;
 }
 
 const CredentialUpdate: React.FC<CredentialUpdateProps> = ({
   type,
-  onSuccess,
+  // onSuccess,
   onError,
   onCancel,
 }) => {
@@ -24,7 +24,7 @@ const CredentialUpdate: React.FC<CredentialUpdateProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  // const [showConfirmation, setShowConfirmation] = useState(false); // Removed unused variable
   
   // Validation states
   const [currentPasswordError, setCurrentPasswordError] = useState('');
