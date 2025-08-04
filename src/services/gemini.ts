@@ -40,7 +40,7 @@ class GeminiService {
         // Enhanced prompt with better structure
         const enhancedPrompt = this.buildEnhancedPrompt(request);
         
-        console.log(`🎯 Attempt ${attempt}/${retries}: Generating story with prompt length: ${enhancedPrompt.length}`);
+        console.log(`🎯 Attempted ${attempt}/${retries}: Generating story with prompt length: ${enhancedPrompt.length}`);
 
         // Create proper request structure with contents.parts
         const requestContent = {
