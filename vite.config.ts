@@ -95,13 +95,14 @@ export default defineConfig(({ mode }) => {
         'index.html',
         'app.html'
       ],
-      exclude: ['@google/generative-ai', 'marked'],
+      exclude: ['marked'],
       include: [
         'react',
         'react-dom',
         'react-router-dom',
         'framer-motion',
-        'styled-components'
+        'styled-components',
+        '@google/generative-ai'
       ],
       // Ensure styled-components is properly deduplicated
       force: true

@@ -47,7 +47,7 @@
     "preview:dist": "vite preview --port 4173",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist node_modules/.vite",
-    "postinstall": "echo 'Type-check disabled for build'",
+    "postinstall": "echo 'Type-check disabled for build' && npm ls @google/generative-ai",
     "start": "npm run preview",
     "deploy": "npm run build && vercel --prod",
     "deploy:staging": "npm run build:staging && vercel"
