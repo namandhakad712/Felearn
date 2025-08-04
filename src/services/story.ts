@@ -1,10 +1,13 @@
-import { Story } from '../types';
 import { appwriteService } from './appwrite';
+import { databaseService } from './databaseService';
+import { Story, StorySlide } from '../types';
+import { APPWRITE_CONFIG } from '../config/appwrite';
 
 /**
- * Story service for handling story CRUD operations
+ * Story Service
+ * Handles all story-related operations
  */
-export class StoryService {
+class StoryService {
   /**
    * Create a new story
    */
@@ -15,9 +18,34 @@ export class StoryService {
       // Extract title from content if not provided
       const finalTitle = title || this.extractTitleFromContent(content);
 
-      const story = await appwriteService.createStory(finalTitle, content, images, slides);
-      console.log('Story created successfully:', story);
+      // Get current user for story data
+      const currentUser = await appwriteService.getCurrentUser();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
 
+      // Create story document
+      const storyData = {
+        userId: currentUser.$id,
+        email: currentUser.email,
+        name: currentUser.name,
+        lastLogin: currentUser.accessedAt,
+        title: finalTitle,
+        content,
+        images,
+        slides,
+        createdAt: new Date().toISOString(),
+        isPinned: false,
+        tags: [],
+        tokens: this.calculateTokens(content)
+      };
+
+      const story = await databaseService.createDocument<Story>(
+        APPWRITE_CONFIG.collections.stories,
+        storyData
+      );
+      
+      console.log('Story created successfully:', story);
       return story;
     } catch (error) {
       console.error('Error creating story:', error);
@@ -30,13 +58,23 @@ export class StoryService {
    */
   async getStories(): Promise<Story[]> {
     try {
-      // Fetching user stories
+      // Get current user
+      const currentUser = await appwriteService.getCurrentUser();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
 
-      const stories = await appwriteService.getStories();
-      // Stories fetched successfully
+      // Fetch stories for current user
+      const result = await databaseService.listDocuments<Story>(
+        APPWRITE_CONFIG.collections.stories,
+        [/* Add user filter here if needed */]
+      );
+      
+      const stories = result.documents;
+      console.log('Stories fetched successfully:', stories.length);
 
       // Sort stories by creation date (newest first) and pinned status
-      return stories.sort((a, b) => {
+      return stories.sort((a: any, b: any) => {
         // Pinned stories first
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
@@ -51,32 +89,31 @@ export class StoryService {
   }
 
   /**
-   * Get a specific story by ID
+   * Get a single story by ID
    */
   async getStory(storyId: string): Promise<Story> {
     try {
-      console.log('Fetching story:', storyId);
-
-      const story = await appwriteService.getStory(storyId);
-      console.log('Story fetched successfully:', story);
-
+      const story = await databaseService.getDocument<Story>(
+        APPWRITE_CONFIG.collections.stories,
+        storyId
+      );
       return story;
     } catch (error) {
-      console.error('Error fetching story:', error);
+      console.error('Error getting story:', error);
       throw new Error('Failed to load story. Please try again.');
     }
   }
 
   /**
-   * Update an existing story
+   * Update a story
    */
   async updateStory(storyId: string, updates: Partial<Story>): Promise<Story> {
     try {
-      console.log('Updating story:', storyId, updates);
-
-      const updatedStory = await appwriteService.updateStory(storyId, updates);
-      console.log('Story updated successfully:', updatedStory);
-
+      const updatedStory = await databaseService.updateDocument<Story>(
+        APPWRITE_CONFIG.collections.stories,
+        storyId,
+        updates
+      );
       return updatedStory;
     } catch (error) {
       console.error('Error updating story:', error);
@@ -89,11 +126,10 @@ export class StoryService {
    */
   async deleteStory(storyId: string): Promise<boolean> {
     try {
-      console.log('Deleting story:', storyId);
-
-      const result = await appwriteService.deleteStory(storyId);
-      console.log('Story deleted successfully');
-
+      const result = await databaseService.deleteDocument(
+        APPWRITE_CONFIG.collections.stories,
+        storyId
+      );
       return result;
     } catch (error) {
       console.error('Error deleting story:', error);
@@ -241,17 +277,20 @@ export class StoryService {
   }
 
   /**
-   * Extract title from story content
+   * Calculate tokens used for content (simple word count approximation)
+   */
+  private calculateTokens(content: string): number {
+    // Simple approximation: 1 token ≈ 4 characters
+    return Math.ceil(content.length / 4);
+  }
+
+  /**
+   * Extract title from content
    */
   private extractTitleFromContent(content: string): string {
-    const lines = content.split('\n').filter(line => line.trim());
-    if (lines.length > 0) {
-      const firstLine = lines[0].trim();
-      // Remove common markdown headers
-      const cleanTitle = firstLine.replace(/^#+\s*/, '').trim();
-      return cleanTitle || 'Untitled Story';
-    }
-    return 'Untitled Story';
+    // Extract first line or first 50 characters as title
+    const firstLine = content.split('\n')[0];
+    return firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine || 'Untitled Story';
   }
 
   /**

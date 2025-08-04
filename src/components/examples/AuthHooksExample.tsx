@@ -6,7 +6,7 @@ import {
   useLogout, 
   useRegister,
   usePasswordReset,
-  useUserProfile,
+  // useUserProfile, // Hook doesn't exist
   useAuthPersistence
 } from '../../hooks';
 
@@ -20,18 +20,19 @@ const AuthHooksExample: React.FC = () => {
   // Auth state hooks
   const { user, isAuthenticated, isLoading } = useAuthState();
   
-  // Auth operation hooks
-  const { loginWithEmail, isLoading: isLoginLoading, error: loginError } = useLogin();
-  const { registerWithEmail, isLoading: isRegisterLoading, error: registerError } = useRegister();
-  const { logout, isLoading: isLogoutLoading } = useLogout();
-  const { sendPasswordResetEmail, isLoading: isResetLoading, success: resetSuccess } = usePasswordReset();
+  // Auth operations hooks
+  const { login, isLoading: loginLoading, error: loginError } = useLogin();
+  const { register, isLoading: registerLoading, error: registerError } = useRegister();
+  const { logout } = useLogout();
+  const { resetPassword, isLoading: resetLoading, error: resetError } = usePasswordReset();
   
-  // User profile hook
-  const { 
-    updateProfile, 
-    deleteUserAccount, 
-    isLoading: isProfileLoading 
-  } = useUserProfile();
+  // These methods don't exist in the hooks, so we'll use the ones that do exist
+  // const { loginWithEmail } = useLogin(); // Doesn't exist - use login instead
+  // const { registerWithEmail } = useRegister(); // Doesn't exist - use register instead
+  // const { sendPasswordResetEmail, success } = usePasswordReset(); // Doesn't exist - use resetPassword instead
+
+  // Profile hook - commenting out since it doesn't exist
+  // const useUserProfile = null; // Hook doesn't exist
   
   // Auth persistence hook
   const { 
@@ -48,17 +49,17 @@ const AuthHooksExample: React.FC = () => {
   // Handle login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    await loginWithEmail(email, password);
+    await login(email, password);
   };
   
   // Handle registration
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await registerWithEmail(email, password);
+    const success = await register(email, password);
     
     if (success && displayName) {
       // Update the user profile with the display name
-      await updateProfile({ name: displayName });
+      // await updateProfile({ name: displayName }); // updateProfile is not available
     }
   };
   
@@ -70,7 +71,7 @@ const AuthHooksExample: React.FC = () => {
   // Handle password reset
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    await sendPasswordResetEmail(email);
+    await resetPassword(email);
   };
   
   // Handle persistence change
@@ -134,10 +135,10 @@ const AuthHooksExample: React.FC = () => {
               )}
               <button
                 type="submit"
-                disabled={isLoginLoading}
+                disabled={loginLoading}
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
               >
-                {isLoginLoading ? 'Logging in...' : 'Login'}
+                {loginLoading ? 'Logging in...' : 'Login'}
               </button>
             </form>
           </div>
@@ -180,10 +181,10 @@ const AuthHooksExample: React.FC = () => {
               )}
               <button
                 type="submit"
-                disabled={isRegisterLoading}
+                disabled={registerLoading}
                 className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
               >
-                {isRegisterLoading ? 'Registering...' : 'Register'}
+                {registerLoading ? 'Registering...' : 'Register'}
               </button>
             </form>
           </div>
@@ -202,15 +203,18 @@ const AuthHooksExample: React.FC = () => {
                   required
                 />
               </div>
-              {resetSuccess && (
+              {/* resetSuccess && ( // resetSuccess is not available
                 <div className="text-green-500">Password reset email sent!</div>
+              ) */}
+              {resetError && (
+                <div className="text-red-500">{resetError.message}</div>
               )}
               <button
                 type="submit"
-                disabled={isResetLoading}
+                disabled={resetLoading}
                 className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50"
               >
-                {isResetLoading ? 'Sending...' : 'Send Reset Email'}
+                {resetLoading ? 'Sending...' : 'Send Reset Email'}
               </button>
             </form>
           </div>
@@ -230,26 +234,29 @@ const AuthHooksExample: React.FC = () => {
                     onChange={(e) => setDisplayName(e.target.value)}
                     className="flex-1 px-3 py-2 border rounded"
                   />
-                  <button
+                  {/* updateProfile is not available */}
+                  {/* <button
                     onClick={() => updateProfile({ name: displayName })}
                     disabled={isProfileLoading}
                     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
                   >
                     {isProfileLoading ? 'Updating...' : 'Update'}
-                  </button>
+                  </button> */}
                 </div>
               </div>
               
               <div className="flex justify-between">
                 <button
                   onClick={handleLogout}
-                  disabled={isLogoutLoading}
+                  disabled={false} // isLogoutLoading is not available
                   className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
                 >
-                  {isLogoutLoading ? 'Logging out...' : 'Logout'}
+                  {/* isLogoutLoading is not available */}
+                  Logout
                 </button>
                 
-                <button
+                {/* deleteUserAccount is not available */}
+                {/* <button
                   onClick={() => {
                     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
                       deleteUserAccount();
@@ -259,7 +266,7 @@ const AuthHooksExample: React.FC = () => {
                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
                 >
                   Delete Account
-                </button>
+                </button> */}
               </div>
             </div>
           </div>

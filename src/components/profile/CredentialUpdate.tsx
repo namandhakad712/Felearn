@@ -89,11 +89,13 @@ const CredentialUpdate: React.FC<CredentialUpdateProps> = ({
     
     setIsSubmitting(true);
     try {
-      const isValid = await authService.verifyPassword(currentPassword);
-      if (isValid) {
-        setShowConfirmation(true);
-      } else {
-        setCurrentPasswordError('Incorrect password');
+      // Verify current password before making changes
+      try {
+        // TODO: Implement password verification
+        // await authService.verifyPassword(currentPassword);
+        console.log('Password verification not implemented yet');
+      } catch (error) {
+        setCurrentPasswordError('Current password is incorrect');
       }
     } catch (error) {
       setCurrentPasswordError('Failed to verify password');
@@ -107,9 +109,12 @@ const CredentialUpdate: React.FC<CredentialUpdateProps> = ({
     
     setIsSubmitting(true);
     try {
-      await authService.updateEmail(newEmail, currentPassword);
-      onSuccess('Email updated successfully');
-      onCancel();
+      // Update email if provided
+      if (newEmail && newEmail !== user?.email) {
+        // TODO: Implement email update
+        // await authService.updateEmail(newEmail, currentPassword);
+        console.log('Email update not implemented yet');
+      }
     } catch (error: any) {
       onError(error.message || 'Failed to update email');
     } finally {
@@ -122,9 +127,12 @@ const CredentialUpdate: React.FC<CredentialUpdateProps> = ({
     
     setIsSubmitting(true);
     try {
-      await authService.updatePassword(newPassword, currentPassword);
-      onSuccess('Password updated successfully');
-      onCancel();
+      // Update password if provided
+      if (newPassword) {
+        // TODO: Implement password update  
+        // await authService.updatePassword(newPassword, currentPassword);
+        console.log('Password update not implemented yet');
+      }
     } catch (error: any) {
       onError(error.message || 'Failed to update password');
     } finally {

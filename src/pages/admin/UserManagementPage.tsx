@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { AdminLayout } from '../../components/admin';
-import { Card } from '../../components/ui';
-import { User } from '../../types';
-import { adminService } from '../../services/admin';
+import { UserManagementTable } from '../../components/admin';
+import { LoadingSpinner } from '../../components/';
+import { adminService } from '../../services';
+import { useAuth } from '../../hooks';
 
 const UserManagementPage: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const { user } = useAuth();
+  const [users, setUsers] = useState<any[]>([]); // Changed to any[] as User type is removed
+  const [filteredUsers, setFilteredUsers] = useState<any[]>([]); // Changed to any[]
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<'email' | 'createdAt' | 'lastLogin'>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null); // Changed to any
   const [isUserDetailOpen, setIsUserDetailOpen] = useState(false);
   
   const usersPerPage = 10;
@@ -95,7 +96,7 @@ const UserManagementPage: React.FC = () => {
   };
   
   // Function to view user details
-  const handleViewUser = (user: User) => {
+  const handleViewUser = (user: any) => { // Changed to any
     setSelectedUser(user);
     setIsUserDetailOpen(true);
   };
@@ -103,7 +104,10 @@ const UserManagementPage: React.FC = () => {
   // Function to disable a user
   const handleDisableUser = async (userId: string) => {
     try {
-      await adminService.disableUser(userId);
+      if (!user?.$id) {
+        throw new Error('Admin user not found');
+      }
+      await adminService.disableUser(userId, user.$id);
       
       // Update the user in the list
       setUsers(prevUsers => 
@@ -120,7 +124,10 @@ const UserManagementPage: React.FC = () => {
   // Function to enable a user
   const handleEnableUser = async (userId: string) => {
     try {
-      await adminService.enableUser(userId);
+      if (!user?.$id) {
+        throw new Error('Admin user not found');
+      }
+      await adminService.enableUser(userId, user.$id);
       
       // Update the user in the list
       setUsers(prevUsers => 

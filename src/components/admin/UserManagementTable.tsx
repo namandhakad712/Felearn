@@ -3,6 +3,7 @@ import { User } from '../../types';
 import { adminService } from '../../services';
 import { Spinner, Card } from '../ui';
 import UserDetailModal from './UserDetailModal';
+import { useAuth } from '../../hooks';
 
 interface UserManagementTableProps {
   onError: (message: string) => void;
@@ -11,6 +12,7 @@ interface UserManagementTableProps {
 type FilterOption = 'all' | 'active' | 'disabled' | 'admin' | 'verified' | 'unverified';
 
 const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) => {
+  const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -128,7 +130,10 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
 
   const handleToggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      await adminService.updateUserStatus(userId, !currentStatus);
+      if (!user?.$id) {
+        throw new Error('Admin user not found');
+      }
+      await adminService.updateUserStatus(userId, !currentStatus, user.$id);
       
       // Update local state
       setUsers(prevUsers => 
@@ -149,6 +154,10 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
     if (selectedUsers.length === 0) return;
     
     try {
+      if (!user?.$id) {
+        throw new Error('Admin user not found');
+      }
+      
       // Create a copy of users to update
       const updatedUsers = [...users];
       
@@ -161,7 +170,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
           
           // Only update if status is different
           if (currentStatus !== newStatus) {
-            await adminService.updateUserStatus(userId, newStatus);
+            await adminService.updateUserStatus(userId, newStatus, user.$id);
             updatedUsers[userIndex] = {
               ...updatedUsers[userIndex],
               disabled: newStatus
@@ -170,14 +179,11 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
         }
       }
       
-      // Update state with modified users
+      // Update state
       setUsers(updatedUsers);
-      
-      // Clear selection
       setSelectedUsers([]);
-      setSelectAll(false);
     } catch (error) {
-      console.error(`Failed to ${action} users:`, error);
+      console.error('Failed to perform bulk action:', error);
       onError(`Failed to ${action} users. Please try again.`);
     }
   };

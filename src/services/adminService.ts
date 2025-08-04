@@ -180,6 +180,69 @@ export class AdminService {
   }
 
   /**
+   * Get all users for admin management
+   * @param limit Optional limit of users to return
+   * @param offset Optional offset for pagination
+   * @returns Promise with users
+   */
+  async getUsers(limit: number = 100, offset: number = 0): Promise<User[]> {
+    const result = await databaseService.listDocuments<User>(
+      this.usersCollectionId,
+      [
+        Query.limit(limit),
+        Query.offset(offset),
+        Query.orderDesc('createdAt')
+      ]
+    );
+    
+    return result.documents;
+  }
+
+  /**
+   * Get dashboard stats (alias for getAdminMetrics for backward compatibility)
+   * @param dateRange Optional date range filter (currently unused but kept for compatibility)
+   * @returns Promise with dashboard stats
+   */
+  async getDashboardStats(dateRange?: string): Promise<{
+    totalUsers: number;
+    newUsers: number;
+    activeUsers: number;
+    errorCount: number;
+  }> {
+    return this.getAdminMetrics();
+  }
+
+  /**
+   * Get recent logs (alias for getAdminLogs for backward compatibility)  
+   * @param limit Number of logs to return
+   * @returns Promise with recent logs
+   */
+  async getRecentLogs(limit: number = 10): Promise<AdminLog[]> {
+    const result = await this.getAdminLogs(limit, 0);
+    return result.logs;
+  }
+
+  /**
+   * Disable user (wrapper for updateUserStatus)
+   * @param userId User ID to disable
+   * @param adminId Admin performing the action
+   * @returns Promise with updated user
+   */
+  async disableUser(userId: string, adminId: string): Promise<User> {
+    return this.updateUserStatus(userId, true, adminId);
+  }
+
+  /**
+   * Enable user (wrapper for updateUserStatus)  
+   * @param userId User ID to enable
+   * @param adminId Admin performing the action
+   * @returns Promise with updated user
+   */
+  async enableUser(userId: string, adminId: string): Promise<User> {
+    return this.updateUserStatus(userId, false, adminId);
+  }
+
+  /**
    * Update user status (enable/disable)
    * @param userId User ID
    * @param disabled Whether the user should be disabled

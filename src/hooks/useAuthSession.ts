@@ -54,7 +54,7 @@ export const useSessionExpiryWarning = (_warningThresholdMs: number = 5 * 60 * 1
   // In a real application, you would check the token expiration time
   
   return {
-    isAboutToExpire,
+    isAboutToExpire: _isAboutToExpire,
     extendSession: () => {}, // Placeholder function
   };
 };

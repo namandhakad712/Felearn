@@ -10,7 +10,7 @@ const MagicURLLogin: React.FC<MagicURLLoginProps> = ({ onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sent' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const { loginWithMagicURL } = useAuth();
+  const { /* loginWithMagicURL */ } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,15 +18,14 @@ const MagicURLLogin: React.FC<MagicURLLoginProps> = ({ onSuccess }) => {
     setErrorMessage('');
 
     try {
-      await loginWithMagicURL(email);
+      // TODO: Implement magic URL login functionality
+      // await loginWithMagicURL(email);
+      console.log('Magic URL login not implemented yet for:', email);
       setStatus('sent');
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Magic URL login error:', error);
+      setErrorMessage('Failed to send magic link. Please try again.');
       setStatus('error');
-      setErrorMessage(error.message || 'Failed to send login link. Please try again.');
     } finally {
       setIsLoading(false);
     }

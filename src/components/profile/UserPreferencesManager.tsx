@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks';
 import { useTheme } from '../../contexts/ThemeContext';
+import { UserSettings } from '../../types';
+
+type Theme = 'light' | 'dark';
 
 interface UserPreferencesManagerProps {
   onSuccess: (message: string) => void;
@@ -16,11 +19,28 @@ const UserPreferencesManager: React.FC<UserPreferencesManagerProps> = ({
   const { theme: currentTheme, setTheme } = useTheme();
   
   // Form states
-  const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark'>(
-    user?.settings?.theme || currentTheme || 'light'
+  const getUserSettings = (user: any): UserSettings => {
+    if (!user?.settings) return { theme: 'light', language: 'en' };
+    
+    // Handle both string and object types for settings
+    if (typeof user.settings === 'string') {
+      try {
+        return JSON.parse(user.settings);
+      } catch {
+        return { theme: 'light', language: 'en' };
+      }
+    }
+    
+    // If it's already an object, return it
+    return user.settings as UserSettings;
+  };
+
+  const userSettings = getUserSettings(user);
+  const [selectedTheme, setSelectedTheme] = useState<Theme>(
+    userSettings?.theme || currentTheme || 'light'
   );
-  const [selectedLanguage, setSelectedLanguage] = useState(
-    user?.settings?.language || 'en'
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(
+    userSettings?.language || 'en'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -39,10 +59,10 @@ const UserPreferencesManager: React.FC<UserPreferencesManagerProps> = ({
   
   // Check for changes
   useEffect(() => {
-    const themeChanged = selectedTheme !== (user?.settings?.theme || 'light');
-    const languageChanged = selectedLanguage !== (user?.settings?.language || 'en');
+    const themeChanged = selectedTheme !== (userSettings?.theme || 'light');
+    const languageChanged = selectedLanguage !== (userSettings?.language || 'en');
     setHasChanges(themeChanged || languageChanged);
-  }, [selectedTheme, selectedLanguage, user?.settings]);
+  }, [selectedTheme, selectedLanguage, userSettings]);
   
   // Apply theme changes in real-time for preview
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
@@ -65,7 +85,7 @@ const UserPreferencesManager: React.FC<UserPreferencesManagerProps> = ({
     try {
       await updateUser({
         settings: {
-          ...user?.settings,
+          ...userSettings,
           theme: selectedTheme,
           language: selectedLanguage,
         },
@@ -78,9 +98,9 @@ const UserPreferencesManager: React.FC<UserPreferencesManagerProps> = ({
       onError(error.message || 'Failed to update preferences');
       
       // Revert theme if save failed
-      if (user?.settings?.theme) {
-        setTheme(user.settings.theme);
-        setSelectedTheme(user.settings.theme);
+      if (userSettings?.theme) {
+        setTheme(userSettings.theme);
+        setSelectedTheme(userSettings.theme);
       }
     } finally {
       setIsSubmitting(false);
@@ -88,8 +108,8 @@ const UserPreferencesManager: React.FC<UserPreferencesManagerProps> = ({
   };
   
   const handleResetPreferences = () => {
-    const originalTheme = user?.settings?.theme || 'light';
-    const originalLanguage = user?.settings?.language || 'en';
+    const originalTheme = userSettings?.theme || 'light';
+    const originalLanguage = userSettings?.language || 'en';
     
     setSelectedTheme(originalTheme);
     setSelectedLanguage(originalLanguage);
