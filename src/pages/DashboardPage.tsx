@@ -52,40 +52,19 @@ const StoryGenerator = () => {
   //   clearStoriesError();
   // };
 
-  // const _handleStoryRename = async (storyId: string, newTitle: string) => {
-  //   try {
-  //     await renameStory(storyId, newTitle);
-  //   } catch (error) {
-  //     console.error('Failed to rename story:', error);
-  //     // Error is handled by the hook
-  //   }
+  // const _handleStoryRename = (storyId: string, newTitle: string) => {
+  //   // TODO: Implement story renaming
+  //   console.log('Rename story:', storyId, 'to:', newTitle);
   // };
 
-  // const _handleStoryDelete = async (storyId: string) => {
-  //   try {
-  //     await deleteStory(storyId);
-
-  //     // Clear selected story if it was deleted
-  //     if (selectedStory?.$id === storyId) {
-  //       setSelectedStory(null);
-  //       setGeneratedStory(null);
-  //       setStoryImages([]);
-  //       setError(null);
-  //       clearStoriesError();
-  //     }
-  //   } catch (error) {
-  //     console.error('Failed to delete story:', error);
-  //     // Error is handled by the hook
-  //   }
+  // const _handleStoryDelete = (storyId: string) => {
+  //   // TODO: Implement story deletion
+  //   console.log('Delete story:', storyId);
   // };
 
-  // const handleStoryPin = async (storyId: string, isPinned: boolean) => {
-  //   try {
-  //     await togglePin(storyId, isPinned);
-  //   } catch (error) {
-  //     console.error('Failed to toggle pin:', error);
-  //     // Error is handled by the hook
-  //   }
+  // const handleStoryPin = (storyId: string, isPinned: boolean) => {
+  //   // TODO: Implement story pinning
+  //   console.log('Pin story:', storyId, 'pinned:', isPinned);
   // };
 
 
@@ -127,10 +106,10 @@ const StoryGenerator = () => {
           const { GoogleGenerativeAI } = await import('@google/generative-ai');
 
           // Initialize the Gemini API with the user's API key
-          const ai = new GoogleGenerativeAI(apiKey);
+          const genAI = new GoogleGenerativeAI(apiKey);
 
           // Create a chat with a model that supports image generation
-          const model = ai.getGenerativeModel({
+          const model = genAI.getGenerativeModel({
             model: 'gemini-2.0-flash-preview-image-generation',
             generationConfig: {
               maxOutputTokens: options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
@@ -138,9 +117,9 @@ const StoryGenerator = () => {
             }
           });
           const chat = model.startChat({ history: [] });
-
-          // Add compatibility properties to match your existing code
-          // chat.history = []; // Removed - not supported in this version
+          
+          // Clear chat history before starting new generation
+          // chat.history = []; // Removed - history property doesn't exist on ChatSession
 
           // Create arrays to store the generated content
           const images = [];
@@ -186,10 +165,9 @@ const StoryGenerator = () => {
             let img = null;
 
             // Process the stream of content - check if result has stream property
-            const streamToIterate = result.stream || result;
-            for await (const chunk of streamToIterate) {
+            for await (const chunk of result.stream || result) {
               for (const candidate of chunk.candidates || []) {
-                for (const part of candidate.content.parts ?? []) {
+                for (const part of candidate.content?.parts || []) {
                   if (part.text) {
                     console.log('Received text part:', typeof part.text, part.text);
                     text += String(part.text);
@@ -606,18 +584,12 @@ const StoryGenerator = () => {
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
-        story={selectedStory || (generatedStory ? {
-          $id: 'temp',
-          userId: user?.$id || '',
-          title: 'Generated Story',
-          content: generatedStory,
-          images: storyImages,
-          createdAt: new Date().toISOString(),
-          isPinned: false,
+        story={selectedStory ? {
+          ...selectedStory,
           email: user?.email || '',
           name: user?.name || '',
           lastLogin: user?.lastLogin || new Date().toISOString(),
-        } : undefined)}
+        } : undefined}
         slides={storySlides}
         onExportComplete={handleExportComplete}
       />

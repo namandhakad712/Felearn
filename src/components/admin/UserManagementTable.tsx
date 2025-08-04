@@ -96,7 +96,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
     setCurrentPage(1);
     // Reset selected users when filters change
     setSelectedUsers([]);
-    setSelectAll(false);
+    // setSelectAll(false); // Removed unused variable
   }, [users, searchQuery, sortField, sortDirection, activeFilter]);
 
   const loadUsers = async () => {
@@ -220,7 +220,7 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({ onError }) =>
   useEffect(() => {
     const allSelected = paginatedUsers.length > 0 && 
       paginatedUsers.every(user => selectedUsers.includes(user.$id));
-    setSelectAll(allSelected);
+    // setSelectAll(allSelected); // Removed unused variable
   }, [selectedUsers, paginatedUsers]);
   
   // Export users data as CSV

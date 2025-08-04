@@ -36,15 +36,27 @@ const PasswordResetForm: React.FC<PasswordResetFormProps> = ({ onSuccess, onErro
       return;
     }
     
-    const success = await resetPassword(email);
-    
-    if (success) {
-      setIsSubmitted(true);
-      if (onSuccess) {
-        onSuccess();
+    try {
+      const success = await resetPassword(email);
+      
+      if (success) {
+        setIsSubmitted(true);
+        if (onSuccess) {
+          onSuccess();
+        }
+      } else if (error && onError) {
+        onError(error);
       }
-    } else if (error && onError) {
-      onError(error);
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      const errorData: ErrorDisplayData = {
+        message: error.message || 'Password reset failed',
+        severity: 'high',
+        suggestions: ['Check your email address', 'Try again in a few minutes'],
+        isRetryable: true,
+        retryDelay: 5000
+      };
+      onError?.(errorData);
     }
   };
   

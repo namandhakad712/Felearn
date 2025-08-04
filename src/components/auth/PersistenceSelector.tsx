@@ -14,12 +14,23 @@ const PersistenceSelector: React.FC<PersistenceSelectorProps> = ({ onSuccess, on
   const { persistenceType, setPersistence, isLoading, error } = useAuthPersistence();
   
   const handlePersistenceChange = async (type: string) => {
-    const success = await setPersistence(type);
-    
-    if (success && onSuccess) {
-      onSuccess();
-    } else if (!success && error && onError) {
-      onError(error);
+    try {
+      setIsLoading(true);
+      await setPersistence(type);
+      setSelectedType(type);
+      onSuccess?.();
+    } catch (error: any) {
+      console.error('Persistence change error:', error);
+      const errorData: ErrorDisplayData = {
+        message: error.message || 'Failed to change persistence type',
+        severity: 'medium',
+        suggestions: ['Try again', 'Refresh the page'],
+        isRetryable: true,
+        retryDelay: 3000
+      };
+      onError?.(errorData);
+    } finally {
+      setIsLoading(false);
     }
   };
   

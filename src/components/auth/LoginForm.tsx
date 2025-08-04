@@ -52,12 +52,31 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError, showForgotPas
       return;
     }
     
-    const success = await login(email, password);
-    
-    if (success && onSuccess) {
-      onSuccess();
-    } else if (!success && error && onError) {
-      onError(error);
+    try {
+      const success = await login(email, password);
+      
+      if (success && onSuccess) {
+        onSuccess();
+      } else if (!success && error && onError) {
+        const errorData: ErrorDisplayData = {
+          message: error.message || 'Login failed',
+          severity: 'high',
+          suggestions: ['Check your email and password', 'Try resetting your password'],
+          isRetryable: true,
+          retryDelay: 5000
+        };
+        onError(errorData);
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      const errorData: ErrorDisplayData = {
+        message: error.message || 'Login failed',
+        severity: 'high',
+        suggestions: ['Check your email and password', 'Try resetting your password'],
+        isRetryable: true,
+        retryDelay: 5000
+      };
+      onError?.(errorData);
     }
   };
   

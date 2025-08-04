@@ -93,9 +93,9 @@ const JellyText: React.FC<JellyTextProps> = ({
         from: 'random'
       },
       onComplete: () => {
-      const cleanup = initEvents();
-      return cleanup;
-    }
+        const cleanup = initEvents();
+        return cleanup;
+      }
     });
   }, [chars]);
 
