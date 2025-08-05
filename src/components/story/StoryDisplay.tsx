@@ -17,6 +17,7 @@ interface StoryDisplayProps {
   onNewStory?: () => void;
   isLoading?: boolean;
   isGenerating?: boolean;
+  tokens?: number; // Add tokens prop
 }
 
 const StoryDisplay: React.FC<StoryDisplayProps> = ({
@@ -29,7 +30,8 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
   onExport,
   onNewStory,
   isLoading = false,
-  isGenerating = false
+  isGenerating = false,
+  tokens = 0 // Default to 0 if not provided
 }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -136,7 +138,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               )}
             </button>
           )}
-          {onExport && (
+          {onExport && !isGenerating && (
             <button
               onClick={onExport}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm"
@@ -175,11 +177,10 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
             images={displayImages}
             isGenerating={isGenerating}
             className="p-4 sm:p-6"
-            // tokens={story?.tokens || 0} // story is a string, not an object with tokens
+            tokens={tokens}
           />
           
           {/* Token Usage Display */}
-          {/* story?.tokens is not valid since story is a string */}
           {slides.length > 0 && (
             <div className="px-4 sm:px-6 pb-4 border-t border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
@@ -188,7 +189,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   {/* Calculate tokens from story content length instead */}
-                  <span>{Math.ceil((story.length || 0) / 4)} tokens used</span>
+                  <span>{tokens} tokens used</span>
                 </span>
                 <span className="text-gray-300 dark:text-gray-600">•</span>
                 <span>{slides.length} slides generated</span>

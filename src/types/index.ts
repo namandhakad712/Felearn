@@ -26,6 +26,7 @@ export interface User {
   bio?: string; // user bio
   oauthProvider?: string; // OAuth provider used
   disabled?: boolean; // account status
+  onboardingcompleted?: boolean; // onboarding completion status
 }
 
 // Extended User interface that includes Appwrite User properties
@@ -110,6 +111,20 @@ export interface GeminiResponse {
     tokensUsed: number;
     processingTime: number;
   };
+}
+
+// Add new interface for streaming updates
+export interface StreamingUpdate {
+  type: 'slide' | 'complete' | 'error';
+  slide?: StorySlide;
+  story?: string;
+  images?: string[];
+  slides?: StorySlide[]; // Add slides array for complete type
+  metadata?: {
+    tokensUsed: number;
+    processingTime: number;
+  };
+  error?: string;
 }
 
 export interface ErrorReport {

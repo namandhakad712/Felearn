@@ -1,37 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { authService } from '@/services/auth';
+import { useAuth } from '../contexts/AuthContext';
+import { authService } from '../services/auth';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const OAuthCallbackPage: React.FC = () => {
-  const navigate = useNavigate();
   const { refreshUser, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Redirect authenticated users to dashboard
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, authLoading, navigate]);
-
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render callback page if user is authenticated
-  if (isAuthenticated) {
-    return null;
-  }
+  const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -58,6 +35,7 @@ const OAuthCallbackPage: React.FC = () => {
           console.log('❌ Error getting current user:', userError);
         }
         
+        // Handle OAuth callback to ensure user document exists
         const result = await authService.handleOAuthCallback();
         console.log('✅ OAuth callback result:', result);
         
@@ -95,19 +73,12 @@ const OAuthCallbackPage: React.FC = () => {
       }
     };
 
+    // Always handle callback, regardless of authentication status
     handleCallback();
   }, [navigate, refreshUser]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Completing sign in...</h2>
-          <p className="text-gray-600">Please wait while we set up your account.</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen message="Completing sign in..." />;
   }
 
   if (error) {

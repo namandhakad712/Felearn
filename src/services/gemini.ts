@@ -1,6 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-// Note: Modality export doesn't exist in current version
-import { GeminiRequest, GeminiResponse, StorySlide } from '../types';
+import { GeminiRequest, GeminiResponse, StorySlide, StreamingUpdate } from '../types';
 import { marked } from 'marked';
 
 class GeminiService {
@@ -131,6 +130,169 @@ class GeminiService {
 
     // If all retries failed, throw the last error
     throw new Error(`Failed to generate story after ${retries} attempts: ${lastError?.message || 'Unknown error'}`);
+  }
+
+  /**
+   * Generate story with streaming updates
+   * @param request Story generation request
+   * @param onUpdate Callback function for streaming updates
+   * @param retries Number of retry attempts
+   */
+  async generateStoryStream(
+    request: GeminiRequest, 
+    onUpdate: (update: StreamingUpdate) => void,
+    retries: number = 3
+  ): Promise<void> {
+    if (!this.genAI) {
+      throw new Error('Gemini API not initialized. Please provide an API key.');
+    }
+
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const startTime = Date.now();
+
+        // Create a chat model with image generation capabilities
+        const model = this.genAI.getGenerativeModel({
+          model: "gemini-2.0-flash-preview-image-generation",
+          generationConfig: {
+            temperature: request.options?.temperature || 0.7,
+            maxOutputTokens: request.options?.maxTokens || 11264,
+            responseModalities: ["TEXT", "IMAGE"],
+          }
+        });
+
+        // Create a chat instance with empty history
+        const chat = model.startChat({
+          history: [],
+        });
+
+        // Send the message with our prompt and get a stream response
+        const result = await chat.sendMessageStream(request.prompt + this.additionalInstructions());
+        
+        // Process the stream to extract text and images progressively
+        const slides: StorySlide[] = [];
+        const images: string[] = [];
+        let text = '';
+        let img: string | null = null;
+        let slideIndex = 0;
+
+        for await (const chunk of result.stream) {
+          for (const candidate of chunk.candidates || []) {
+            for (const part of candidate.content?.parts || []) {
+              if (part.text) {
+                text += part.text;
+              } else if (part.inlineData) {
+                // Found an image
+                img = `data:image/png;base64,${part.inlineData.data}`;
+              }
+              
+              // If we have both text and image, create a slide and emit update
+              if (text && img) {
+                const newSlide: StorySlide = {
+                  id: `slide-${slideIndex}`,
+                  text: text,
+                  image: img,
+                  index: slideIndex
+                };
+                
+                slides.push(newSlide);
+                images.push(img);
+                slideIndex++;
+                
+                // Emit slide update immediately
+                onUpdate({
+                  type: 'slide',
+                  slide: newSlide
+                });
+                
+                // Reset for next slide
+                text = '';
+                img = null;
+              }
+            }
+          }
+        }
+        
+        // Handle any remaining text or image at the end
+        if (text || img) {
+          const finalSlide: StorySlide = {
+            id: `slide-${slideIndex}`,
+            text: text || '',
+            image: img || '',
+            index: slideIndex
+          };
+          
+          slides.push(finalSlide);
+          if (img) images.push(img);
+          
+          // Emit final slide update
+          onUpdate({
+            type: 'slide',
+            slide: finalSlide
+          });
+        }
+
+        // Combine all text for the story content
+        const storyText = slides.map(slide => slide.text).join('\n\n');
+        
+        const endTime = Date.now();
+
+        // Emit completion update
+        onUpdate({
+          type: 'complete',
+          story: storyText,
+          images,
+          slides,
+          metadata: {
+            tokensUsed: this.estimateTokens(storyText),
+            processingTime: endTime - startTime,
+          }
+        });
+
+        return; // Success, exit retry loop
+
+      } catch (error: any) {
+        lastError = error;
+        console.error(`Gemini API error (attempt ${attempt}/${retries}):`, error);
+
+        // Parse error message
+        const errorMessage = this.parseError(error);
+
+        // Don't retry on authentication errors
+        if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+          onUpdate({
+            type: 'error',
+            error: 'Invalid API key. Please check your Gemini API key in settings.'
+          });
+          throw new Error('Invalid API key. Please check your Gemini API key in settings.');
+        }
+
+        // Don't retry on quota exceeded errors
+        if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+          onUpdate({
+            type: 'error',
+            error: 'API quota exceeded. Please try again later or check your Gemini API usage.'
+          });
+          throw new Error('API quota exceeded. Please try again later or check your Gemini API usage.');
+        }
+
+        // Wait before retrying (exponential backoff)
+        if (attempt < retries) {
+          const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s...
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    // If all retries failed, emit error and throw
+    const finalError = `Failed to generate story after ${retries} attempts: ${lastError?.message || 'Unknown error'}`;
+    onUpdate({
+      type: 'error',
+      error: finalError
+    });
+    throw new Error(finalError);
   }
 
   // Parse error message like in "main thing" implementation

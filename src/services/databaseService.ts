@@ -89,7 +89,7 @@ export class AppwriteDatabaseService implements DataService {
       
       return processedDocument;
     } catch (error) {
-      console.error(`Create document error (${collectionId}):`, error);
+      console.error(`Create document error (${collectionId})`);
       const errorInfo = AppwriteErrorHandler.handleDatabaseError(error);
       throw new Error(errorInfo.message);
     }
@@ -116,7 +116,7 @@ export class AppwriteDatabaseService implements DataService {
       
       return this.processDocument(document) as T;
     } catch (error) {
-      console.error(`Update document error (${collectionId}/${documentId}):`, error);
+      console.error(`Update document error (${collectionId}/${documentId})`);
       const errorInfo = AppwriteErrorHandler.handleDatabaseError(error);
       throw new Error(errorInfo.message);
     }
@@ -138,7 +138,7 @@ export class AppwriteDatabaseService implements DataService {
       
       return true;
     } catch (error) {
-      console.error(`Delete document error (${collectionId}/${documentId}):`, error);
+      console.error(`Delete document error (${collectionId}/${documentId})`);
       const errorInfo = AppwriteErrorHandler.handleDatabaseError(error);
       throw new Error(errorInfo.message);
     }
@@ -171,7 +171,7 @@ export class AppwriteDatabaseService implements DataService {
         total: response.total
       };
     } catch (error) {
-      console.error(`List documents error (${collectionId}):`, error);
+      console.error(`List documents error (${collectionId})`);
       const errorInfo = AppwriteErrorHandler.handleDatabaseError(error);
       throw new Error(errorInfo.message);
     }

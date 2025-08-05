@@ -12,6 +12,7 @@ import { Story, StorySlide } from '../types';
 import { ToastContainer } from '../components/ui';
 import { ExportFormat } from '../services/export';
 import StoryLibraryPage from './dashboard/StoryLibraryPage';
+import { geminiService } from '../services/gemini';
 
 // Story Generator Component with Chat Interface
 const StoryGenerator = () => {
@@ -24,6 +25,7 @@ const StoryGenerator = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [_isProfileModalOpen, _setIsProfileModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [tokens, setTokens] = useState(0); // Add tokens state
 
   const { user } = useAuth();
 
@@ -83,28 +85,24 @@ const StoryGenerator = () => {
       return;
     }
 
-
-
-
-
     setIsGenerating(true);
     setError(null);
     setGeneratedStory(null);
     setStoryImages([]);
     setStorySlides([]);
+    setTokens(0); // Reset tokens
 
     try {
       console.log('Generating story for concept:', concept);
       console.log('Using API key (first 10 chars):', user.geminiKey?.substring(0, 10) + '...');
 
       // Use the real gemini service
-      const { geminiService } = await import('../services/gemini');
       
       // Initialize the service with user's API key (now stored directly)
       geminiService.initialize(user.geminiKey);
 
-      // Generate story with proper request structure
-      const response = await geminiService.generateStory({
+      // Use the new streaming method for progressive updates
+      await geminiService.generateStoryStream({
         prompt: concept,
         apiKey: user.geminiKey,
         userId: user.$id,
@@ -113,50 +111,83 @@ const StoryGenerator = () => {
           maxTokens: 8192,
           includeImages: true
         }
-      });
+      }, (update) => {
+        // Handle streaming updates
+        switch (update.type) {
+          case 'slide':
+            if (update.slide) {
+              // Add new slide to the list
+              setStorySlides(prev => [...prev, update.slide!]);
+              if (update.slide.image) {
+                setStoryImages(prev => [...prev, update.slide!.image!]);
+              }
+            }
+            break;
+          
+          case 'complete':
+            // Set the final generated content
+            if (update.story) {
+              setGeneratedStory(update.story);
+            }
+            if (update.images) {
+              setStoryImages(update.images);
+            }
+            if (update.slides) {
+              setStorySlides(update.slides);
+            }
+            if (update.metadata?.tokensUsed) {
+              setTokens(update.metadata.tokensUsed);
+            }
 
-      // Set the final generated content
-      setStorySlides(response.slides || []);
-      setStoryImages(response.images || []);
-      setGeneratedStory(response.story); // Minimal text
+            // Auto-save the generated story (only if not already saved)
+            if (!selectedStory && update.story) {
+              try {
+                // Use the user's prompt as the title
+                let title = concept.trim();
 
+                // Limit title to 300 characters to avoid database constraint issues
+                if (title.length > 300) {
+                  title = title.substring(0, 297) + '...';
+                }
 
+                // Log the title we're using
+                console.log('Using user prompt as title:', title);
+                console.log('Title length:', title.length);
+                console.log('Response tokens:', update.metadata?.tokensUsed);
+                console.log('Tokens being saved:', update.metadata?.tokensUsed || 0);
 
-      // Auto-save the generated story (only if not already saved)
-      if (!selectedStory) {
-        try {
-        // Use the user's prompt as the title
-        let title = concept.trim();
+                // Create story with user information
+                createStory(
+                  title, 
+                  update.story, 
+                  update.images || [], 
+                  update.slides || [], 
+                  update.metadata?.tokensUsed || 0
+                ).then(savedStory => {
+                  setSelectedStory(savedStory);
+                  console.log('Visual story saved automatically:', savedStory);
+                }).catch(saveError => {
+                  console.error('Failed to save story:', saveError);
+                  // Show error to user but still display the story
+                  showErrorToast('Save Error', 'Failed to save story automatically. You can try saving manually.');
+                });
+              } catch (saveError) {
+                console.error('Failed to save story:', saveError);
+                // Show error to user but still display the story
+                showErrorToast('Save Error', 'Failed to save story automatically. You can try saving manually.');
+              }
+            }
 
-        // Limit title to 300 characters to avoid database constraint issues
-        if (title.length > 300) {
-          title = title.substring(0, 297) + '...';
+            console.log('Visual story generated successfully with', update.slides?.length || 0, 'slides');
+            break;
+          
+          case 'error':
+            if (update.error) {
+              setError(update.error);
+            }
+            break;
         }
-
-        // Log the title we're using
-        console.log('Using user prompt as title:', title);
-        console.log('Title length:', title.length);
-        console.log('Response tokens:', response.metadata?.tokensUsed);
-        console.log('Tokens being saved:', response.metadata?.tokensUsed || 0);
-
-        // Create story with user information
-        const savedStory = await createStory(
-          title, 
-          response.story, 
-          response.images || [], 
-          response.slides || [], 
-          response.metadata?.tokensUsed || 0
-        );
-        setSelectedStory(savedStory);
-        console.log('Visual story saved automatically:', savedStory);
-      } catch (saveError) {
-        console.error('Failed to save story:', saveError);
-        // Show error to user but still display the story
-        showErrorToast('Save Error', 'Failed to save story automatically. You can try saving manually.');
-      }
-      }
-
-      console.log('Visual story generated successfully with', response.slides?.length || 0, 'slides');
+      });
 
       // Refresh rate limit status after successful generation
       refreshStatus();
@@ -315,7 +346,9 @@ const StoryGenerator = () => {
                   setStorySlides([]);
                   setSelectedStory(null);
                   setError(null);
+                  setTokens(0); // Reset tokens
                 }}
+                tokens={tokens} // Pass tokens to StoryDisplay
               />
             )}
           </div>

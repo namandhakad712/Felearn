@@ -29,6 +29,7 @@ export interface User {
   bio?: string; // user bio
   oauthProvider?: string; // OAuth provider used
   disabled?: boolean; // account status
+  onboardingcompleted?: boolean; // onboarding completion status
 }
 
 export interface UserSettings {

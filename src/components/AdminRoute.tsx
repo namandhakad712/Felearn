@@ -1,20 +1,22 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from './LoadingSpinner';
 
 interface AdminRouteProps {
   children: React.ReactNode;
 }
 
-const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
+/**
+ * Admin Route Component
+ * Redirects to login page if user is not authenticated
+ * Redirects to dashboard if user is not admin
+ */
+export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen message="Checking admin access..." />;
   }
 
   if (!user || !user.isAdmin) {
@@ -23,5 +25,3 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
 
   return <>{children}</>;
 };
-
-export default AdminRoute;

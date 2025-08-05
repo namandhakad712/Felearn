@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { validateGeminiApiKey } from '@/utils/userUtils';
+import { 
+  initOnboardingSession, 
+  getOnboardingSession, 
+  updateOnboardingStep, 
+  completeOnboardingSession, 
+  clearOnboardingSession,
+  setupOnboardingSessionCleanup 
+} from '@/utils/onboardingUtils';
 import styled from 'styled-components';
 
 // Simple error boundary for debugging
@@ -51,7 +59,7 @@ class OnboardingErrorBoundary extends React.Component<
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, updateUser, refreshUser } = useAuth();
+  const { user, updateUser, refreshUser, logout } = useAuth();
   const { setTheme } = useTheme();
   const [currentStep, setCurrentStep] = useState(1);
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -59,22 +67,31 @@ const OnboardingPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isValidatingKey, setIsValidatingKey] = useState(false);
   const [error, setError] = useState('');
+  const [showExitModal, setShowExitModal] = useState(false);
 
-  // Debug: Log component mount and user info
+  // Initialize session state on mount
   React.useEffect(() => {
     console.log('🚀 OnboardingPage mounted');
-    // User object available
+    
+    // Check if this is a fresh session (no onboarding session data)
+    const sessionData = getOnboardingSession();
+    if (!sessionData) {
+      // Mark this as an active onboarding session
+      initOnboardingSession();
+    } else {
+      console.log('🔄 Continuing existing onboarding session');
+    }
+    
     console.log('🔄 Current step:', currentStep);
     return () => {
       console.log('🚀 OnboardingPage unmounted');
     };
   }, []);
 
-  // Debug: Log when currentStep changes
-  // Debug: Log when currentStep changes
-
-  // Debug: Log when selectedTheme changes
-  // Debug: Log when selectedTheme changes
+  // Handle page refresh/exit - clear session if user leaves onboarding
+  React.useEffect(() => {
+    return setupOnboardingSessionCleanup();
+  }, []);
 
   // Early return with debug info if user is not available
   if (!user) {
@@ -89,19 +106,21 @@ const OnboardingPage: React.FC = () => {
     );
   }
 
-
-
   const totalSteps = 3;
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+      // Update session state
+      updateOnboardingStep(currentStep + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      // Update session state
+      updateOnboardingStep(currentStep - 1);
     }
   };
 
@@ -161,6 +180,9 @@ const OnboardingPage: React.FC = () => {
       
       console.log('🎯 Onboarding completed, refreshing user state...');
       
+      // Mark session as completed
+      completeOnboardingSession(false);
+      
       // Refresh user state to ensure onboarding status is updated
       const refreshedUser = await refreshUser();
       
@@ -193,32 +215,69 @@ const OnboardingPage: React.FC = () => {
     }
   };
 
-  // const handleSkip = async () => {
-  //   try {
-  //     await updateUser({
-  //       onboardingcompleted: true,
-  //       settings: JSON.stringify({
-  //         theme: selectedTheme,
-  //         notifications: true,
-  //         autoSave: true,
-  //         language: 'en'
-  //       })
-  //     });
-      
-  //     // Just navigate - theme will be applied by dashboard
-  //     navigate('/dashboard');
-      
-  //   } catch (error) {
-  //     console.error('Failed to update onboarding status:', error);
-  //     navigate('/dashboard'); // Navigate anyway
-  //   }
-  // };
+  // NEW: Handle skipping onboarding
+  const handleSkipOnboarding = async () => {
+    console.log('⏭️ User chose to skip onboarding');
+    setIsLoading(true);
+    setError('');
 
-  console.log('🎨 OnboardingPage render called, currentStep:', currentStep);
+    try {
+      // Mark onboarding as completed with default settings
+      const updateData = {
+        onboardingcompleted: true,
+        settings: JSON.stringify({
+          theme: 'light',
+          notifications: true,
+          autoSave: true,
+          language: 'en'
+        })
+      };
+      
+      await updateUser(updateData);
+      
+      // Mark session as completed
+      completeOnboardingSession(true);
+      
+      // Apply default theme
+      setTheme('light');
+      
+      // Navigate to dashboard
+      navigate('/dashboard');
+      
+    } catch (error: any) {
+      console.error('Skip onboarding error:', error);
+      setError(error.message || 'Failed to skip onboarding');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // NEW: Handle exiting onboarding completely
+  const handleExitOnboarding = async () => {
+    console.log('🚪 User chose to exit onboarding');
+    
+    try {
+      // Clear onboarding session
+      clearOnboardingSession();
+      
+      // Sign out the user so they can start fresh
+      await logout();
+      
+      // Navigate to login
+      navigate('/auth/login');
+      
+    } catch (error: any) {
+      console.error('Exit onboarding error:', error);
+      // Force redirect even if logout fails
+      window.location.href = '/auth/login';
+    }
+  };
+
+      console.log('🎨 OnboardingPage rendering');
 
   // Add a simple test div to see if component renders at all
   if (process.env.NODE_ENV === 'development') {
-    console.log('🧪 OnboardingPage: Rendering in development mode');
+    console.log('🧪 OnboardingPage: Development mode');
   }
 
   return (
@@ -244,9 +303,14 @@ const OnboardingPage: React.FC = () => {
       
       {/* Content */}
       <div className="content-container">
-        {/* Debug indicator */}
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-3 py-1 rounded text-sm z-50">
-          Onboarding Loaded
+        {/* NEW: Exit button */}
+        <div className="fixed top-4 left-4 z-50">
+          <button
+            onClick={() => setShowExitModal(true)}
+            className="px-4 py-2 bg-red-400/20 backdrop-blur-md border border-red-300/30 text-red-700 rounded-lg text-sm font-medium hover:bg-red-400/30 hover:border-red-400/50 transition-all duration-300 shadow-lg"
+          >
+            Exit
+          </button>
         </div>
         
         <div className="max-w-2xl w-full bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
@@ -497,6 +561,34 @@ const OnboardingPage: React.FC = () => {
         )}
         </div>
       </div>
+
+      {/* NEW: Exit Confirmation Modal */}
+      {showExitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Exit Onboarding?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to exit onboarding? You'll be signed out and can sign in again later to complete the setup.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExitOnboarding}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Exit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </VideoBackgroundContainer>
   );
 };

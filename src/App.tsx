@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import AppRoutes from './components/AppRoutes';
 import { AuthProvider } from './contexts/AuthContext';
@@ -14,12 +14,7 @@ preventStyledComponentsError17();
 
 function App() {
   return (
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true
-      }}
-    >
+    <HashRouter>
       <StyledThemeProvider theme={theme}>
         <GlobalStyle />
         <ErrorBoundary>
@@ -31,7 +26,7 @@ function App() {
           </AuthProvider>
         </ErrorBoundary>
       </StyledThemeProvider>
-    </BrowserRouter>
+          </HashRouter>
   );
 }
 

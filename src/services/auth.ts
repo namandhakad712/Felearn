@@ -2,7 +2,7 @@ import { Account, Models, OAuthProvider } from 'appwrite';
 
 // OAuthProvider validation - removed debug logging for production
 import { account } from '@/lib/appwrite';
-import { databaseService } from './database';
+import { databaseService } from './databaseService';
 import { extractNameFromEmail } from '@/utils/userUtils';
 import { getAuthUrls, logAppConfig } from '@/config/app';
 
@@ -40,7 +40,7 @@ export class AuthService {
 
       // Create user document in database collection
       try {
-        await databaseService.createUserDocument(userId, {
+        await databaseService.createDocument('users', {
           email: email,
           name: extractNameFromEmail(email),
           geminiKey: '', // Will be set during onboarding
@@ -49,8 +49,13 @@ export class AuthService {
           createdAt: new Date().toISOString(),
           emailVerification: false,
           disabled: false,
-          onboardingcompleted: false
-        });
+          onboardingcompleted: false,
+          settings: {
+            theme: 'light',
+            language: 'en',
+            onboardingcompleted: false
+          }
+        }, userId);
       } catch (dbError) {
         console.error('Failed to create user document:', dbError);
         // Continue with registration even if database creation fails
@@ -148,7 +153,7 @@ export class AuthService {
       
       // Update the database document to sync email verification status
       try {
-        await databaseService.updateUserDocument(userId, {
+        await databaseService.updateDocument('users', userId, {
           emailVerification: true
         });
         console.log('✅ Database document updated with emailVerification: true');
@@ -188,7 +193,7 @@ export class AuthService {
         
         // Update database document to ensure it's synced
         try {
-          await databaseService.updateUserDocument(userId, {
+          await databaseService.updateDocument('users', userId, {
             emailVerification: true
           });
           console.log('✅ Database document synced with emailVerification: true (already verified case)');
@@ -209,7 +214,7 @@ export class AuthService {
           // This might mean the email is already verified or there's a scope issue
           // Update database document to ensure it's synced
           try {
-            await databaseService.updateUserDocument(userId, {
+            await databaseService.updateDocument('users', userId, {
               emailVerification: true
             });
             console.log('✅ Database document synced with emailVerification: true (unauthorized scope case)');
@@ -272,27 +277,27 @@ export class AuthService {
           throw new Error(`Unsupported OAuth provider: ${provider}`);
       }
 
-      // Create OAuth2 session with universal URLs
-      const urls = getAuthUrls();
-      console.log('🌐 Universal OAuth URLs (auto-detected):', {
-        callback: urls.callback,
-        login: urls.login,
-        verify: urls.verify,
-        resetPassword: urls.resetPassword,
+      // Create OAuth2 session with React app URLs (universal for localhost and production)
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+      const successUrl = `${currentOrigin}/app.html#/auth/callback`;
+      const failureUrl = `${currentOrigin}/app.html#/auth/login`;
+      
+      console.log('🌐 React App OAuth URLs:', {
+        successUrl,
+        failureUrl,
         currentDomain: typeof window !== 'undefined' ? window.location.origin : 'server-side'
       });
-      logAppConfig(); // Debug: show current configuration
       
       console.log('🔗 Creating OAuth2 session with provider:', oauthProvider);
-      console.log('📍 Success redirect URL:', urls.callback);
-      console.log('📍 Failure redirect URL:', urls.login);
+      console.log('📍 Success redirect URL:', successUrl);
+      console.log('📍 Failure redirect URL:', failureUrl);
       console.log('🌍 Current environment:', typeof window !== 'undefined' ? window.location.hostname : 'server-side');
       
       // Calling createOAuth2Session
       this.account.createOAuth2Session(
         oauthProvider,
-        urls.callback, // Universal success redirect
-        urls.login,    // Universal failure redirect
+        successUrl, // React app success redirect
+        failureUrl, // React app failure redirect
         ['email'] // Request email scope
       );
       console.log('✅ OAuth session creation initiated');
@@ -311,7 +316,7 @@ export class AuthService {
       console.log('🔄 Starting OAuth callback handling...');
       
       const user = await this.account.get();
-      console.log('👤 User from account.get():', user ? 'Found' : 'Not found');
+             console.log('👤 User authentication status:', user ? 'Authenticated' : 'Not authenticated');
       
       if (user) {
         console.log('✅ User found, processing OAuth callback...');
@@ -331,10 +336,10 @@ export class AuthService {
           console.log('📊 Checking user document in database...');
           let userDoc;
           try {
-            userDoc = await databaseService.getUserDocument(user.$id);
-            console.log('📄 User document:', userDoc ? 'Found' : 'Not found');
+            userDoc = await databaseService.getDocument('users', user.$id);
+            console.log('📄 User document status:', userDoc ? 'Exists' : 'Not found');
           } catch (error) {
-            console.log('❌ Error getting user document:', error);
+                         console.log('❌ Error retrieving user document');
             // Document doesn't exist, userDoc will be null
             userDoc = null;
           }
@@ -343,7 +348,7 @@ export class AuthService {
             console.log('📝 Creating new user document...');
             // Try to create user document for OAuth user
             try {
-              await databaseService.createUserDocument(user.$id, {
+              await databaseService.createDocument('users', {
                 email: user.email,
                 name: user.name || extractNameFromEmail(user.email),
                 geminiKey: '', // Will be set during onboarding
@@ -353,16 +358,21 @@ export class AuthService {
                 emailVerification: user.emailVerification || true, // OAuth users are usually verified
                 disabled: false,
                 onboardingcompleted: false,
-                oauthProvider: oauthProvider
-              });
+                oauthProvider: oauthProvider,
+                settings: {
+                  theme: 'light',
+                  language: 'en',
+                  onboardingcompleted: false
+                }
+              }, user.$id); // Use auth user ID as document ID
               console.log('✅ User document created successfully');
             } catch (createError: any) {
-              console.log('⚠️ Error creating user document:', createError);
+                             console.log('⚠️ Error creating user document');
               // If document already exists, just update it
               if (createError.message?.includes('already exists')) {
                 console.log('🔄 User document already exists, updating instead...');
                 // User document already exists, updating instead
-                await databaseService.updateUserDocument(user.$id, {
+                await databaseService.updateDocument('users', user.$id, {
                   lastLogin: new Date().toISOString(),
                   oauthProvider: oauthProvider
                 });
@@ -374,14 +384,14 @@ export class AuthService {
           } else {
             console.log('🔄 Updating existing user document...');
             // Update last login and OAuth provider
-            await databaseService.updateUserDocument(user.$id, {
+            await databaseService.updateDocument('users', user.$id, {
               lastLogin: new Date().toISOString(),
               oauthProvider: oauthProvider
             });
             console.log('✅ User document updated successfully');
           }
         } catch (dbError) {
-          console.error('❌ Failed to handle OAuth user document:', dbError);
+          console.error('❌ Failed to handle OAuth user document');
           // Continue anyway - the user can still use the app
         }
 
@@ -396,7 +406,7 @@ export class AuthService {
       console.log('❌ No user found after OAuth callback');
       throw new Error('No user found after OAuth callback');
     } catch (error: any) {
-      console.error('❌ OAuth callback error:', error);
+      console.error('❌ OAuth callback failed');
       throw error;
     }
   }
@@ -410,7 +420,7 @@ export class AuthService {
     } catch (error: any) {
       // Don't log 401 errors as they're expected when not logged in
       if (error?.code !== 401) {
-        console.error('Logout error:', error);
+        console.error('Logout failed');
         throw error;
       }
     }
@@ -425,7 +435,7 @@ export class AuthService {
     } catch (error: any) {
       // Don't log 401 errors as they're expected when not logged in
       if (error?.code !== 401) {
-        console.error('Get current user error:', error);
+        console.error('Failed to get current user');
       }
       return null;
     }
@@ -446,7 +456,7 @@ export class AuthService {
         message: 'Password reset instructions have been sent to your email.'
       };
     } catch (error) {
-      console.error('Password reset error:', error);
+      console.error('Password reset failed');
       throw error;
     }
   }
@@ -471,7 +481,7 @@ export class AuthService {
         message: '🎉 Password has been reset successfully! You can now log in with your new password.'
       };
     } catch (error: any) {
-      console.error('❌ Complete password reset error:', error);
+      console.error('❌ Password reset failed');
       
       // Provide more user-friendly error messages
       let errorMessage = 'Failed to reset password. Please try again.';
@@ -504,7 +514,7 @@ export class AuthService {
         message: 'Email updated successfully. Please verify your new email.'
       };
     } catch (error) {
-      console.error('Update email error:', error);
+      console.error('Update email failed');
       throw error;
     }
   }
@@ -520,7 +530,7 @@ export class AuthService {
         message: 'Password updated successfully.'
       };
     } catch (error) {
-      console.error('Update password error:', error);
+      console.error('Update password failed');
       throw error;
     }
   }
@@ -560,7 +570,7 @@ export class AuthService {
         message: 'Verification email sent. Please check your inbox.'
       };
     } catch (error) {
-      console.error('Send email verification error:', error);
+      console.error('Send email verification failed');
       throw error;
     }
   }
@@ -575,9 +585,9 @@ export class AuthService {
         throw new Error('User not authenticated');
       }
 
-      await databaseService.updateUserDocument(user.$id, data);
+      await databaseService.updateDocument('users', user.$id, data);
     } catch (error) {
-      console.error('Update user error:', error);
+      console.error('Update user failed');
       throw error;
     }
   }

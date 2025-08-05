@@ -49,15 +49,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🔄 refreshUser called');
     try {
       const currentUser = await authService.getCurrentUser();
-      console.log('🔄 currentUser from authService:', currentUser);
+      console.log('🔄 User authenticated successfully');
       if (currentUser) {
         // Merge with database user document
         try {
-          console.log('🔍 Fetching user document for ID:', currentUser.$id);
+          console.log('🔍 Fetching user document from database...');
           const { databaseService } = await import('@/services/database');
           const userDoc = await databaseService.getUserDocument(currentUser.$id);
           
-          console.log('🔍 User document from database:', userDoc);
+          console.log('🔍 User document retrieved successfully');
           
           if (userDoc) {
             // Check if email verification status needs to be synced
@@ -98,8 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(mergedUser as any);
             return mergedUser;
           } else {
-            console.log('❌ No user document found in database for user:', currentUser.$id);
-            console.log('❌ This means onboardingcompleted will be undefined');
+                    console.log('❌ No user document found in database');
           }
         } catch (dbError) {
           console.error('❌ Error fetching user document:', dbError);
@@ -178,12 +177,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUser = async (data: any) => {
     try {
-      console.log('🔄 Updating user with data:', data);
+              console.log('🔄 Updating user data...');
       await authService.updateUser(data);
       
       // Always refresh user data to get the latest from database
       const updatedUser = await refreshUser();
-      console.log('🔄 User refreshed after update:', updatedUser);
+      console.log('🔄 User data refreshed successfully');
       
       // Also update local state immediately for better UX
       if (user) {
@@ -191,11 +190,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...user,
           ...data
         } as any;
-        console.log('🔄 Setting new user state:', newUserState);
+        console.log('🔄 User state updated locally');
         setUser(newUserState);
       }
     } catch (error) {
-      console.error('Update user error:', error);
+      console.error('Failed to update user data');
       throw error;
     }
   };

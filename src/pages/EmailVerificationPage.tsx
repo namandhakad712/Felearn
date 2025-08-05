@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/auth';
 import { Card, Button } from '../components/ui';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const EmailVerificationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,14 +23,7 @@ const EmailVerificationPage: React.FC = () => {
 
   // Show loading while checking authentication
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking authentication...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen message="Checking authentication..." />;
   }
 
   // Don't render verification page if user is authenticated
@@ -288,7 +282,7 @@ const EmailVerificationPage: React.FC = () => {
               <div className="relative mb-8">
                 {/* Animated spinner */}
                 <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full mb-6">
-                  <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                  <LoadingSpinner />
                 </div>
                 
                 {/* Floating dots animation */}

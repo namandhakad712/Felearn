@@ -10,7 +10,8 @@ const EmailVerificationPage = lazy(() => import('../pages/EmailVerificationPage'
 const OAuthCallbackPage = lazy(() => import('../pages/OAuthCallbackPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
-const DashboardPage = lazy(() => import('../pages/DashboardPage'));
+// Temporarily use regular import for DashboardPage to fix dynamic import issue
+import DashboardPage from '../pages/DashboardPage';
 
 function AppRoutes() {
   const { isLoading } = useAuth();
@@ -30,6 +31,7 @@ function AppRoutes() {
         <Route path="/auth/verify" element={<EmailVerificationPage />} />
         <Route path="/auth/verify/*" element={<EmailVerificationPage />} />
         <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+        <Route path="/auth/callback/*" element={<OAuthCallbackPage />} />
         <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
         <Route 
           path="/onboarding" 
