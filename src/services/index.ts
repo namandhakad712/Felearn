@@ -4,7 +4,7 @@ export * from './databaseService';
 export * from './userService';
 export * from './storyService';
 export * from './adminService';
-export * from './authService';
+export * from './auth';
 export * from './authStateManager';
 
 // Export interfaces

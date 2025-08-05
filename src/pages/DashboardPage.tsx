@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { DashboardLayout } from '../components/dashboard';
 import { Card, JellyText } from '../components/ui';
 import { ChatInterface, StoryDisplay, ExportModal, ExamplePrompts } from '../components/story';
@@ -93,11 +95,12 @@ const StoryGenerator = () => {
 
     try {
       console.log('Generating story for concept:', concept);
+      console.log('Using API key (first 10 chars):', user.geminiKey?.substring(0, 10) + '...');
 
       // Use the real gemini service
       const { geminiService } = await import('../services/gemini');
       
-      // Initialize the service with user's API key
+      // Initialize the service with user's API key (now stored directly)
       geminiService.initialize(user.geminiKey);
 
       // Generate story with proper request structure
@@ -122,22 +125,16 @@ const StoryGenerator = () => {
       // Auto-save the generated story (only if not already saved)
       if (!selectedStory) {
         try {
-        // Extract title from the first line of the story or use a default title
-        const storyLines = response.story.split('\n');
-        let title = storyLines[0].trim();
+        // Use the user's prompt as the title
+        let title = concept.trim();
 
-        // Make sure we have a valid title and limit its length
-        if (!title || title.length < 2) {
-          title = 'Tiny Cats Explain: ' + concept;
-        }
-        
         // Limit title to 300 characters to avoid database constraint issues
         if (title.length > 300) {
           title = title.substring(0, 297) + '...';
         }
 
         // Log the title we're using
-        console.log('Using title for story:', title);
+        console.log('Using user prompt as title:', title);
         console.log('Title length:', title.length);
         console.log('Response tokens:', response.metadata?.tokensUsed);
         console.log('Tokens being saved:', response.metadata?.tokensUsed || 0);
@@ -348,20 +345,21 @@ const StoryGenerator = () => {
 // Removed old StoryLibrary component - now using StoryLibraryPage
 
 const Settings = () => {
-  const { user, updateUser, updatePassword } = useAuth();
+  const { user, updateUser } = useAuth();
   const [apiKey, setApiKey] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationStatus, setValidationStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
-  // Password change state
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  // GSAP refs for animations
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  
+
 
   // Initialize API key from user data
   useEffect(() => {
@@ -371,22 +369,55 @@ const Settings = () => {
     }
   }, [user]);
 
-  const handleUpdateApiKey = async () => {
-    if (!apiKey) {
-      setError('Please enter an API key');
-      return;
+  const validateApiKey = async () => {
+    if (!apiKey.trim()) {
+      setError('API key is required');
+      setValidationStatus('invalid');
+      return false;
     }
+
+    setIsValidating(true);
+    setError(null);
+
+    try {
+      // Use the same validation function as onboarding
+      const { validateGeminiApiKey } = await import('../utils/userUtils');
+      const validation = await validateGeminiApiKey(apiKey);
+
+      if (validation.isValid) {
+        setValidationStatus('valid');
+        return true;
+      } else {
+        setValidationStatus('invalid');
+        setError(validation.error || 'Invalid API key');
+        return false;
+      }
+    } catch (error: any) {
+      setValidationStatus('invalid');
+      setError(error.message || 'Failed to validate API key. Check your internet connection.');
+      return false;
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleUpdateApiKey = async () => {
+    // First validate the API key
+    const isValid = await validateApiKey();
+    if (!isValid) return;
 
     setIsSaving(true);
     setError(null);
 
     try {
+      // Save the API key directly without encryption
       await updateUser({
-        geminiKey: apiKey
+        geminiKey: apiKey.trim()
       });
 
       setSuccess('API key updated successfully');
       setIsEditing(false);
+      setValidationStatus('idle');
 
       // Clear success message after 3 seconds
       setTimeout(() => {
@@ -399,89 +430,198 @@ const Settings = () => {
     }
   };
 
-  const handlePasswordChange = async () => {
-    setPasswordError(null);
-    
-    // Validation
-    if (!currentPassword) {
-      setPasswordError('Please enter your current password');
-      return;
+
+
+  // GSAP animations for settings page
+  useGSAP(() => {
+    if (settingsRef.current) {
+      // Entrance animation for the entire settings page
+      gsap.fromTo(settingsRef.current,
+        { opacity: 0, y: 50 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }
+      );
     }
     
-    if (!newPassword) {
-      setPasswordError('Please enter a new password');
-      return;
+    if (cardRef.current) {
+      // Morphing entrance for the settings card
+      gsap.fromTo(cardRef.current,
+        { 
+          scale: 0.8, 
+          opacity: 0, 
+          rotationY: 15,
+          transformOrigin: "center center"
+        },
+        { 
+          scale: 1, 
+          opacity: 1, 
+          rotationY: 0,
+          duration: 0.8, 
+          delay: 0.2,
+          ease: "back.out(1.7)" 
+        }
+      );
     }
     
-    if (newPassword !== confirmPassword) {
-      setPasswordError('New passwords do not match');
-      return;
+    if (formRef.current) {
+      // Stagger animation for form elements
+      const formElements = formRef.current.querySelectorAll('.form-element');
+      gsap.fromTo(formElements,
+        { opacity: 0, x: -30 },
+        { 
+          opacity: 1, 
+          x: 0, 
+          duration: 0.5,
+          stagger: 0.1,
+          delay: 0.5,
+          ease: "power2.out"
+        }
+      );
     }
-    
-    if (newPassword.length < 8) {
-      setPasswordError('New password must be at least 8 characters long');
-      return;
+  }, []);
+
+  // Animation for editing state change
+  useGSAP(() => {
+    if (formRef.current && isEditing) {
+      const editingElements = formRef.current.querySelectorAll('.editing-element');
+      gsap.fromTo(editingElements,
+        { opacity: 0, scale: 0.9, y: 10 },
+        { 
+          opacity: 1, 
+          scale: 1, 
+          y: 0,
+          duration: 0.4,
+          stagger: 0.05,
+          ease: "back.out(1.7)"
+        }
+      );
     }
-    
-    setIsSaving(true);
-    
-    try {
-      await updatePassword(newPassword, currentPassword);
-      
-      setPasswordSuccess('Password updated successfully');
-      setIsChangingPassword(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setPasswordSuccess(null);
-      }, 3000);
-    } catch (error: any) {
-      setPasswordError(error.message || 'Failed to update password');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  }, { dependencies: [isEditing] });
 
   return (
-    <div className="p-4 md:p-6">
+    <div ref={settingsRef} className="p-4 md:p-6">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Settings</h2>
-        <Card>
-          <h3 className="font-bold mb-4 text-gray-900 dark:text-white">Profile Settings</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+        {/* Glassmorphic Settings Card */}
+        <div 
+          ref={cardRef}
+          className="relative overflow-hidden rounded-3xl p-8"
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          {/* Grainy texture overlay */}
+          <div 
+            className="absolute inset-0 opacity-30 pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+              mixBlendMode: 'overlay'
+            }}
+          />
+          
+          <h3 className="font-bold mb-6 text-gray-900 dark:text-white text-xl">Profile Settings</h3>
+          <div ref={formRef} className="space-y-6">
+            <div className="form-element">
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                 Email
               </label>
               <input
                 type="email"
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                className="w-full p-4 border-0 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
                 value={user?.email || ''}
                 readOnly
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+            <div className="form-element">
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                 Gemini API Key
               </label>
               {isEditing ? (
                 <div className="space-y-2">
-                  <input
-                    type="text"
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Enter your Gemini API key"
-                    autoFocus
-                  />
-                  <div className="flex space-x-2">
+                  <div className="relative editing-element">
+                    <input
+                      type="text"
+                      className={`w-full p-4 pr-12 border-0 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all ${
+                        error ? 'ring-2 ring-red-500' : 
+                        validationStatus === 'valid' ? 'ring-2 ring-green-500' :
+                        validationStatus === 'invalid' ? 'ring-2 ring-red-500' : ''
+                      }`}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                      }}
+                      value={apiKey}
+                      onChange={(e) => {
+                        setApiKey(e.target.value);
+                        setValidationStatus('idle');
+                        setError(null);
+                      }}
+                      placeholder="Enter your Gemini API key"
+                      autoFocus
+                    />
+                    
+                    {/* Validation Status Icon */}
+                    {validationStatus === 'valid' && (
+                      <div className="absolute inset-y-0 right-3 flex items-center">
+                        <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {validationStatus === 'invalid' && (
+                      <div className="absolute inset-y-0 right-3 flex items-center">
+                        <svg className="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Validation Success Message */}
+                  {validationStatus === 'valid' && (
+                    <p className="text-sm text-green-600 dark:text-green-400">
+                      ✓ API key is valid and ready to use
+                    </p>
+                  )}
+                  
+                  <div className="flex space-x-3 mt-4 editing-element">
+                    <button
+                      onClick={validateApiKey}
+                      disabled={isValidating || !apiKey.trim()}
+                      className="px-6 py-3 rounded-xl text-gray-700 dark:text-gray-300 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.3)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                      }}
+                    >
+                      {isValidating ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Testing...
+                        </>
+                      ) : 'Test Key'}
+                    </button>
                     <button
                       onClick={handleUpdateApiKey}
-                      disabled={isSaving}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
+                      disabled={isSaving || !apiKey.trim() || validationStatus !== 'valid'}
+                      className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:scale-105 transition-all disabled:opacity-50 font-medium shadow-lg"
                     >
                       {isSaving ? 'Saving...' : 'Save'}
                     </button>
@@ -491,7 +631,13 @@ const Settings = () => {
                         setApiKey('••••••••••••••••');
                         setError(null);
                       }}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+                      className="px-6 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:scale-105 transition-all font-medium"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                      }}
                     >
                       Cancel
                     </button>
@@ -501,21 +647,32 @@ const Settings = () => {
                 <>
                   <input
                     type="password"
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    className="w-full p-4 border-0 rounded-xl text-gray-900 dark:text-white focus:outline-none transition-all"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
                     value={apiKey}
                     readOnly
                   />
-                  <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center justify-between mt-3">
                     <button
                       onClick={() => {
                         setIsEditing(true);
                         setApiKey(''); // Clear the placeholder for editing
                       }}
-                      className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                      className="px-4 py-2 rounded-lg text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all font-medium"
+                      style={{
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                      }}
                     >
                       Update API Key
                     </button>
-
                   </div>
                 </>
               )}
@@ -533,93 +690,32 @@ const Settings = () => {
                   {success}
                 </div>
               )}
+              
+              {/* API Key Help Text */}
+              <div 
+                className="mt-4 p-3 rounded-lg text-xs text-gray-600 dark:text-gray-300"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(5px)',
+                  WebkitBackdropFilter: 'blur(5px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+              >
+                Your API key is stored securely. We validate all keys with the Gemini API before saving.
+                <a
+                  href="https://ai.google.dev/tutorials/setup"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
+                >
+                  Get API Key
+                </a>
+              </div>
             </div>
 
-            {/* Password Change Section */}
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                Password
-              </label>
-              {isChangingPassword ? (
-                <div className="space-y-3">
-                  <input
-                    type="password"
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
-                  />
-                  <input
-                    type="password"
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
-                  />
-                  <input
-                    type="password"
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                  />
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handlePasswordChange}
-                      disabled={isSaving}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
-                    >
-                      {isSaving ? 'Updating...' : 'Update Password'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsChangingPassword(false);
-                        setCurrentPassword('');
-                        setNewPassword('');
-                        setConfirmPassword('');
-                        setPasswordError(null);
-                      }}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="password"
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    value="••••••••••••••••"
-                    readOnly
-                  />
-                  <div className="flex items-center justify-between mt-2">
-                    <button
-                      onClick={() => setIsChangingPassword(true)}
-                      className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-                    >
-                      Change Password
-                    </button>
-                  </div>
-                </>
-              )}
 
-              {/* Password Error message */}
-              {passwordError && (
-                <div className="mt-2 text-sm text-red-600 dark:text-red-400">
-                  {passwordError}
-                </div>
-              )}
-
-              {/* Password Success message */}
-              {passwordSuccess && (
-                <div className="mt-2 text-sm text-green-600 dark:text-green-400">
-                  {passwordSuccess}
-                </div>
-              )}
-            </div>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

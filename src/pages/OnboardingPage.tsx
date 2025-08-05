@@ -51,7 +51,7 @@ class OnboardingErrorBoundary extends React.Component<
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, refreshUser } = useAuth();
   const { setTheme } = useTheme();
   const [currentStep, setCurrentStep] = useState(1);
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -146,7 +146,7 @@ const OnboardingPage: React.FC = () => {
     setError('');
 
     try {
-      await updateUser({
+      const updateData = {
         onboardingcompleted: true,
         settings: JSON.stringify({
           theme: selectedTheme,
@@ -154,15 +154,36 @@ const OnboardingPage: React.FC = () => {
           autoSave: true,
           language: 'en'
         })
-      });
+      };
       
-      console.log('🎯 Onboarding completed, navigating to dashboard');
+      console.log('🎯 Updating user with data:', updateData);
+      await updateUser(updateData);
+      
+      console.log('🎯 Onboarding completed, refreshing user state...');
+      
+      // Refresh user state to ensure onboarding status is updated
+      const refreshedUser = await refreshUser();
+      
+      console.log('🎯 User state refreshed:', refreshedUser);
+      console.log('🎯 Onboarding status after refresh:', refreshedUser?.onboardingcompleted);
+      console.log('🎯 User state refreshed, applying theme and navigating to dashboard');
       // Apply theme before navigating
       setTheme(selectedTheme);
       // Applying theme
       
-      // Navigate to dashboard
-      navigate('/dashboard');
+      // Force a complete refresh of the user state
+      console.log('🎯 Forcing complete user state refresh...');
+      
+      // Clear any cached user data and refresh
+      const { databaseService } = await import('@/services/database');
+      const userDoc = await databaseService.getUserDocument(user?.$id || '');
+      console.log('🎯 Fresh user document from DB:', userDoc);
+      
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        console.log('🎯 Navigating to dashboard...');
+        navigate('/dashboard');
+      }, 500);
       
     } catch (error: any) {
       console.error('Onboarding completion error:', error);

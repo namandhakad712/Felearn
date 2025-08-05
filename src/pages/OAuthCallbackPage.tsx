@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthService } from '@/services/auth';
+import { authService } from '@/services/auth';
 
 const OAuthCallbackPage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,8 +42,6 @@ const OAuthCallbackPage: React.FC = () => {
         console.log('📍 URL pathname:', window.location.pathname);
         console.log('📍 URL search:', window.location.search);
         
-        const authService = new AuthService();
-        
         // Check if we have a user before handling callback
         try {
           const currentUser = await authService.getCurrentUser();
@@ -65,9 +63,17 @@ const OAuthCallbackPage: React.FC = () => {
         
         if (result.success) {
           console.log('🔄 Refreshing user data...');
-        await refreshUser(); // Refresh user data with merged database info
-          console.log('✅ User refreshed, navigating to dashboard...');
-        navigate('/dashboard');
+          const updatedUser = await refreshUser(); // Refresh user data with merged database info
+          console.log('✅ User refreshed:', updatedUser);
+          
+          // Check if user needs onboarding
+          if (updatedUser && !updatedUser.onboardingcompleted) {
+            console.log('🚀 New user detected, redirecting to onboarding...');
+            navigate('/onboarding', { replace: true });
+          } else {
+            console.log('🚀 Existing user, redirecting to dashboard...');
+            navigate('/dashboard', { replace: true });
+          }
         } else {
           throw new Error(result.message || 'OAuth authentication failed');
         }

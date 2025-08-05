@@ -14,7 +14,12 @@ preventStyledComponentsError17();
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
       <StyledThemeProvider theme={theme}>
         <GlobalStyle />
         <ErrorBoundary>

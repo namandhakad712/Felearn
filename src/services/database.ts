@@ -33,7 +33,7 @@ export interface UserSettings {
 
 export class DatabaseService {
   private databaseId = appwriteConfig.database.id;
-  private usersCollectionId = 'users';
+  private usersCollectionId = appwriteConfig.collections.users?.id || 'users';
 
   /**
    * Create user document in users collection
@@ -82,6 +82,10 @@ export class DatabaseService {
       // Filter out document keys that shouldn't be updated
       const { $id, $createdAt, $updatedAt, $permissions, $collectionId, $databaseId, ...updateData } = userData;
       
+      console.log('🔄 Database updateUserDocument called');
+      console.log('🔄 userId:', userId);
+      console.log('🔄 updateData:', updateData);
+      
       const document = await databases.updateDocument(
         this.databaseId,
         this.usersCollectionId,
@@ -89,6 +93,7 @@ export class DatabaseService {
         updateData
       );
 
+      console.log('🔄 Database update result:', document);
       return document as unknown as UserDocument;
     } catch (error) {
       console.error('Update user document error:', error);
@@ -107,6 +112,8 @@ export class DatabaseService {
         userId
       );
 
+      console.log('🔍 getUserDocument result:', document);
+      console.log('🔍 onboardingcompleted from DB:', document.onboardingcompleted);
       return document as unknown as UserDocument;
     } catch (error) {
       console.error('Get user document error:', error);

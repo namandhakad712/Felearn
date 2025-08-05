@@ -59,7 +59,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <UnicornBackground />
       
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} onToggle={toggleSidebar} />
       
       {/* Mobile overlay */}
       <AnimatePresence>
@@ -89,7 +89,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           onToggleSidebar={toggleSidebar}
           sidebarOpen={sidebarOpen}
           onNotificationClick={() => {
-            info('υρ∂αтєѕ ση тнє ωαу 🚨🚘', '', 2000);
+            info('Updates on the way! 🚨🚘 New features coming soon', '', 3000);
           }}
         />
         

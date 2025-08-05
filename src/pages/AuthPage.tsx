@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { authService } from '@/services/auth';
 import type { AuthResponse } from '@/services/auth';
@@ -7,6 +7,7 @@ import styled from 'styled-components';
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, register, isAuthenticated, isLoading: authLoading } = useAuth();
   
   const [isLogin, setIsLogin] = useState(true);
@@ -22,6 +23,14 @@ const AuthPage: React.FC = () => {
       navigate('/dashboard');
     }
   }, [isAuthenticated, authLoading, navigate]);
+
+  // Check for verification message from location state
+  useEffect(() => {
+    const state = location?.state as any;
+    if (state?.needsVerification) {
+      setError('Please verify your email before accessing your account. Check your inbox for a verification link.');
+    }
+  }, [location]);
 
   // Show loading while checking authentication
   if (authLoading) {
@@ -78,6 +87,14 @@ const AuthPage: React.FC = () => {
         try {
           const result: AuthResponse = await login(email, password);
           if (result.success) {
+            // Check if user needs onboarding
+            const currentUser = await authService.getCurrentUser();
+            if (currentUser && !currentUser.emailVerification) {
+              setError('Please verify your email before logging in. Check your inbox for a verification link.');
+              return;
+            }
+            
+            // Let ProtectedRoute handle onboarding redirect
             navigate('/dashboard');
           } else {
             setError(result.message);
@@ -136,6 +153,7 @@ const AuthPage: React.FC = () => {
           if (result.requiresVerification) {
             setSuccessMessage(result.message);
           } else {
+            // New user registered successfully, they'll be redirected to onboarding by ProtectedRoute
             navigate('/dashboard');
           }
         } else {
@@ -152,7 +170,6 @@ const AuthPage: React.FC = () => {
   const handleOAuthLogin = async (provider: 'google' | 'github') => {
     try {
       console.log(`🔐 Starting ${provider} OAuth login...`);
-      const authService = new AuthService();
       await authService.createOAuthSession(provider);
       console.log(`✅ ${provider} OAuth initiated successfully`);
     } catch (error: any) {

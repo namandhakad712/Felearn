@@ -6,7 +6,7 @@ interface ExamplePromptsProps {
 
 const ExamplePrompts: React.FC<ExamplePromptsProps> = ({ onSelectPrompt }) => {
   const examples = [
-    'Explain thermodynamics properties.',
+    'How does a solar panel work?.',
     'What is neural network of AI.',
   ];
 

@@ -21,7 +21,7 @@ export interface User {
   accessedAt: string;
   
   // Extended properties required by the application
-  geminiKey?: string; // encrypted API key
+  geminiKey?: string; // API key
   isAdmin?: boolean; // admin privileges
   settings?: UserSettings | string; // user preferences
   lastLogin?: string; // last login timestamp
@@ -34,5 +34,5 @@ export interface User {
 export interface UserSettings {
   theme: 'light' | 'dark';
   language: string;
-  onboardingCompleted?: boolean;
+  onboardingcompleted?: boolean;
 } 

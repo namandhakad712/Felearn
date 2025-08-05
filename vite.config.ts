@@ -19,7 +19,9 @@ export default defineConfig(({ mode }) => {
       host: true,
       hmr: {
         overlay: false // Disable the error overlay
-      }
+      },
+      // Enable history API fallback for client-side routing
+      historyApiFallback: true
     },
     build: {
       // Optimize for production
@@ -121,6 +123,8 @@ export default defineConfig(({ mode }) => {
     preview: {
       port: 4173,
       host: true,
+      // Enable history API fallback for production preview
+      historyApiFallback: true
     },
     
     // CSS configuration

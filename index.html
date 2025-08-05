@@ -172,6 +172,58 @@
         .lenis.lenis-smooth iframe {
             pointer-events: none;
         }
+
+        /* Enhanced smooth scroll styles */
+        html.lenis {
+            scroll-behavior: auto !important;
+        }
+
+        .lenis.lenis-smooth {
+            scroll-behavior: auto !important;
+        }
+
+        .lenis.lenis-smooth [data-lenis-prevent] {
+            overscroll-behavior: contain;
+        }
+
+        .lenis.lenis-stopped {
+            overflow: hidden;
+        }
+
+        .lenis.lenis-smooth iframe {
+            pointer-events: none;
+        }
+
+        /* Smooth scroll enhancements */
+        body {
+            overscroll-behavior: none;
+        }
+
+        /* Prevent scroll issues on mobile */
+        @media (max-width: 768px) {
+            body {
+                -webkit-overflow-scrolling: touch;
+                overflow-scrolling: touch;
+            }
+        }
+
+        /* Custom scrollbar for better UX */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
     </style>
 
     <!-- PIXELS TAG-->
@@ -1559,12 +1611,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                                     <div class="nav__btn--text u-text-small"></div>
                                 </div>
                             </a>
-                            <a href="/app.html#/auth/login" class="nav__btn--w w-inline-block">
+                            <a href="/app.html#/auth/register" class="nav__btn--w w-inline-block">
                                 <div class="nav__btn--layout">
                                     <div class="nav__btn--text u-text-small">Sign Up</div>
                                 </div>
                             </a>
-                            <a href="app.html#/auth/login" class="btn--w is--cta w-inline-block">
+                            <a href="/app.html#/auth/login" class="btn--w is--cta w-inline-block">
                                 <div class="btn-cta__layout u-hflex-left-stretch is--nav">
                                     <div class="btn-cta__inner is--nav">
                                         <div class="btn-cta__text u-text-main is--nav">Dashboard</div>
@@ -1596,7 +1648,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                                 </svg>
                             </div>
                             <div class="nav__mobile-link--list">
-                                <a href="#" class="nav__submenu--link u-hflex-left-center is--mobile w-inline-block">
+                                <a href="/app.html#/auth/register" class="nav__submenu--link u-hflex-left-center is--mobile w-inline-block">
                                     <div class="nav__link--icon is--mobile"><svg xmlns="http://www.w3.org/2000/svg"
                                             width="100%" viewBox="0 0 28 28" fill="none">
                                             <rect x="1.14844" y="1.1499" width="25.7" height="25.7" rx="12.85"
@@ -1608,9 +1660,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                                                 d="M7.47806 10.5823C6.80845 10.9689 6.26562 11.9091 6.26562 12.6823V18.4882C6.26562 19.2614 6.80845 19.5748 7.47806 19.1882L11.23 17.022V15.8939C11.23 14.3475 12.3156 12.4671 13.6549 11.6939L14.8953 10.9777V7.69994C14.8953 6.92674 14.3525 6.61334 13.6829 6.99994L7.47806 10.5823ZM14.8953 12.3777L13.6549 13.0939C13.0755 13.4284 12.591 14.1774 12.471 14.874C12.591 14.1774 13.0755 13.4286 13.6548 13.0941L14.8953 12.3779V12.3777Z"
                                                 fill="#2F3032"></path>
                                         </svg></div>
-                                    <div class="nav__submenu--text u-text-main">Platform</div>
+                                    <div class="nav__submenu--text u-text-main">Sign up</div>
                                 </a>
-                                <a href="/solutions"
+                                <a href="/app.html#/auth/login"
                                     class="nav__submenu--link u-hflex-left-center is--mobile w-inline-block">
                                     <div class="nav__link--icon is--mobile"><svg xmlns="http://www.w3.org/2000/svg"
                                             width="100%" viewBox="0 0 28 28" fill="none">
@@ -1621,34 +1673,26 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                                             <circle cx="11.3527" cy="11.2941" r="5.79412" fill="#2F3032"
                                                 stroke="#F8F8F8"></circle>
                                         </svg></div>
-                                    <div class="nav__submenu--text u-text-main">Solutions</div>
+                                    <div class="nav__submenu--text u-text-main">Login</div>
                                 </a>
                             </div>
                         </div>
                         <a data-nav-mobile-link="" href="#"
                             class="nav__mobile-link u-hflex-between-center link-block w-inline-block">
-                            <div class="nav__mobile-link--text u-text-main">Pricing</div>
+                            <div class="nav__mobile-link--text u-text-main">Learn</div>
                         </a>
                         <a data-nav-mobile-link="" href="#" target="_blank"
                             class="nav__mobile-link u-hflex-between-center link-block w-inline-block">
-                            <div class="nav__mobile-link--text u-text-main">Blog</div>
-                        </a>
-                        <a data-nav-mobile-link="" href="/contact"
-                            class="nav__mobile-link u-hflex-between-center link-block w-inline-block">
-                            <div class="nav__mobile-link--text u-text-main">Contact</div>
+                            <div class="nav__mobile-link--text u-text-main">Something</div>
                         </a>
                         <a data-nav-mobile-link="" href="#"
                             class="nav__mobile-link u-hflex-between-center link-block w-inline-block">
-                            <div class="nav__mobile-link--text u-text-main">Docs</div>
-                        </a>
-                        <a data-nav-mobile-link="" href="#"
-                            class="nav__mobile-link u-hflex-between-center link-block w-inline-block">
-                            <div class="nav__mobile-link--text u-text-main"></div>
+                            <div class="nav__mobile-link--text u-text-main">New</div>
                         </a>
                         <a href="/contact" class="btn--w is--cta is--mobile-menu w-inline-block">
                             <div class="btn-cta__layout u-hflex-left-stretch is--mobile-menu">
                                 <div class="btn-cta__inner is--mobile-mnu">
-                                    <div class="btn-cta__text u-text-main">Talk to sales</div>
+                                    <div class="btn-cta__text u-text-main">Contact Us</div>
                                 </div><svg xmlns="http://www.w3.org/2000/svg" width="100%" fill="none"
                                     class="btn-cta__right">
                                     <path fill-rule="evenodd" clip-rule="evenodd"
@@ -5244,7 +5288,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                         <div class="partners-video__inner">
                             <div style="padding-top:56.17021276595745%"
                                 class="w-embed-youtubevideo partners-video_youtube" id="youtube-container">
-                                <iframe src="#" frameBorder="0"
+                                <iframe src="" frameBorder="0"
                                     style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:auto"
                                     allow="autoplay; encrypted-media" allowfullscreen="" title="Felearn AI"
                                     onerror="showVideoFallback()"></iframe>
@@ -9827,7 +9871,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                                     class="footer__link u-text-main">•</a>
                             </div>
                             <div class="footer__links--list u-vflex-left-top is--mobile-hidden">
-                                <div class="footer__links--subtitle u-text-small">Naman</div><a href="#" target="_blank"
+                                <div class="footer__links--subtitle u-text-small">Andy</div><a href="#" target="_blank"
                                     class="footer__link u-text-main">•</a><a href="#" target="_blank"
                                     class="footer__link u-text-main">•</a><a href="#"
                                     class="footer__link u-text-main">•</a>
@@ -9881,7 +9925,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                                     alt="" class="footer__badge-img" /></div>
                         </div>
                         <div class="footer__subinfo--btn-list u-hflex-left-center is--mobile-hidden"><a
-                                href="/app.html#/auth/login" class="footer__subinfo--link u-text-main">Sign Up</a>
+                                href="/app.html#/auth/register" class="footer__subinfo--link u-text-main">Sign Up</a>
                             <a href="/contact" class="btn--w is--light is--footer w-inline-block">
                                 <div class="btn-cta__layout u-hflex-left-stretch">
                                     <div class="btn-cta__inner is--light">
@@ -9900,10 +9944,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     </div>
                     <div class="footer__legal--w u-column-full u-hflex-between-center">
                         <div class="footer__legal--links-w u-hflex-left-center"><a
-                                href="https://www.iubenda.com/privacy-policy/23732899" target="_blank"
+                                href="#" target="_blank"
                                 class="footer__legal--link u-text-small u-display-none">Privacy</a>
                             <div class="footer__legal--link u-text-small w-embed w-iframe w-script"><a
-                                    href="https://www.iubenda.com/privacy-policy/23732899"
+                                    href="#"
                                     class="iubenda-nostyle iubenda-noiframe iubenda-embed iubenda-noiframe "
                                     title="Privacy Policy ">•</a>
                                 <script type="text/javascript">
@@ -10152,29 +10196,114 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <script>
         let lenis;
+        
+        // Enhanced smooth scroll with GSAP integration
         if (Webflow.env("editor") === undefined) {
+            // Initialize Lenis with enhanced settings
             lenis = new Lenis({
-                duration: 1,
+                duration: 1.2,
+                easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Custom easing
+                direction: 'vertical',
+                gestureDirection: 'vertical',
+                smooth: true,
+                mouseMultiplier: 1,
+                smoothTouch: false,
+                touchMultiplier: 2,
+                infinite: false,
             });
 
+            // GSAP integration for better performance
             function raf(time) {
                 lenis.raf(time);
                 requestAnimationFrame(raf);
             }
             requestAnimationFrame(raf);
+
+            // Integrate with GSAP ScrollTrigger
+            if (typeof ScrollTrigger !== 'undefined') {
+                lenis.on('scroll', ScrollTrigger.update);
+                
+                gsap.ticker.add((time) => {
+                    lenis.raf(time * 1000);
+                });
+                
+                gsap.ticker.lagSmoothing(0);
+            }
+
+            // Enhanced scroll-to functionality
+            function scrollToElement(target, offset = 0) {
+                const element = document.querySelector(target);
+                if (element) {
+                    lenis.scrollTo(element, {
+                        offset: offset,
+                        duration: 1.5,
+                        easing: (t) => 1 - Math.pow(1 - t, 3)
+                    });
+                }
+            }
+
+            // Auto-detect and handle anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    const href = this.getAttribute('href');
+                    if (href !== '#' && href.length > 1) {
+                        e.preventDefault();
+                        scrollToElement(href, -80); // 80px offset for fixed headers
+                    }
+                });
+            });
+
+            // Pause smooth scroll during form interactions
+            const formElements = document.querySelectorAll('input, textarea, select');
+            formElements.forEach(element => {
+                element.addEventListener('focus', () => lenis.stop());
+                element.addEventListener('blur', () => lenis.start());
+            });
+
+            // Handle resize events
+            window.addEventListener('resize', () => {
+                lenis.resize();
+            });
         }
+
+        // Control functions with jQuery
         $("[data-lenis-start]").on("click", function () {
-            lenis.start();
+            if (lenis) lenis.start();
         });
+        
         $("[data-lenis-stop]").on("click", function () {
-            lenis.stop();
+            if (lenis) lenis.stop();
         });
+        
         $("[data-lenis-toggle]").on("click", function () {
-            $(this).toggleClass("stop-scroll");
-            if ($(this).hasClass("stop-scroll")) {
-                lenis.stop();
-            } else {
-                lenis.start();
+            if (lenis) {
+                $(this).toggleClass("stop-scroll");
+                if ($(this).hasClass("stop-scroll")) {
+                    lenis.stop();
+                } else {
+                    lenis.start();
+                }
+            }
+        });
+
+        // Custom scroll-to buttons
+        $("[data-scroll-to]").on("click", function (e) {
+            e.preventDefault();
+            const target = $(this).attr('data-scroll-to');
+            const offset = $(this).attr('data-scroll-offset') || -80;
+            if (lenis && target) {
+                scrollToElement(target, parseInt(offset));
+            }
+        });
+
+        // Smooth scroll for "back to top" functionality
+        $("[data-scroll-top]").on("click", function (e) {
+            e.preventDefault();
+            if (lenis) {
+                lenis.scrollTo(0, {
+                    duration: 2,
+                    easing: (t) => 1 - Math.pow(1 - t, 3)
+                });
             }
         });
     </script>

@@ -146,6 +146,17 @@ export class AuthService {
       // Use the userId as-is from Appwrite's verification URL
       await this.account.updateVerification(userId, secret);
       
+      // Update the database document to sync email verification status
+      try {
+        await databaseService.updateUserDocument(userId, {
+          emailVerification: true
+        });
+        console.log('✅ Database document updated with emailVerification: true');
+      } catch (dbError) {
+        console.error('❌ Failed to update database document with email verification:', dbError);
+        // Continue anyway - the auth verification succeeded
+      }
+      
       // Try to get updated user info, but don't fail if user is not logged in
       try {
         const user = await this.account.get();
@@ -174,6 +185,17 @@ export class AuthService {
           error.message?.includes('User already verified') ||
           error.message?.includes('email verification') ||
           error.type === 'user_already_verified') {
+        
+        // Update database document to ensure it's synced
+        try {
+          await databaseService.updateUserDocument(userId, {
+            emailVerification: true
+          });
+          console.log('✅ Database document synced with emailVerification: true (already verified case)');
+        } catch (dbError) {
+          console.error('❌ Failed to sync database document:', dbError);
+        }
+        
         // Email already verified - treating as success
         return {
           success: true,
@@ -185,6 +207,16 @@ export class AuthService {
       if (error.code === 401) {
         if (error.type === 'general_unauthorized_scope') {
           // This might mean the email is already verified or there's a scope issue
+          // Update database document to ensure it's synced
+          try {
+            await databaseService.updateUserDocument(userId, {
+              emailVerification: true
+            });
+            console.log('✅ Database document synced with emailVerification: true (unauthorized scope case)');
+          } catch (dbError) {
+            console.error('❌ Failed to sync database document:', dbError);
+          }
+          
           // Unauthorized scope error - checking if email is already verified
           return {
             success: true,
@@ -242,15 +274,20 @@ export class AuthService {
 
       // Create OAuth2 session with universal URLs
       const urls = getAuthUrls();
-      console.log('🌐 OAuth URLs:', {
+      console.log('🌐 Universal OAuth URLs (auto-detected):', {
         callback: urls.callback,
         login: urls.login,
         verify: urls.verify,
-        resetPassword: urls.resetPassword
+        resetPassword: urls.resetPassword,
+        currentDomain: typeof window !== 'undefined' ? window.location.origin : 'server-side'
       });
       logAppConfig(); // Debug: show current configuration
       
       console.log('🔗 Creating OAuth2 session with provider:', oauthProvider);
+      console.log('📍 Success redirect URL:', urls.callback);
+      console.log('📍 Failure redirect URL:', urls.login);
+      console.log('🌍 Current environment:', typeof window !== 'undefined' ? window.location.hostname : 'server-side');
+      
       // Calling createOAuth2Session
       this.account.createOAuth2Session(
         oauthProvider,
@@ -493,7 +530,31 @@ export class AuthService {
    */
   async sendEmailVerification(): Promise<AuthResponse> {
     try {
-      await this.account.createVerification(getAuthUrls().verify);
+      const verifyUrl = getAuthUrls().verify;
+      console.log('📧 Universal verification email URL (auto-detected):', verifyUrl);
+      console.log('🌍 Current domain:', typeof window !== 'undefined' ? window.location.origin : 'server-side');
+      console.log('✅ This will work on ANY domain automatically!');
+      
+      // Validate URL format
+      if (!verifyUrl.includes('/auth/verify')) {
+        console.error('❌ Invalid verification URL format:', verifyUrl);
+        throw new Error('Invalid verification URL configuration');
+      }
+      
+      // Test URL generation
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'unknown';
+      const expectedUrl = currentOrigin.includes('localhost') ? 
+        'https://felearn.vercel.app/auth/verify' : 
+        `${currentOrigin}/auth/verify`;
+        
+      console.log('🧪 Email URL Test:', {
+        generated: verifyUrl,
+        expected: expectedUrl,
+        isValid: verifyUrl.endsWith('/auth/verify'),
+        isLocalhost: currentOrigin.includes('localhost')
+      });
+      
+      await this.account.createVerification(verifyUrl);
       return {
         success: true,
         message: 'Verification email sent. Please check your inbox.'
@@ -521,3 +582,6 @@ export class AuthService {
     }
   }
 }
+
+// Create and export a singleton instance
+export const authService = new AuthService();

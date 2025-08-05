@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 // import { Models } from 'appwrite'; // Unused import
-import { AuthService, AuthResponse } from '@/services/auth';
+import { authService, AuthResponse } from '@/services/auth';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -44,18 +44,42 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const authService = new AuthService();
 
   const refreshUser = async () => {
+    console.log('🔄 refreshUser called');
     try {
       const currentUser = await authService.getCurrentUser();
+      console.log('🔄 currentUser from authService:', currentUser);
       if (currentUser) {
         // Merge with database user document
         try {
+          console.log('🔍 Fetching user document for ID:', currentUser.$id);
           const { databaseService } = await import('@/services/database');
           const userDoc = await databaseService.getUserDocument(currentUser.$id);
           
+          console.log('🔍 User document from database:', userDoc);
+          
           if (userDoc) {
+            // Check if email verification status needs to be synced
+            if (currentUser.emailVerification !== userDoc.emailVerification) {
+              console.log('🔄 Email verification status mismatch - syncing database');
+              console.log('🔄 Auth emailVerification:', currentUser.emailVerification);
+              console.log('🔄 DB emailVerification:', userDoc.emailVerification);
+              
+              try {
+                const { databaseService: dbService } = await import('@/services/database');
+                await dbService.updateUserDocument(currentUser.$id, {
+                  emailVerification: currentUser.emailVerification
+                });
+                console.log('✅ Email verification status synced to database');
+                
+                // Update the userDoc for merging
+                userDoc.emailVerification = currentUser.emailVerification;
+              } catch (syncError) {
+                console.error('❌ Failed to sync email verification status:', syncError);
+              }
+            }
+            
             // Merge auth user with database document
             const mergedUser = {
               ...currentUser,
@@ -65,13 +89,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               isAdmin: userDoc.isAdmin,
               settings: userDoc.settings,
               onboardingcompleted: userDoc.onboardingcompleted,
-              lastLogin: userDoc.lastLogin
+              lastLogin: userDoc.lastLogin,
+              emailVerification: currentUser.emailVerification // Use auth system as source of truth
             };
+            console.log('✅ Successfully merged user data:', mergedUser);
+            console.log('✅ Onboarding status from DB:', userDoc.onboardingcompleted);
+            console.log('✅ Email verification status:', mergedUser.emailVerification);
             setUser(mergedUser as any);
             return mergedUser;
+          } else {
+            console.log('❌ No user document found in database for user:', currentUser.$id);
+            console.log('❌ This means onboardingcompleted will be undefined');
           }
         } catch (dbError) {
-          console.error('Error fetching user document:', dbError);
+          console.error('❌ Error fetching user document:', dbError);
+          console.error('❌ This means the user object will not have database fields like onboardingcompleted');
         }
       }
       
@@ -88,7 +120,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await authService.login(email, password);
       if (response.success && response.user) {
-        setUser(response.user);
+        console.log('🔄 Login successful, refreshing user data to get database fields...');
+        // Don't just set the auth user - refresh to get database data merged
+        await refreshUser();
       }
       return response;
     } catch (error: any) {
@@ -101,7 +135,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await authService.register(email, password);
       if (response.success && !response.requiresVerification) {
-        setUser(response.user || null);
+        console.log('🔄 Registration successful, refreshing user data to get database fields...');
+        // Don't just set the auth user - refresh to get database data merged
+        await refreshUser();
       }
       return response;
     } catch (error: any) {
@@ -142,18 +178,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUser = async (data: any) => {
     try {
+      console.log('🔄 Updating user with data:', data);
       await authService.updateUser(data);
-      // Only refresh user if not during onboarding to prevent step reset
-      if (!data.onboardingcompleted) {
-        await refreshUser(); // Refresh merged user data after update
-      } else {
-        // For onboarding completion, just update the user state directly
-        if (user) {
-          setUser({
-            ...user,
-            ...data
-          } as any);
-        }
+      
+      // Always refresh user data to get the latest from database
+      const updatedUser = await refreshUser();
+      console.log('🔄 User refreshed after update:', updatedUser);
+      
+      // Also update local state immediately for better UX
+      if (user) {
+        const newUserState = {
+          ...user,
+          ...data
+        } as any;
+        console.log('🔄 Setting new user state:', newUserState);
+        setUser(newUserState);
       }
     } catch (error) {
       console.error('Update user error:', error);

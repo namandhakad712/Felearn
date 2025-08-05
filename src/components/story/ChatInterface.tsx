@@ -30,8 +30,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && !isLoading) {
-      onSubmit(message.trim());
+    const trimmedMessage = message.trim();
+    const wordCount = trimmedMessage.split(/\s+/).filter(word => word.length > 0).length;
+    
+    if (trimmedMessage && !isLoading && wordCount >= 7) {
+      onSubmit(trimmedMessage);
       setMessage('');
     }
   };
@@ -46,6 +49,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const characterCount = message.length;
   const isOverLimit = characterCount > maxLength;
   const isNearLimit = characterCount > maxLength * 0.8;
+  
+  // Word count validation
+  const wordCount = message.trim().split(/\s+/).filter(word => word.length > 0).length;
+  const hasMinimumWords = wordCount >= 7;
 
   return (
     <motion.div
@@ -81,11 +88,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           {/* Submit Button */}
           <motion.button
             type="submit"
-            disabled={!message.trim() || isLoading || isOverLimit}
-            whileHover={{ scale: message.trim() && !isLoading && !isOverLimit ? 1.05 : 1 }}
-            whileTap={{ scale: message.trim() && !isLoading && !isOverLimit ? 0.95 : 1 }}
+            disabled={!message.trim() || isLoading || isOverLimit || !hasMinimumWords}
+            whileHover={{ scale: message.trim() && !isLoading && !isOverLimit && hasMinimumWords ? 1.05 : 1 }}
+            whileTap={{ scale: message.trim() && !isLoading && !isOverLimit && hasMinimumWords ? 0.95 : 1 }}
             className={`absolute bottom-4 right-4 p-3 rounded-xl transition-all duration-200 ${
-              message.trim() && !isLoading && !isOverLimit
+              message.trim() && !isLoading && !isOverLimit && hasMinimumWords
                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
             }`}
@@ -146,7 +153,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <span className="hidden sm:inline"> for new line</span>
             </div>
             
-            {/* Rate Limit Indicator */}
+            {/* Word Count Indicator */}
+            <div className={`text-xs font-medium transition-colors duration-200 ${
+              !hasMinimumWords && message.trim()
+                ? 'text-red-500'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}>
+              {wordCount}/7 words min
+            </div>
 
           </div>
 
@@ -164,7 +178,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* Error Messages */}
         {isOverLimit && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -186,6 +200,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               />
             </svg>
             Message is too long. Please keep it under {maxLength} characters.
+          </motion.div>
+        )}
+        
+        {!hasMinimumWords && message.trim() && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-2 text-sm text-red-500 flex items-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 mr-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+            Please write at least 7 words to create a meaningful story prompt.
           </motion.div>
         )}
       </form>

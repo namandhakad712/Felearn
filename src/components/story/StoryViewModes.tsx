@@ -1,6 +1,5 @@
 import React, { useState, forwardRef, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import HTMLFlipBook from 'react-pageflip';
 import { Story, StorySlide } from '../../types';
@@ -110,6 +109,21 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const modalContainerRef = useRef<HTMLDivElement>(null);
 
+  // Debug: Log story data
+  console.log('StoryViewModes received story:', {
+    title: story.title,
+    hasImages: !!(story.images && story.images.length > 0),
+    imagesCount: story.images?.length || 0,
+    hasSlides: !!(story.slides && story.slides.length > 0),
+    slidesCount: story.slides?.length || 0,
+    firstImage: story.images?.[0]?.substring(0, 50) + '...' || 'No images',
+    firstSlide: story.slides?.[0] ? {
+      hasImage: !!story.slides[0].image,
+      hasText: !!story.slides[0].text,
+      imageUrl: story.slides[0].image?.substring(0, 50) + '...' || 'No image'
+    } : 'No slides'
+  });
+
   // Ensure modal is visible when opened
   useEffect(() => {
     // Scroll to top of page when modal opens
@@ -123,8 +137,34 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  const slides = story.slides || [];
+  // Create slides from story data - prioritize story.slides, fallback to story.images
+  const slides = React.useMemo(() => {
+    if (story.slides && story.slides.length > 0) {
+      console.log('Using story.slides data');
+      return story.slides;
+    } else if (story.images && story.images.length > 0) {
+      console.log('Creating slides from story.images');
+      // Create slides from images
+      return story.images.map((imageUrl, index) => ({
+        image: imageUrl,
+        text: `Slide ${index + 1}` // Default text if no slides data
+      }));
+    }
+    console.log('No slides or images available');
+    return [];
+  }, [story.slides, story.images]);
+  
   const hasSlides = slides.length > 0;
+  
+  console.log('Final slides data:', {
+    slidesCount: slides.length,
+    slides: slides.map((slide, idx) => ({
+      index: idx,
+      hasImage: !!slide.image,
+      hasText: !!slide.text,
+      imagePreview: slide.image?.substring(0, 50) + '...' || 'No image'
+    }))
+  });
 
   // const nextSlide = () => { // Unused function
   //   setCurrentPage((prev) => (prev + 1) % slides.length);
@@ -138,66 +178,90 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
   //   setCurrentPage(index);
   // };
 
-  const EmbeddedImageSlide: React.FC<{ slide: StorySlide; index: number }> = ({ slide, index }) => (
-    <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
-      {/* Image Section */}
-      <div className="relative w-full aspect-[4/3] bg-gray-50 dark:bg-gray-700">
-        <img
-          src={slide.image || ''}
-          alt={`Slide ${index + 1}`}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 800;
-            canvas.height = 600;
-            const ctx = canvas.getContext('2d');
-            
-            if (ctx) {
-              // Create gradient background
-              const gradient = ctx.createLinearGradient(0, 0, 800, 600);
-              gradient.addColorStop(0, '#667eea');
-              gradient.addColorStop(1, '#764ba2');
-              ctx.fillStyle = gradient;
-              ctx.fillRect(0, 0, 800, 600);
-              
-              // Add some text for fallback
-              ctx.fillStyle = 'white';
-              ctx.font = 'bold 24px "Indie Flower", cursive';
-              ctx.textAlign = 'center';
-              ctx.fillText(`Slide ${index + 1}`, 400, 280);
-              ctx.font = '18px "Indie Flower", cursive';
-              ctx.fillText('Image loading...', 400, 320);
-              
-              (e.target as HTMLImageElement).src = canvas.toDataURL();
-            }
-          }}
-        />
+  const EmbeddedImageSlide: React.FC<{ slide: StorySlide; index: number }> = ({ slide, index }) => {
+    console.log(`Rendering slide ${index + 1}:`, { 
+      hasImage: !!slide.image, 
+      imageUrl: slide.image?.substring(0, 50) + '...', 
+      hasText: !!slide.text 
+    });
+    
+    return (
+      <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+        {/* Image Section */}
+        <div className="relative w-full aspect-[4/3] bg-gray-50 dark:bg-gray-700">
+          {slide.image ? (
+            <img
+              src={slide.image}
+              alt={`Slide ${index + 1}`}
+              className="w-full h-full object-cover"
+              onLoad={() => {
+                console.log(`✅ Slide ${index + 1} image loaded successfully`);
+              }}
+              onError={(e) => {
+                console.error(`❌ Slide ${index + 1} image failed to load:`, slide.image?.substring(0, 50) + '...');
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 600;
+                const ctx = canvas.getContext('2d');
+                
+                if (ctx) {
+                  // Create gradient background
+                  const gradient = ctx.createLinearGradient(0, 0, 800, 600);
+                  gradient.addColorStop(0, '#667eea');
+                  gradient.addColorStop(1, '#764ba2');
+                  ctx.fillStyle = gradient;
+                  ctx.fillRect(0, 0, 800, 600);
+                  
+                  // Add some text for fallback
+                  ctx.fillStyle = 'white';
+                  ctx.font = 'bold 24px "Indie Flower", cursive';
+                  ctx.textAlign = 'center';
+                  ctx.fillText(`Slide ${index + 1}`, 400, 280);
+                  ctx.font = '18px "Indie Flower", cursive';
+                  ctx.fillText('Image not available', 400, 320);
+                  
+                  (e.target as HTMLImageElement).src = canvas.toDataURL();
+                }
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900">
+              <div className="text-center">
+                <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-lg font-medium text-gray-600 dark:text-gray-300">Slide {index + 1}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No image available</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Slide Number Badge */}
+          <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
+            {index + 1} / {slides.length}
+          </div>
+        </div>
         
-        {/* Slide Number Badge */}
-        <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
-          {index + 1} / {slides.length}
-        </div>
+        {/* Caption Section - Below Image */}
+        {slide.text && (
+          <div className="p-4 sm:p-6 md:p-8 bg-white dark:bg-gray-800">
+            <p className="story-caption text-gray-800 dark:text-gray-200">
+              {slide.text.replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim()}
+            </p>
+          </div>
+        )}
+        
+        {/* If no caption, add some padding */}
+        {!slide.text && (
+          <div className="p-4 sm:p-6 bg-white dark:bg-gray-800">
+            <p className="indie-flower text-gray-500 dark:text-gray-400 text-base sm:text-lg text-center italic">
+              AI-generated illustration
+            </p>
+          </div>
+        )}
       </div>
-      
-      {/* Caption Section - Below Image */}
-      {slide.text && (
-        <div className="p-4 sm:p-6 md:p-8 bg-white dark:bg-gray-800">
-          <p className="story-caption text-gray-800 dark:text-gray-200">
-            {slide.text.replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim()}
-          </p>
-        </div>
-      )}
-      
-      {/* If no caption, add some padding */}
-      {!slide.text && (
-        <div className="p-4 sm:p-6 bg-white dark:bg-gray-800">
-          <p className="indie-flower text-gray-500 dark:text-gray-400 text-base sm:text-lg text-center italic">
-            AI-generated illustration
-          </p>
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   // Add flipbook functionality
   const [flipBookSize, setFlipBookSize] = React.useState({ width: 400, height: 600 });
@@ -479,8 +543,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
   return (
     <div 
       ref={modalContainerRef}
-      className="story-view-modal"
-      style={{ alignItems: 'flex-start', paddingTop: '0.5rem' }}
+      className="story-view-modal fixed inset-0 flex items-center justify-center p-4 z-[199]"
     >
       {/* Backdrop overlay */}
       <div 
@@ -490,7 +553,8 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
       
       <div
         ref={modalRef}
-        className="modal-content bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden transform-gpu z-[200] relative"
+        className="modal-content bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden transform-gpu z-[200] relative w-full max-w-7xl"
+        style={{ height: '90vh', maxHeight: '90vh' }}
       >
         {/* Book Animation Overlay */}
         <AnimatePresence>
@@ -643,54 +707,158 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
                 <>
                   {/* Scroll View - All Slides with Zoom */}
                   <div 
-                    className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 scroll-smooth story-scroll-container"
+                    className="flex-1 overflow-y-auto story-scroll-container"
+                    style={{
+                      height: 'calc(100vh - 140px)',
+                      maxHeight: 'calc(100vh - 140px)',
+                      overflowY: 'auto',
+                      scrollBehavior: 'smooth',
+                      padding: '0'
+                    }}
                   >
                     <div 
+                      className="p-4 sm:p-6 lg:p-8"
                       style={{ 
                         transform: `scale(${zoomLevel})`,
                         transformOrigin: 'top center',
-                        transition: 'transform 0.3s ease'
+                        transition: 'transform 0.3s ease',
+                        minHeight: 'fit-content',
+                        paddingBottom: '2rem'
                       }}
                     >
-                      {slides.map((slide, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 30 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ 
-                            delay: index * 0.1,
-                            duration: 0.6,
-                            ease: [0.25, 0.46, 0.45, 0.94]
-                          }}
-                          className="w-full max-w-4xl mx-auto mb-6 sm:mb-8"
-                          whileInView={{ 
-                            opacity: 1, 
-                            y: 0,
-                            transition: { duration: 0.6 }
-                          }}
-                          viewport={{ once: true, margin: "-100px" }}
-                        >
-                          <EmbeddedImageSlide slide={slide} index={index} />
-                        </motion.div>
-                      ))}
-                      
-                      {/* Scroll to top button */}
-                      <div className="flex justify-center pt-8 pb-4">
-                        <button
-                          onClick={() => {
-                            const scrollContainer = document.querySelector('.story-scroll-container');
-                            if (scrollContainer) {
-                              scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-                            }
-                          }}
-                          className="flex items-center space-x-2 px-6 py-3 bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 rounded-full transition-all duration-200 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 shadow-sm hover:shadow-md transform hover:scale-105"
-                          title="Scroll to top"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                          </svg>
-                          <span className="text-sm font-medium">Back to top</span>
-                        </button>
+                      <div className="space-y-8 sm:space-y-12">
+                        {slides.length > 0 ? (
+                          slides.map((slide, index) => (
+                            <motion.div
+                              key={`slide-${index}`}
+                              initial={{ opacity: 0, y: 50 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ 
+                                delay: index * 0.15,
+                                duration: 0.8,
+                                ease: [0.25, 0.46, 0.45, 0.94]
+                              }}
+                              className="w-full max-w-5xl mx-auto"
+                              whileInView={{ 
+                                opacity: 1, 
+                                y: 0,
+                                transition: { duration: 0.6 }
+                              }}
+                              viewport={{ once: true, margin: "-50px" }}
+                            >
+                              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-shadow duration-300">
+                                {/* Image Section */}
+                                <div className="relative w-full bg-gray-50 dark:bg-gray-700" style={{ aspectRatio: '16/10' }}>
+                                  {slide.image ? (
+                                    <img
+                                      src={slide.image}
+                                      alt={`Slide ${index + 1}`}
+                                      className="w-full h-full object-cover"
+                                      style={{ 
+                                        display: 'block',
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                      }}
+                                      onLoad={() => {
+                                        console.log(`✅ Slide ${index + 1} image loaded successfully`);
+                                      }}
+                                      onError={(e) => {
+                                        console.error(`❌ Slide ${index + 1} image failed to load:`, slide.image?.substring(0, 50) + '...');
+                                        const canvas = document.createElement('canvas');
+                                        canvas.width = 800;
+                                        canvas.height = 500;
+                                        const ctx = canvas.getContext('2d');
+                                        
+                                        if (ctx) {
+                                          // Create gradient background
+                                          const gradient = ctx.createLinearGradient(0, 0, 800, 500);
+                                          gradient.addColorStop(0, '#667eea');
+                                          gradient.addColorStop(1, '#764ba2');
+                                          ctx.fillStyle = gradient;
+                                          ctx.fillRect(0, 0, 800, 500);
+                                          
+                                          // Add fallback text
+                                          ctx.fillStyle = 'white';
+                                          ctx.font = 'bold 32px "Indie Flower", cursive';
+                                          ctx.textAlign = 'center';
+                                          ctx.fillText(`Slide ${index + 1}`, 400, 220);
+                                          ctx.font = '24px "Indie Flower", cursive';
+                                          ctx.fillText('Image not available', 400, 280);
+                                          
+                                          (e.target as HTMLImageElement).src = canvas.toDataURL();
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900">
+                                      <div className="text-center">
+                                        <svg className="w-20 h-20 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <p className="text-xl font-medium text-gray-600 dark:text-gray-300">Slide {index + 1}</p>
+                                        <p className="text-base text-gray-500 dark:text-gray-400">No image available</p>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Slide Number Badge */}
+                                  <div className="absolute top-6 right-6 bg-black/80 backdrop-blur-sm text-white px-4 py-2 rounded-full text-base font-semibold shadow-lg">
+                                    {index + 1} / {slides.length}
+                                  </div>
+                                </div>
+                                
+                                {/* Caption Section - Always show, with fallback text */}
+                                <div className="p-6 sm:p-8 md:p-10 bg-white dark:bg-gray-800">
+                                  {slide.text ? (
+                                    <div className="text-center">
+                                      <p className="story-caption text-gray-800 dark:text-gray-200 leading-relaxed">
+                                        {slide.text.replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim()}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <div className="text-center">
+                                      <p className="indie-flower text-gray-500 dark:text-gray-400 text-lg italic">
+                                        AI-generated illustration for slide {index + 1}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))
+                        ) : (
+                          <div className="flex items-center justify-center h-96 text-gray-500 dark:text-gray-400">
+                            <div className="text-center">
+                              <svg className="w-20 h-20 mx-auto mb-6 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <p className="text-xl font-medium mb-2">No slides available</p>
+                              <p className="text-base">This story doesn't have any image slides to display</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Scroll to top button - only show if there are slides */}
+                        {slides.length > 0 && (
+                          <div className="flex justify-center pt-8 pb-4">
+                            <button
+                              onClick={() => {
+                                const scrollContainer = document.querySelector('.story-scroll-container');
+                                if (scrollContainer) {
+                                  scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                                }
+                              }}
+                              className="flex items-center space-x-3 px-8 py-4 bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 rounded-full transition-all duration-200 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                              title="Scroll to top"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                              </svg>
+                              <span className="text-base font-medium">Back to top</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -6,14 +6,25 @@ import { gsap } from 'gsap';
 export const registerGSAPPlugins = () => {
   try {
     // Register core plugins
-    const { useGSAP } = require('@gsap/react');
-    gsap.registerPlugin(useGSAP);
+    try {
+      import('@gsap/react').then(({ useGSAP }) => {
+        gsap.registerPlugin(useGSAP);
+        console.log('✅ useGSAP registered successfully');
+      }).catch(() => {
+        console.warn('@gsap/react not available');
+      });
+    } catch (error) {
+      console.warn('@gsap/react not available:', error);
+    }
     
     // Register ScrollTrigger if available
     try {
-      const { ScrollTrigger } = require('gsap/ScrollTrigger');
-      gsap.registerPlugin(ScrollTrigger);
-      console.log('✅ ScrollTrigger registered successfully');
+      import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
+        gsap.registerPlugin(ScrollTrigger);
+        console.log('✅ ScrollTrigger registered successfully');
+      }).catch(() => {
+        console.warn('ScrollTrigger not available');
+      });
     } catch (error) {
       console.warn('ScrollTrigger not available:', error);
     }

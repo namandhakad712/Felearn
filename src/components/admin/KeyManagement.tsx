@@ -26,7 +26,7 @@ const KeyManagement: React.FC = () => {
       
       setResult({
         success: true,
-        message: 'Encryption keys rotated successfully. All API keys have been re-encrypted with the new key.'
+        message: 'Security keys rotated successfully. All API keys have been updated with new security measures.'
       });
     } catch (error: any) {
       setResult({
@@ -47,8 +47,8 @@ const KeyManagement: React.FC = () => {
       
       <div className="space-y-4">
         <p className="text-gray-700 dark:text-gray-300">
-          Rotating encryption keys is a security best practice that helps protect sensitive data.
-          When you rotate keys, all API keys will be re-encrypted with a new encryption key.
+          Rotating security keys is a security best practice that helps protect sensitive data.
+          When you rotate keys, all API keys will be updated with new security measures.
         </p>
         
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">

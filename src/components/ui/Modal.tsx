@@ -64,9 +64,14 @@ const Modal: React.FC<ModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
             className={`modal-content w-full ${sizeClasses[size]} p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg ${className}`}
+            style={{ 
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
           >
               {title && (
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 flex-shrink-0">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                     {title}
                   </h3>
@@ -81,7 +86,7 @@ const Modal: React.FC<ModalProps> = ({
                 </div>
               )}
               
-              <div className="mt-2">
+              <div className="mt-2 flex-1 overflow-y-auto">
                 {children}
               </div>
             </motion.div>

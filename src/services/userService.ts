@@ -35,7 +35,7 @@ export class UserService {
     const settings: UserSettings = {
       theme: 'light',
       language: 'en',
-      onboardingCompleted: false
+      onboardingcompleted: false
     };
     
     // Create user data

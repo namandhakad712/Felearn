@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { User } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -21,6 +23,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   user,
 }) => {
   const { updateUser } = useAuth();
+  
+  // GSAP refs
+  const modalRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
   
   // Simple toast implementation to replace the missing useToast hook
   const showSuccess = (message: string) => {
@@ -46,7 +53,26 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const [bioError, setBioError] = useState('');
   
   const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab);
+    if (tab === activeTab) return;
+    
+    // Animate tab content transition
+    if (contentRef.current) {
+      gsap.to(contentRef.current, {
+        opacity: 0,
+        y: 10,
+        duration: 0.15,
+        ease: "power2.out",
+        onComplete: () => {
+          setActiveTab(tab);
+          gsap.fromTo(contentRef.current, 
+            { opacity: 0, y: -10 },
+            { opacity: 1, y: 0, duration: 0.2, ease: "power2.out" }
+          );
+        }
+      });
+    } else {
+      setActiveTab(tab);
+    }
   };
   
   const validateName = () => {
@@ -206,6 +232,59 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     }
   };
   
+  // GSAP animations for modal entrance
+  useGSAP(() => {
+    if (isOpen && modalRef.current) {
+      // Morphing entrance animation
+      gsap.fromTo(modalRef.current, 
+        {
+          scale: 0.3,
+          opacity: 0,
+          rotationY: 45,
+          transformOrigin: "center center"
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          rotationY: 0,
+          duration: 0.6,
+          ease: "back.out(1.7)"
+        }
+      );
+      
+      // Animate tabs with stagger
+      if (tabsRef.current) {
+        const tabs = tabsRef.current.querySelectorAll('button');
+        gsap.fromTo(tabs,
+          { opacity: 0, y: 20, scale: 0.8 },
+          { 
+            opacity: 1, 
+            y: 0, 
+            scale: 1,
+            duration: 0.4,
+            stagger: 0.1,
+            delay: 0.3,
+            ease: "back.out(1.7)"
+          }
+        );
+      }
+      
+      // Animate content
+      if (contentRef.current) {
+        gsap.fromTo(contentRef.current,
+          { opacity: 0, y: 30 },
+          { 
+            opacity: 1, 
+            y: 0,
+            duration: 0.5,
+            delay: 0.4,
+            ease: "power2.out"
+          }
+        );
+      }
+    }
+  }, { dependencies: [isOpen] });
+
   if (!isOpen) return null;
   
   return (
@@ -217,68 +296,128 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+        <div
+          ref={modalRef}
+          className="relative overflow-hidden rounded-3xl max-w-2xl w-full max-h-[90vh]"
+          style={{
+            background: 'rgba(255, 255, 255, 0.25)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+          }}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Grainy texture overlay */}
+          <div 
+            className="absolute inset-0 opacity-15 pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+              mixBlendMode: 'overlay'
+            }}
+          />
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <div 
+            className="relative p-6 flex items-center justify-between"
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+            }}
+          >
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
               Profile Settings
             </h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 rounded-xl transition-all hover:scale-110"
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
             >
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
           
           {/* Tabs */}
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="flex overflow-x-auto" aria-label="Tabs">
+          <div 
+            ref={tabsRef}
+            className="relative"
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+            }}
+          >
+            <nav className="flex overflow-x-auto px-2" aria-label="Tabs">
               <button
                 onClick={() => handleTabChange('profile')}
-                className={`px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap ${
+                className={`px-6 py-3 mx-1 text-sm font-medium rounded-xl whitespace-nowrap transition-all ${
                   activeTab === 'profile'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'text-indigo-700 dark:text-indigo-300 font-semibold'
+                    : 'text-gray-700 dark:text-gray-200 hover:text-gray-800 dark:hover:text-gray-100'
                 }`}
+                style={activeTab === 'profile' ? {
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                } : {}}
               >
                 Profile
               </button>
               <button
                 onClick={() => handleTabChange('appearance')}
-                className={`px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap ${
+                className={`px-6 py-3 mx-1 text-sm font-medium rounded-xl whitespace-nowrap transition-all ${
                   activeTab === 'appearance'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'text-indigo-700 dark:text-indigo-300 font-semibold'
+                    : 'text-gray-700 dark:text-gray-200 hover:text-gray-800 dark:hover:text-gray-100'
                 }`}
+                style={activeTab === 'appearance' ? {
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                } : {}}
               >
                 Appearance
               </button>
               <button
                 onClick={() => handleTabChange('api')}
-                className={`px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap ${
+                className={`px-6 py-3 mx-1 text-sm font-medium rounded-xl whitespace-nowrap transition-all ${
                   activeTab === 'api'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'text-indigo-700 dark:text-indigo-300 font-semibold'
+                    : 'text-gray-700 dark:text-gray-200 hover:text-gray-800 dark:hover:text-gray-100'
                 }`}
+                style={activeTab === 'api' ? {
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                } : {}}
               >
                 API Keys
               </button>
               <button
                 onClick={() => handleTabChange('security')}
-                className={`px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap ${
+                className={`px-6 py-3 mx-1 text-sm font-medium rounded-xl whitespace-nowrap transition-all ${
                   activeTab === 'security'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'text-indigo-700 dark:text-indigo-300 font-semibold'
+                    : 'text-gray-700 dark:text-gray-200 hover:text-gray-800 dark:hover:text-gray-100'
                 }`}
+                style={activeTab === 'security' ? {
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                } : {}}
               >
                 Security
               </button>
@@ -286,20 +425,19 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
           
           {/* Content */}
-          <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 130px)' }}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                {renderTabContent()}
-              </motion.div>
-            </AnimatePresence>
+          <div 
+            ref={contentRef}
+            className="relative p-8 overflow-y-auto" 
+            style={{ 
+              maxHeight: 'calc(90vh - 130px)',
+              background: 'rgba(255, 255, 255, 0.02)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)',
+            }}
+          >
+            {renderTabContent()}
           </div>
-        </motion.div>
+        </div>
       </motion.div>
     </AnimatePresence>
   );

@@ -314,7 +314,7 @@ export class AppwriteDatabaseService implements DataService {
           processedDoc.settings = {
             theme: 'light',
             language: 'en',
-            onboardingCompleted: false
+            onboardingcompleted: false
           };
         }
       }

@@ -112,7 +112,7 @@ const ApiKeyStep: React.FC<ApiKeyStepProps> = ({
       </div>
       
       <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">
-        Your API key is stored securely and encrypted. We never share your API key with third parties.
+        Your API key is stored securely. We never share your API key with third parties.
       </p>
     </div>
   );

@@ -143,7 +143,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                   <div>
                     <span className="text-xs text-gray-500 dark:text-gray-400">Onboarding:</span>{' '}
                     <span className="text-sm text-gray-900 dark:text-white">
-                      {typeof user.settings === 'object' && user.settings.onboardingCompleted 
+                      {typeof user.settings === 'object' && user.settings.onboardingcompleted 
                         ? 'Completed' 
                         : 'Not Completed'}
                     </span>

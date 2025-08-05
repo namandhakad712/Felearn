@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { AuthService } from '../services/auth';
+import { authService } from '../services/auth';
 import { Card, Button } from '../components/ui';
 
 const EmailVerificationPage: React.FC = () => {
@@ -42,7 +42,10 @@ const EmailVerificationPage: React.FC = () => {
     // First try React Router search params (hash-based)
     for (const name of paramNames) {
       const value = searchParams.get(name);
-      if (value) return value;
+      if (value) {
+        console.log(`✅ Found ${name} in React Router params:`, value);
+        return value;
+      }
     }
     
     // Then try main URL search params (before hash)
@@ -51,7 +54,10 @@ const EmailVerificationPage: React.FC = () => {
       const mainParams = new URLSearchParams(mainSearch);
       for (const name of paramNames) {
         const value = mainParams.get(name);
-        if (value) return value;
+        if (value) {
+          console.log(`✅ Found ${name} in main URL params:`, value);
+          return value;
+        }
       }
     }
     
@@ -62,10 +68,30 @@ const EmailVerificationPage: React.FC = () => {
       const hashParams = new URLSearchParams(hashSearch);
       for (const name of paramNames) {
         const value = hashParams.get(name);
-        if (value) return value;
+        if (value) {
+          console.log(`✅ Found ${name} in hash params:`, value);
+          return value;
+        }
       }
     }
     
+    // Try to extract from path segments (some services use path-based parameters)
+    const pathSegments = window.location.pathname.split('/');
+    const searchInPath = window.location.search || window.location.hash;
+    
+    // Check if parameters are in the URL path or fragment
+    if (searchInPath) {
+      const allParams = new URLSearchParams(searchInPath.replace('#', '').replace('?', ''));
+      for (const name of paramNames) {
+        const value = allParams.get(name);
+        if (value) {
+          console.log(`✅ Found ${name} in combined params:`, value);
+          return value;
+        }
+      }
+    }
+    
+    console.log(`❌ Parameter ${paramNames.join('/')} not found in any location`);
     return null;
   };
 
@@ -76,14 +102,15 @@ const EmailVerificationPage: React.FC = () => {
   
   // Get verification parameters from URL
   // Appwrite uses different parameter names in verification URLs
-  const userId = getParam(['userId', 'user', 'id', 'userID', 'uid']);
-  const secret = getParam(['secret', 'token', 'code', 'verification', 'verify']);
+  const userId = getParam(['userId', 'user', 'id', 'userID', 'uid', 'user_id']);
+  const secret = getParam(['secret', 'token', 'code', 'verification', 'verify', 'key']);
+  
+  console.log('🔍 Extracted parameters:', { userId, secret });
 
   // Handler to request new verification email
   const handleRequestNewVerification = async () => {
     setIsVerifying(true);
     try {
-      const authService = new AuthService();
       const result = await authService.sendEmailVerification();
       
       if (result.success) {
@@ -103,7 +130,14 @@ const EmailVerificationPage: React.FC = () => {
   useEffect(() => {
     const handleVerification = async () => {
       // Debug: Log all URL parameters
-      // const fullUrl = window.location.href; // Removed unused variable
+      console.log('🔍 Email Verification Debug:');
+      console.log('Full URL:', window.location.href);
+      console.log('Pathname:', window.location.pathname);
+      console.log('Search:', window.location.search);
+      console.log('Hash:', window.location.hash);
+      console.log('Current Origin:', window.location.origin);
+      console.log('Expected Route:', '/auth/verify');
+      
       const hashParams = window.location.hash;
       
       // Extracting verification parameters
@@ -146,6 +180,7 @@ const EmailVerificationPage: React.FC = () => {
         console.error('❌ Missing verification parameters');
         console.log('Available React Router parameters:', reactRouterParams);
         console.log('Available main URL parameters:', allMainParams);
+        console.log('Current URL:', window.location.href);
         
         const allAvailableKeys = [...Object.keys(reactRouterParams), ...Object.keys(allMainParams)];
         const hasAnyParams = allAvailableKeys.length > 0;
@@ -160,8 +195,14 @@ const EmailVerificationPage: React.FC = () => {
         return;
       }
 
+      console.log('✅ Verification parameters found:', { 
+        userId: userId?.substring(0, 10) + '...', 
+        secret: secret?.substring(0, 10) + '...',
+        urlValid: window.location.pathname === '/auth/verify',
+        hasRequiredParams: !!(userId && secret)
+      });
+
       try {
-        const authService = new AuthService();
         // Starting verification process
         
         const result = await authService.verifyEmail(userId, secret);
@@ -228,6 +269,17 @@ const EmailVerificationPage: React.FC = () => {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Felearn
             </h1>
+          </div>
+
+          {/* Universal Domain Info */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-800">
+              🌍 Universal Domain: {typeof window !== 'undefined' ? window.location.origin : 'Loading...'} 
+              <span className="ml-2 text-green-600">✅ Auto-configured</span>
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              📧 Verification URL: {typeof window !== 'undefined' ? `${window.location.origin}/auth/verify` : 'Loading...'}
+            </p>
           </div>
 
           {/* Verifying State */}

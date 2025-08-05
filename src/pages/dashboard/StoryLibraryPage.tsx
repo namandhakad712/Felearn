@@ -272,7 +272,18 @@ const StoryLibraryPage: React.FC = () => {
   const openViewModes = (story: Story) => {
     console.log('Opening story view modes:', {
       title: story.title,
-      slidesCount: story.slides?.length || 0
+      hasImages: !!(story.images && story.images.length > 0),
+      imagesCount: story.images?.length || 0,
+      hasSlides: !!(story.slides && story.slides.length > 0),
+      slidesCount: story.slides?.length || 0,
+      storyData: {
+        images: story.images?.map(img => img.substring(0, 50) + '...') || [],
+        slides: story.slides?.map(slide => ({
+          hasImage: !!slide.image,
+          hasText: !!slide.text,
+          imagePreview: slide.image?.substring(0, 50) + '...' || 'No image'
+        })) || []
+      }
     });
     setStoryToView(story);
     setIsViewModesOpen(true);
@@ -732,9 +743,24 @@ const StoryLibraryPage: React.FC = () => {
               <div key={story.$id} className="story-card">
                 <Card
                   animate
-                  className="h-full flex flex-col cursor-pointer relative transform-gpu"
+                  className="h-full flex flex-col cursor-pointer relative transform-gpu library-card-enhanced"
                   onClick={() => openViewModes(story)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px) saturate(120%)',
+                    WebkitBackdropFilter: 'blur(10px) saturate(120%)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                  }}
                 >
+                  {/* Subtle gradient overlay */}
+                  <div 
+                    className="absolute inset-0 opacity-20 pointer-events-none rounded-xl"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)',
+                    }}
+                  />
+                  
                   {/* 3-Dot Menu in top-left corner */}
                   <div className="absolute top-4 left-4 z-10">
                     <div className="relative">
@@ -747,7 +773,13 @@ const StoryLibraryPage: React.FC = () => {
                             menu.classList.toggle('hidden');
                           }
                         }}
-                        className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-100 hover:scale-110 hover:shadow-xl"
+                        className="p-2 rounded-full backdrop-blur-sm shadow-lg hover:scale-110 hover:shadow-xl transition-all duration-200"
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          backdropFilter: 'blur(10px)',
+                          WebkitBackdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                        }}
                         aria-label="Story options"
                       >
                         <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
@@ -829,10 +861,20 @@ const StoryLibraryPage: React.FC = () => {
                         e.stopPropagation();
                         togglePin(story.$id, story.isPinned);
                       }}
-                      className={`p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-100 hover:scale-110 hover:shadow-xl ${story.isPinned
+                      className={`p-2 rounded-full backdrop-blur-sm shadow-lg hover:scale-110 hover:shadow-xl transition-all duration-200 ${story.isPinned
                         ? 'text-yellow-500 hover:text-yellow-600'
                         : 'text-gray-400 hover:text-gray-500'
                         }`}
+                      style={{
+                        background: story.isPinned 
+                          ? 'rgba(251, 191, 36, 0.2)' 
+                          : 'rgba(255, 255, 255, 0.9)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        border: story.isPinned 
+                          ? '1px solid rgba(251, 191, 36, 0.3)' 
+                          : '1px solid rgba(255, 255, 255, 0.3)',
+                      }}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M14 4v5c0 1.12.37 2.16 1 3H9c.65-.86 1-1.9 1-3V4h4zm3-2H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H18v-2c-1.66 0-3-1.34-3-3V4h1c.55 0 1-.45 1-1s-.45-1-1-1z" />
@@ -840,24 +882,28 @@ const StoryLibraryPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="flex items-start justify-between mb-3 pt-12">
-                    <h3 className="font-dosis font-semibold text-gray-900 dark:text-white text-lg line-clamp-2">
+                  <div className="flex items-start justify-between mb-3 pt-12 relative z-10">
+                    <h3 className="font-dosis font-semibold text-gray-900 dark:text-white text-lg line-clamp-2 drop-shadow-sm">
                       {story.title}
                     </h3>
                   </div>
 
-                  <p className="font-ubuntu-light text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  <p className="font-ubuntu-light text-sm text-gray-600 dark:text-gray-400 mb-3 relative z-10 drop-shadow-sm">
                     {formatDate(story.createdAt)}
                   </p>
 
                   {/* First Image Preview - Large */}
                   {story.images && story.images.length > 0 && (
                     <div className="mb-4">
-                      <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 group">
+                      <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 group shadow-lg"
+                        style={{
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                        }}>
                         <img
                           src={story.images[0]}
                           alt={`${story.title} - Preview`}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-150"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300 ease-out"
                           onLoad={(e) => {
                             console.log(`Preview image loaded successfully:`, story.images[0].substring(0, 50) + '...');
                             // Show green indicator for successful load
@@ -892,8 +938,16 @@ const StoryLibraryPage: React.FC = () => {
                         </div>
 
                         {/* Click to view overlay */}
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-25 transition-all duration-150 flex items-center justify-center">
-                          <div className="opacity-0 group-hover:opacity-100 transition-all duration-150 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2 transform group-hover:scale-105">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2 transform group-hover:scale-105"
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.95)',
+                              backdropFilter: 'blur(10px)',
+                              WebkitBackdropFilter: 'blur(10px)',
+                              border: '1px solid rgba(255, 255, 255, 0.3)',
+                              color: '#1f2937',
+                              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                            }}>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>

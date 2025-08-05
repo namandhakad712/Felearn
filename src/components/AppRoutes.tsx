@@ -28,12 +28,13 @@ function AppRoutes() {
       <Routes>
         <Route path="/auth/:type" element={<AuthPage />} />
         <Route path="/auth/verify" element={<EmailVerificationPage />} />
+        <Route path="/auth/verify/*" element={<EmailVerificationPage />} />
         <Route path="/auth/callback" element={<OAuthCallbackPage />} />
         <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
         <Route 
           path="/onboarding" 
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requireOnboarding={false}>
               <OnboardingPage />
             </ProtectedRoute>
           } 
@@ -41,7 +42,7 @@ function AppRoutes() {
         <Route 
           path="/dashboard/*" 
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requireOnboarding={true}>
               <DashboardPage />
             </ProtectedRoute>
           } 

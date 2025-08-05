@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 // import { authService } from '../../services'; // Unused import
-import { encryptApiKey } from '../../utils/encryption';
 import { validateGeminiApiKey } from '../../utils/userUtils';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -94,12 +93,9 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
     setIsSaving(true);
     
     try {
-      // Encrypt the API key before saving
-      const encryptedKey = await encryptApiKey(apiKey);
-      
-      // Update user with encrypted API key
+      // Save the API key directly without encryption
       await updateUser({
-        geminiKey: encryptedKey,
+        geminiKey: apiKey.trim(),
       });
       
       onSuccess('API key updated successfully');
@@ -189,7 +185,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
             {keyStatus === 'available' ? 'Update Gemini API Key' : 'Gemini API Key'}
           </label>
           <a
-            href="https://ai.google.dev/tutorials/setup"
+            href="https://aistudio.google.com/apikey"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
@@ -279,7 +275,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
         )}
         
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Your API key is encrypted and stored securely. We validate all keys with the Gemini API before saving.
+          Your API key is stored securely. We validate all keys with the Gemini API before saving.
         </p>
       </div>
       
@@ -301,7 +297,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
               <ul className="list-disc list-inside space-y-1">
                 <li>Gemini API usage is subject to Google's rate limits and pricing</li>
                 <li>You are responsible for any charges incurred from API usage</li>
-                <li>Your API key is encrypted and never shared with third parties</li>
+                <li>Your API key is stored securely and never shared with third parties</li>
                 <li>Remove your API key anytime to stop story generation</li>
               </ul>
             </div>
