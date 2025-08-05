@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       ),
     },
     {
-      path: '/library',
+      path: '/dashboard/library',
       label: 'My Stories',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -102,7 +102,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       ),
     },
     {
-      path: '/settings',
+      path: '/dashboard/settings',
       label: 'Settings',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,13 +124,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   
   const isActiveRoute = (path: string) => {
     if (path === '/dashboard') {
-      return location.pathname === '/dashboard';
+      return location.pathname === '/dashboard' || location.pathname === '/dashboard/';
     }
-    if (path === '/library') {
-      return location.pathname === '/library';
+    if (path === '/dashboard/library') {
+      return location.pathname === '/dashboard/library' || location.pathname === '/dashboard/library/';
     }
-    if (path === '/settings') {
-      return location.pathname === '/settings';
+    if (path === '/dashboard/settings') {
+      return location.pathname === '/dashboard/settings' || location.pathname === '/dashboard/settings/';
     }
     return location.pathname.startsWith(path);
   };
