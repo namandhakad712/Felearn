@@ -1,14 +1,12 @@
-import { AuthService } from './auth';
+import { authService } from './auth';
 
 /**
  * Session Manager
  * Handles authentication session management
  */
 export class SessionManager {
-  private authService: AuthService;
-
   constructor() {
-    this.authService = new AuthService();
+    // Using singleton authService
   }
 
   /**
@@ -18,7 +16,7 @@ export class SessionManager {
   async initializeAuthSession(): Promise<{ isAuthenticated: boolean; message: string }> {
     try {
       // Try to get current session
-      const session = await this.authService.getCurrentUser();
+      const session = await authService.getCurrentUser();
       
       if (session) {
         return {
@@ -50,7 +48,7 @@ export class SessionManager {
    */
   async hasActiveSession(): Promise<boolean> {
     try {
-      const user = await this.authService.getCurrentUser();
+      const user = await authService.getCurrentUser();
       return !!user;
     } catch (error) {
       return false;

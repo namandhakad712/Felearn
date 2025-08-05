@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { AuthService } from '../services/auth';
+import { authService } from '../services/auth';
 import { Card, Button } from '../components/ui';
 import styled from 'styled-components';
 
@@ -128,7 +128,7 @@ const ResetPasswordPage: React.FC = () => {
           throw new Error('Password must contain at least one number.');
         }
 
-        const result = await AuthService.completePasswordReset(userId, secret, newPassword);
+        const result = await authService.completePasswordReset(userId, secret, newPassword);
         
         if (result.success) {
           setSuccessMessage('Password has been reset successfully! Redirecting to login...');

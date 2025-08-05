@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthService } from '@/services/auth';
+import { authService } from '@/services/auth';
 import type { AuthResponse } from '@/services/auth';
 import styled from 'styled-components';
 

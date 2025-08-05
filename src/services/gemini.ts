@@ -35,7 +35,7 @@ class GeminiService {
           generationConfig: {
             temperature: request.options.temperature || 0.7,
             maxOutputTokens: request.options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
-            // responseModalities: [Modality.TEXT, Modality.IMAGE], // Modality not available
+            responseModalities: ["TEXT", "IMAGE"], // ✅ FIXED: Specify both modalities
           }
         });
 
@@ -45,16 +45,14 @@ class GeminiService {
         });
 
         // Send the message with our prompt and get a stream response - exactly like "main thing" implementation
-        const result = await chat.sendMessageStream({
-          message: request.prompt + this.additionalInstructions()
-        });
+        const result = await chat.sendMessageStream(request.prompt + this.additionalInstructions());
         
         // Process the stream to extract text and images - exactly like "main thing" implementation
         const slides: StorySlide[] = [];
         let text = '';
         let img: string | null = null;
 
-        for await (const chunk of result) {
+        for await (const chunk of result.stream) {
           for (const candidate of chunk.candidates || []) {
             for (const part of candidate.content?.parts || []) {
               if (part.text) {
