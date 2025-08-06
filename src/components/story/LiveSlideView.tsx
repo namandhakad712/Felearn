@@ -184,6 +184,7 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
   tokens = 0 // Token count with default value
 }) => {
   const [displayedSlides, setDisplayedSlides] = useState<StorySlide[]>([]);
+  const mobileScrollRef = useRef<HTMLDivElement>(null);
 
   // Update displayed slides when new slides are added
   useEffect(() => {
@@ -258,20 +259,30 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
 
   const allSlides = [...displayedSlides, ...createPlaceholderSlides()];
 
-  const renderSlide = (slide: any, index: number) => {
+  // Mobile navigation functions
+  const scrollToNext = () => {
+    if (mobileScrollRef.current) {
+      const scrollContainer = mobileScrollRef.current;
+      const slideWidth = scrollContainer.clientWidth;
+      scrollContainer.scrollBy({ left: slideWidth, behavior: 'smooth' });
+    }
+  };
+
+  const scrollToPrevious = () => {
+    if (mobileScrollRef.current) {
+      const scrollContainer = mobileScrollRef.current;
+      const slideWidth = scrollContainer.clientWidth;
+      scrollContainer.scrollBy({ left: -slideWidth, behavior: 'smooth' });
+    }
+  };
+
+  // Render slide content (shared between mobile and desktop)
+  const renderSlideContent = (slide: any, index: number) => {
     const isPlaceholder = slide.isPlaceholder;
     const isGenerating = isPlaceholder && index === displayedSlides.length;
 
     return (
-      <motion.div
-        key={slide.id || index}
-        variants={slideVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex-shrink-0 w-56 sm:w-64 md:w-72 lg:w-80 xl:w-96 mx-1 sm:mx-2"
-      >
-        {/* Cohesive Slide Card - Image + Caption as single unit */}
-        <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col">
+      <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col">
           {/* Image Section - Flexible height */}
           <div className="relative w-full aspect-[4/3] bg-gray-50 dark:bg-gray-700 flex-shrink-0">
             {isPlaceholder ? (
@@ -378,25 +389,118 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
                 })()}
               </motion.p>
             ) : (
-              <p className="indie-flower text-gray-400 dark:text-gray-600 text-center italic">
+              <div className="indie-flower text-gray-400 dark:text-gray-600 text-center italic text-lg">
                 {isGenerating ? <GeneratingLoader /> : 'Waiting for content...'}
-              </p>
+              </div>
             )}
           </div>
         </div>
+    );
+  };
+
+  // Desktop render function with motion wrapper
+  const renderSlide = (slide: any, index: number) => {
+    return (
+      <motion.div
+        key={slide.id || index}
+        variants={slideVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex-shrink-0 w-64 lg:w-72 xl:w-80"
+        style={{ 
+          scrollSnapAlign: 'start'
+        }}
+      >
+        {renderSlideContent(slide, index)}
       </motion.div>
     );
   };
 
   return (
-    <div className={`${className} relative max-w-full overflow-hidden`}>
-      {/* Horizontal Slideshow - Made responsive */}
-      <div className="w-full overflow-x-auto overflow-y-hidden pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
-        <div className="flex items-stretch justify-start px-2 sm:px-4 py-6 sm:py-8 gap-2 sm:gap-4 min-w-max">
-          {allSlides.map((slide, index) => renderSlide(slide, index))}
+    <div className={`${className} relative w-full max-w-full`}>
+      {/* Mobile: Single slide view with fixed container */}
+      <div className="block md:hidden">
+        <div className="w-full overflow-hidden relative">
+          <div 
+            ref={mobileScrollRef}
+            className="overflow-x-auto overflow-y-hidden pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent" 
+            style={{ 
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'thin',
+              scrollSnapType: 'x mandatory'
+            }}>
+            <div className="flex py-4" 
+                 style={{ width: 'max-content' }}>
+              {allSlides.map((slide, index) => (
+                <div key={slide.id || index} 
+                     className="flex-shrink-0 px-4" 
+                     style={{ 
+                       width: '100vw',
+                       scrollSnapAlign: 'start',
+                       boxSizing: 'border-box'
+                     }}>
+                  {renderSlideContent(slide, index)}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Navigation Chevrons - Mobile Only */}
+          {allSlides.length > 1 && (
+            <>
+              {/* Left Chevron */}
+              <button
+                onClick={scrollToPrevious}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-600 rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 hover:scale-110"
+                style={{ marginTop: '-1rem' }}
+                aria-label="Previous slide"
+              >
+                <svg className="w-4 h-4 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              {/* Right Chevron */}
+              <button
+                onClick={scrollToNext}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-600 rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 hover:scale-110"
+                style={{ marginTop: '-1rem' }}
+                aria-label="Next slide"
+              >
+                <svg className="w-4 h-4 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
       </div>
       
+      {/* Desktop: Multi-slide view */}
+      <div className="hidden md:block">
+        <div className="w-full overflow-hidden rounded-lg">
+          <div className="overflow-x-auto overflow-y-hidden pb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent" 
+               style={{ 
+                 WebkitOverflowScrolling: 'touch',
+                 scrollbarWidth: 'thin'
+               }}>
+            <div className="flex items-stretch justify-start px-4 py-6 gap-4 w-max">
+              {allSlides.map((slide, index) => renderSlide(slide, index))}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile scroll hint */}
+      <div className="block md:hidden text-center mb-2">
+        <div className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+          </svg>
+          Swipe to see next slide
+        </div>
+      </div>
+
       {/* Progress indicator */}
       <div className="flex flex-col sm:flex-row items-center justify-center mt-4 gap-2 sm:gap-3">
         <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 w-32 sm:w-48 md:w-64">

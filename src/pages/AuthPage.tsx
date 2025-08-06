@@ -374,10 +374,15 @@ const AuthPage: React.FC = () => {
         loop
         playsInline
         preload="auto"
-        poster="/public/assets/placeholder-image.png"
+        poster="/assets/placeholder-image.png"
+        webkit-playsinline="true"
+        x5-playsinline="true"
+        x5-video-player-type="h5"
+        x5-video-player-fullscreen="true"
+        x5-video-orientation="portraint"
       >
-        <source src="/public/videos/auth-background-prem.mp4" type="video/mp4" />
-        <source src="/public/videos/auth-background-prem.webm" type="video/webm" />
+        <source src="/videos/auth-background-prem.mp4" type="video/mp4" />
+        <source src="/videos/auth-background-prem.webm" type="video/webm" />
         {/* Fallback for browsers that don't support video */}
         Your browser does not support the video tag.
       </video>
@@ -592,6 +597,17 @@ const VideoBackgroundContainer = styled.div`
     transform: translateX(-50%) translateY(-50%);
     object-fit: cover;
     pointer-events: none; /* Prevent video from being interactive */
+    
+    /* Ensure video loads properly in production */
+    opacity: 1;
+    visibility: visible;
+    
+    /* Better mobile support */
+    @media (max-width: 768px) {
+      /* On mobile, ensure video covers properly */
+      min-width: 120%;
+      min-height: 120%;
+    }
   }
 
   .video-overlay {

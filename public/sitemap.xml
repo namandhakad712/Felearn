@@ -51,7 +51,7 @@
 
   <!-- Static assets that might be indexed -->
   <url>
-    <loc>https://felearn.vercel.app/public/assets/og-thumbnail.webp</loc>
+    <loc>https://felearn.vercel.app/assets/og-thumbnail.webp</loc>
     <lastmod>2025-01-03</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

@@ -138,14 +138,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
               )}
             </button>
           )}
-          {onExport && !isGenerating && (
-            <button
-              onClick={onExport}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm"
-            >
-              Export
-            </button>
-          )}
+          {/* Export button hidden in live slide view */}
           {onNewStory && (
             <button
               onClick={onNewStory}
@@ -159,7 +152,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
       )}
 
       {/* Live Slide View - Shows images as they're generated */}
-      <div className="mb-8 w-full max-w-full overflow-hidden">
+      <div className="mb-8 w-full max-w-full">
         <Card className="p-0 overflow-hidden">
           {imageFixingStatus === 'fixing' && (
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
@@ -176,7 +169,7 @@ const StoryDisplay: React.FC<StoryDisplayProps> = ({
             }))}
             images={displayImages}
             isGenerating={isGenerating}
-            className="p-4 sm:p-6"
+            className="p-2 sm:p-4 md:p-6"
             tokens={tokens}
           />
           

@@ -85,6 +85,12 @@ const StoryGenerator = () => {
       return;
     }
 
+    // Auto-collapse sidebar when story generation starts
+    const sidebarEvent = new CustomEvent('controlSidebar', { 
+      detail: { isOpen: false } 
+    });
+    window.dispatchEvent(sidebarEvent);
+
     setIsGenerating(true);
     setError(null);
     setGeneratedStory(null);

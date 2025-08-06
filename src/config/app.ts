@@ -187,27 +187,30 @@ export const getAuthUrls = () => {
     const emailOrigin = isLocalhost ? productionDomain : currentOrigin;
     console.log('📧 Email origin will be:', emailOrigin);
     
+    // IMPORTANT: React app is served from /app.html, not root!
+    const appPath = '/app.html#';
+    
     const urls = {
-      login: `${currentOrigin}${appConfig.auth.routes.login}`,
-      callback: `${currentOrigin}${appConfig.auth.routes.callback}`,
-      verify: `${emailOrigin}${appConfig.auth.routes.verify}`, // Use production for emails
-      resetPassword: `${emailOrigin}${appConfig.auth.routes.resetPassword}`, // Use production for emails
-      dashboard: `${currentOrigin}${appConfig.auth.routes.dashboard}`,
-      onboarding: `${currentOrigin}${appConfig.auth.routes.onboarding}`,
+      login: `${currentOrigin}${appPath}${appConfig.auth.routes.login}`,
+      callback: `${currentOrigin}${appPath}${appConfig.auth.routes.callback}`,
+      verify: `${emailOrigin}${appPath}${appConfig.auth.routes.verify}`, // Use production for emails
+      resetPassword: `${emailOrigin}${appPath}${appConfig.auth.routes.resetPassword}`, // Use production for emails
+      dashboard: `${currentOrigin}${appPath}${appConfig.auth.routes.dashboard}`,
+      onboarding: `${currentOrigin}${appPath}${appConfig.auth.routes.onboarding}`,
     };
     
     console.log('🔗 Generated auth URLs:', urls);
     return urls;
   } catch (error) {
     console.error('❌ Error generating auth URLs:', error);
-    // Fallback URLs
+    // Fallback URLs - FIXED to include app.html
     return {
-      login: 'https://felearn.vercel.app/auth/login',
-      callback: 'https://felearn.vercel.app/auth/callback',
-      verify: 'https://felearn.vercel.app/auth/verify',
-      resetPassword: 'https://felearn.vercel.app/auth/reset-password',
-      dashboard: 'https://felearn.vercel.app/dashboard',
-      onboarding: 'https://felearn.vercel.app/onboarding',
+      login: 'https://felearn.vercel.app/app.html#/auth/login',
+      callback: 'https://felearn.vercel.app/app.html#/auth/callback',
+      verify: 'https://felearn.vercel.app/app.html#/auth/verify',
+      resetPassword: 'https://felearn.vercel.app/app.html#/auth/reset-password',
+      dashboard: 'https://felearn.vercel.app/app.html#/dashboard',
+      onboarding: 'https://felearn.vercel.app/app.html#/onboarding',
     };
   }
 };

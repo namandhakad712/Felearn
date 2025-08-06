@@ -9,9 +9,10 @@ import { useToast } from '../../hooks/useToast';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  onSidebarControl?: (isOpen: boolean) => void;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, onSidebarControl }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -46,6 +47,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+
+  // Expose sidebar control to parent components
+  useEffect(() => {
+    if (onSidebarControl) {
+      onSidebarControl(sidebarOpen);
+    }
+  }, [sidebarOpen, onSidebarControl]);
+
+  // Add global sidebar control function
+  useEffect(() => {
+    const handleSidebarControl = (event: CustomEvent) => {
+      setSidebarOpen(event.detail.isOpen);
+    };
+
+    window.addEventListener('controlSidebar', handleSidebarControl as EventListener);
+    return () => window.removeEventListener('controlSidebar', handleSidebarControl as EventListener);
+  }, []);
   
   const closeSidebar = () => {
     if (isMobile) {

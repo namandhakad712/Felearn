@@ -290,10 +290,10 @@ const OnboardingPage: React.FC = () => {
         loop
         playsInline
         preload="auto"
-        poster="/public/assets/placeholder-image.png"
+        poster="/assets/placeholder-image.png"
       >
-        <source src="/public/videos/auth-background-prem.mp4" type="video/mp4" />
-        <source src="/public/videos/auth-background-prem.webm" type="video/webm" />
+        <source src="/videos/auth-background-prem.mp4" type="video/mp4" />
+        <source src="/videos/auth-background-prem.webm" type="video/webm" />
         {/* Fallback for browsers that don't support video */}
         Your browser does not support the video tag.
       </video>

@@ -145,38 +145,7 @@ const StoryLibraryPage: React.FC = () => {
     if (cardsRef.current) {
       const cards = cardsRef.current.querySelectorAll('.story-card');
 
-      // 🔥 HOVER ANIMATIONS FOR CARDS
-      cards.forEach((card) => {
-        const cardElement = card as HTMLElement;
-        
-        const handleMouseEnter = () => {
-          safeGSAPAnimation(cardElement, {
-            scale: 1.08,
-            y: -15,
-            rotationY: 8,
-            boxShadow: "0 35px 60px -12px rgba(0, 0, 0, 0.5)",
-            duration: 0.15,
-            ease: "power3.out"
-          });
-        };
-
-        const handleMouseLeave = () => {
-          safeGSAPAnimation(cardElement, {
-            scale: 1,
-            y: 0,
-            rotationY: 0,
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-            duration: 0.12,
-            ease: "power3.out"
-          });
-        };
-
-        cardElement.addEventListener('mouseenter', handleMouseEnter);
-        cardElement.addEventListener('mouseleave', handleMouseLeave);
-
-        // Store event listeners for cleanup
-        (cardElement as any)._gsapListeners = { handleMouseEnter, handleMouseLeave };
-      });
+      // Card animations removed for better performance
     }
 
     // 🌟 SEARCH BAR ANIMATION
@@ -762,18 +731,25 @@ const StoryLibraryPage: React.FC = () => {
                   />
                   
                   {/* 3-Dot Menu in top-left corner */}
-                  <div className="absolute top-4 left-4 z-10">
+                  <div 
+                    className="absolute top-4 left-4 z-20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                  >
                     <div className="relative">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          e.preventDefault();
                           const menuId = `menu-${story.$id}`;
                           const menu = document.getElementById(menuId);
                           if (menu) {
                             menu.classList.toggle('hidden');
                           }
                         }}
-                        className="p-2 rounded-full backdrop-blur-sm shadow-lg hover:scale-110 hover:shadow-xl transition-all duration-200"
+                        className="p-3 rounded-full backdrop-blur-sm shadow-lg hover:scale-105 transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center"
                         style={{
                           background: 'rgba(255, 255, 255, 0.9)',
                           backdropFilter: 'blur(10px)',
@@ -790,30 +766,41 @@ const StoryLibraryPage: React.FC = () => {
                       {/* Dropdown Menu */}
                       <div
                         id={`menu-${story.$id}`}
-                        className="hidden absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-20"
+                        className="hidden absolute top-full left-0 mt-3 w-56 rounded-xl shadow-2xl border-2 py-3"
+                        style={{
+                          zIndex: 99999,
+                          backgroundColor: '#ffffff',
+                          borderColor: '#d1d5db',
+                          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 10px 25px rgba(0, 0, 0, 0.15)',
+                          backdropFilter: 'blur(10px)',
+                          WebkitBackdropFilter: 'blur(10px)'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
                       >
+                        {/* Export Button */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            document.getElementById(`menu-${story.$id}`)?.classList.add('hidden');
-                            openDetailModal(story);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
-                        >
-                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          View Details
-                        </button>
-                        
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
+                            e.preventDefault();
+                            e.nativeEvent.stopImmediatePropagation();
                             document.getElementById(`menu-${story.$id}`)?.classList.add('hidden');
                             openExportModal(story);
+                            return false;
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                          className="w-full text-left px-4 py-3 text-sm font-medium flex items-center transition-colors duration-150"
+                          style={{
+                            color: '#374151',
+                            backgroundColor: 'transparent'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f3f4f6';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
                         >
                           <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -821,13 +808,27 @@ const StoryLibraryPage: React.FC = () => {
                           Export
                         </button>
                         
+                        {/* Rename Button */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            e.preventDefault();
+                            e.nativeEvent.stopImmediatePropagation();
                             document.getElementById(`menu-${story.$id}`)?.classList.add('hidden');
                             openRenameModal(story);
+                            return false;
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                          className="w-full text-left px-4 py-3 text-sm font-medium flex items-center transition-colors duration-150"
+                          style={{
+                            color: '#374151',
+                            backgroundColor: 'transparent'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f3f4f6';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
                         >
                           <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -835,15 +836,29 @@ const StoryLibraryPage: React.FC = () => {
                           Rename
                         </button>
                         
-                        <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                        <div style={{ borderTop: '1px solid #e5e7eb', margin: '8px 0' }}></div>
                         
+                        {/* Delete Button */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            e.preventDefault();
+                            e.nativeEvent.stopImmediatePropagation();
                             document.getElementById(`menu-${story.$id}`)?.classList.add('hidden');
                             deleteStory(story.$id);
+                            return false;
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center"
+                          className="w-full text-left px-4 py-3 text-sm font-medium flex items-center transition-colors duration-150"
+                          style={{
+                            color: '#dc2626',
+                            backgroundColor: 'transparent'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fef2f2';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
                         >
                           <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -855,13 +870,20 @@ const StoryLibraryPage: React.FC = () => {
                   </div>
 
                   {/* Pin button in top-right corner */}
-                  <div className="absolute top-4 right-4 z-10">
+                  <div 
+                    className="absolute top-4 right-4 z-20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                  >
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         togglePin(story.$id, story.isPinned);
                       }}
-                      className={`p-2 rounded-full backdrop-blur-sm shadow-lg hover:scale-110 hover:shadow-xl transition-all duration-200 ${story.isPinned
+                      className={`p-3 rounded-full backdrop-blur-sm shadow-lg hover:scale-105 transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center ${story.isPinned
                         ? 'text-yellow-500 hover:text-yellow-600'
                         : 'text-gray-400 hover:text-gray-500'
                         }`}
@@ -875,6 +897,7 @@ const StoryLibraryPage: React.FC = () => {
                           ? '1px solid rgba(251, 191, 36, 0.3)' 
                           : '1px solid rgba(255, 255, 255, 0.3)',
                       }}
+                      aria-label={story.isPinned ? 'Unpin story' : 'Pin story'}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M14 4v5c0 1.12.37 2.16 1 3H9c.65-.86 1-1.9 1-3V4h4zm3-2H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H18v-2c-1.66 0-3-1.34-3-3V4h1c.55 0 1-.45 1-1s-.45-1-1-1z" />
