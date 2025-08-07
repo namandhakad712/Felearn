@@ -8,6 +8,7 @@ interface ModalProps {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  position?: 'center' | 'top';
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -16,7 +17,8 @@ const Modal: React.FC<ModalProps> = ({
   title,
   children,
   size = 'md',
-  className = ''
+  className = '',
+  position = 'center'
 }) => {
   const sizeClasses = {
     sm: 'max-w-md',
@@ -46,7 +48,7 @@ const Modal: React.FC<ModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="modal-container modal-backdrop z-[100]">
+        <div className={`fixed inset-0 z-[100] flex ${position === 'top' ? 'items-start pt-16 sm:pt-20' : 'items-center'} justify-center p-4 sm:p-6`}>
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -63,9 +65,9 @@ const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className={`modal-content w-full ${sizeClasses[size]} p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg ${className}`}
+            className={`relative w-full ${sizeClasses[size]} mx-auto p-4 sm:p-6 bg-white dark:bg-gray-800 shadow-xl rounded-lg sm:rounded-xl ${className}`}
             style={{ 
-              maxHeight: '90vh',
+              maxHeight: position === 'top' ? '80vh' : '90vh',
               display: 'flex',
               flexDirection: 'column'
             }}

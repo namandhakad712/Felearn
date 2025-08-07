@@ -320,10 +320,12 @@ const StoryLibraryPage: React.FC = () => {
         isOpen={isRenameModalOpen}
         onClose={() => setIsRenameModalOpen(false)}
         title="Rename Story"
+        size="sm"
+        position="top"
       >
-        <div className="space-y-4">
+        <div className="space-y-4 sm:space-y-6">
           <div>
-            <label htmlFor="newTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="newTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               New Title
             </label>
             <input
@@ -331,16 +333,25 @@ const StoryLibraryPage: React.FC = () => {
               id="newTitle"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base sm:text-sm"
               placeholder="Enter new title"
               autoFocus
             />
           </div>
-          <div className="flex justify-end space-x-3">
-            <Button variant="secondary" onClick={() => setIsRenameModalOpen(false)}>
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+            <Button 
+              variant="secondary" 
+              onClick={() => setIsRenameModalOpen(false)}
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleRename} disabled={!newTitle.trim() || newTitle === storyToRename?.title}>
+            <Button 
+              variant="primary" 
+              onClick={handleRename} 
+              disabled={!newTitle.trim() || newTitle === storyToRename?.title}
+              className="w-full sm:w-auto order-1 sm:order-2"
+            >
               Rename
             </Button>
           </div>
