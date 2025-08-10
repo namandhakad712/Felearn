@@ -29,43 +29,63 @@ export default defineConfig(({ mode }) => {
       minify: 'terser',
       sourcemap: mode === 'development',
       
-      // Chunk splitting for better caching
+      // Optimize chunk splitting for better caching and performance
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html'),
           app: path.resolve(__dirname, 'app.html')
         },
         output: {
-          manualChunks: {
+          manualChunks: (id) => {
             // Vendor chunk for React and core libraries
-            vendor: ['react', 'react-dom', 'react-router-dom'],
-            
-            // Styled-components in its own chunk to prevent conflicts
-            styled: ['styled-components'],
-            
-            // UI libraries chunk (excluding styled-components)
-            ui: ['framer-motion'],
-            
-            // AI and services chunk
-            ai: ['@google/generative-ai'],
-            
-            // Appwrite chunk
-            appwrite: ['appwrite'],
-            
-            // PDF and canvas utilities
-            pdf: ['jspdf', 'html2canvas', 'pdf-lib', 'canvas'],
-            
-            // Animation libraries
-            animation: ['gsap', '@gsap/react']
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('styled-components')) {
+                return 'vendor-styled';
+              }
+              if (id.includes('framer-motion')) {
+                return 'vendor-ui';
+              }
+              if (id.includes('@google/generative-ai')) {
+                return 'vendor-ai';
+              }
+              if (id.includes('appwrite')) {
+                return 'vendor-appwrite';
+              }
+              if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('pdf-lib') || id.includes('canvas')) {
+                return 'vendor-pdf';
+              }
+              if (id.includes('gsap') || id.includes('@gsap/react')) {
+                return 'vendor-animation';
+              }
+              if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
+                return 'vendor-charts';
+              }
+              // Group other node_modules into a single vendor chunk
+              return 'vendor';
+            }
+            // Group app code by feature
+            if (id.includes('/components/')) {
+              return 'app-components';
+            }
+            if (id.includes('/pages/')) {
+              return 'app-pages';
+            }
+            if (id.includes('/hooks/') || id.includes('/utils/')) {
+              return 'app-utils';
+            }
           },
-          // Optimize chunk file names
-          chunkFileNames: () => {
+          // Optimize chunk file names for better caching
+          chunkFileNames: (chunkInfo) => {
+            const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop() : 'chunk';
             return `assets/js/[name]-[hash].js`;
           },
           assetFileNames: (assetInfo) => {
             const info = assetInfo.name?.split('.') || [];
             const ext = info[info.length - 1];
-            if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext || '')) {
+            if (/png|jpe?g|svg|gif|tiff|bmp|ico|webp|avif/i.test(ext || '')) {
               return `assets/images/[name]-[hash][extname]`;
             }
             if (/css/i.test(ext || '')) {
@@ -79,17 +99,37 @@ export default defineConfig(({ mode }) => {
         }
       },
       
-      // Terser options for better minification
+      // Enhanced Terser options for better minification
       terserOptions: {
         compress: {
           drop_console: mode === 'production',
           drop_debugger: mode === 'production',
           pure_funcs: mode === 'production' ? ['console.log', 'console.debug', 'console.info'] : [],
+          passes: 2,
+          unsafe: true,
+          unsafe_comps: true,
+          unsafe_Function: true,
+          unsafe_math: true,
+          unsafe_proto: true,
+          unsafe_regexp: true,
+          unsafe_undefined: true
         },
+        mangle: {
+          safari10: true
+        }
       },
       
-      // Chunk size warning limit
+      // Increase chunk size warning limit
       chunkSizeWarningLimit: 1000,
+      
+      // Enable CSS code splitting
+      cssCodeSplit: true,
+      
+      // Optimize dependencies
+      commonjsOptions: {
+        include: [/node_modules/],
+        transformMixedEsModules: true
+      }
     },
     
     optimizeDeps: {
@@ -104,7 +144,10 @@ export default defineConfig(({ mode }) => {
         'react-router-dom',
         'framer-motion',
         'styled-components',
-        '@google/generative-ai'
+        '@google/generative-ai',
+        'appwrite',
+        'gsap',
+        '@gsap/react'
       ],
       // Ensure styled-components is properly deduplicated
       force: true
@@ -130,6 +173,25 @@ export default defineConfig(({ mode }) => {
     // CSS configuration
     css: {
       devSourcemap: mode === 'development',
+      postcss: {
+        plugins: [
+          // Add autoprefixer for better browser compatibility
+          require('autoprefixer')({
+            overrideBrowserslist: [
+              '> 1%',
+              'last 2 versions',
+              'not dead'
+            ]
+          })
+        ]
+      }
     },
+    
+    // Performance optimizations
+    esbuild: {
+      target: 'es2015',
+      minify: mode === 'production',
+      treeShaking: true
+    }
   };
 });

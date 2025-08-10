@@ -40,6 +40,7 @@
     "build:clean": "node scripts/clean-console.js && npm run build",
     "build:analyze": "vite build --mode analyze",
     "build:staging": "vite build --mode staging",
+    "build:optimized": "npm run optimize:images && npm run optimize:css && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "lint:prod": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 20",
@@ -50,7 +51,14 @@
     "postinstall": "echo 'Type-check disabled for build' && npm ls @google/generative-ai",
     "start": "npm run preview",
     "deploy": "npm run build && vercel --prod",
-    "deploy:staging": "npm run build:staging && vercel"
+    "deploy:staging": "npm run build:staging && vercel",
+    "deploy:optimized": "npm run build:optimized && vercel --prod",
+    "optimize": "node scripts/optimize-performance.js",
+    "optimize:images": "node scripts/optimize-images.js",
+    "optimize:css": "node scripts/optimize-css.js",
+    "analyze:bundle": "node scripts/analyze-bundle.js",
+    "lighthouse": "lighthouse https://felearn.vercel.app --output=json --output-path=./lighthouse-report.json",
+    "lighthouse:html": "lighthouse https://felearn.vercel.app --output=html --output-path=./lighthouse-report.html"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
