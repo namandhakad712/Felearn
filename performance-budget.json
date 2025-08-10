@@ -1,0 +1,35 @@
+{
+  "budgets": [
+    {
+      "path": "/*",
+      "timings": [
+        {
+          "metric": "First Contentful Paint",
+          "budget": 1000
+        },
+        {
+          "metric": "Largest Contentful Paint",
+          "budget": 2500
+        },
+        {
+          "metric": "Cumulative Layout Shift",
+          "budget": 0.1
+        },
+        {
+          "metric": "Total Blocking Time",
+          "budget": 300
+        }
+      ],
+      "resourceSizes": [
+        {
+          "resourceType": "script",
+          "budget": 300
+        },
+        {
+          "resourceType": "total",
+          "budget": 500
+        }
+      ]
+    }
+  ]
+}

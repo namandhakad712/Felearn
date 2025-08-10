@@ -173,18 +173,6 @@ export default defineConfig(({ mode }) => {
     // CSS configuration
     css: {
       devSourcemap: mode === 'development',
-      postcss: {
-        plugins: [
-          // Add autoprefixer for better browser compatibility
-          require('autoprefixer')({
-            overrideBrowserslist: [
-              '> 1%',
-              'last 2 versions',
-              'not dead'
-            ]
-          })
-        ]
-      }
     },
     
     // Performance optimizations

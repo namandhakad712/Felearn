@@ -2,116 +2,57 @@
 
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log('🚀 Felearn AI Performance Optimization Suite');
-console.log('=============================================\n');
-
-// Performance optimization configuration
-const OPTIMIZATION_CONFIG = {
-  // Target performance scores
-  targetScores: {
-    performance: 90,
-    accessibility: 95,
-    bestPractices: 95,
-    seo: 95
-  },
-  
-  // File size targets
-  sizeTargets: {
-    totalBundleSize: 500, // KB
-    imageOptimization: 50, // % reduction
-    cssOptimization: 30, // % reduction
-    jsOptimization: 25 // % reduction
-  }
-};
+console.log('🚀 Felearn AI Quick Performance Optimization');
+console.log('============================================\n');
 
 // Lighthouse audit issues from the report
 const LIGHTHOUSE_ISSUES = {
   renderBlocking: {
     description: 'Render-blocking resources',
     potentialSavings: '2,100 ms',
-    priority: 'high'
+    priority: 'high',
+    solution: 'Add preconnect hints and defer non-critical resources'
   },
   imageOptimization: {
     description: 'Improve image delivery',
     potentialSavings: '412 KiB',
-    priority: 'high'
+    priority: 'high',
+    solution: 'Convert to WebP format and implement responsive images'
   },
   cachePolicy: {
     description: 'Use efficient cache lifetimes',
     potentialSavings: '5,522 KiB',
-    priority: 'medium'
+    priority: 'medium',
+    solution: 'Add proper cache headers for static assets'
   },
   unusedCSS: {
     description: 'Reduce unused CSS',
     potentialSavings: '24 KiB',
-    priority: 'medium'
+    priority: 'medium',
+    solution: 'Remove unused CSS rules'
   },
   unusedJS: {
     description: 'Reduce unused JavaScript',
     potentialSavings: '86 KiB',
-    priority: 'medium'
+    priority: 'medium',
+    solution: 'Remove unused JavaScript and implement code splitting'
   },
   fontDisplay: {
     description: 'Font display optimization',
     potentialSavings: '40 ms',
-    priority: 'low'
+    priority: 'low',
+    solution: 'Add font-display: swap to web fonts'
   }
 };
-
-async function runImageOptimization() {
-  console.log('📸 Step 1: Image Optimization');
-  console.log('-----------------------------\n');
-  
-  try {
-    console.log('Running image optimization script...');
-    execSync('node scripts/optimize-images.js', { stdio: 'inherit' });
-    console.log('✅ Image optimization complete!\n');
-  } catch (error) {
-    console.log('⚠️  Image optimization failed, continuing...\n');
-  }
-}
-
-async function runCSSOptimization() {
-  console.log('🎨 Step 2: CSS Optimization');
-  console.log('---------------------------\n');
-  
-  try {
-    console.log('Running CSS optimization script...');
-    execSync('node scripts/optimize-css.js', { stdio: 'inherit' });
-    console.log('✅ CSS optimization complete!\n');
-  } catch (error) {
-    console.log('⚠️  CSS optimization failed, continuing...\n');
-  }
-}
-
-async function runBundleAnalysis() {
-  console.log('📦 Step 3: Bundle Analysis');
-  console.log('--------------------------\n');
-  
-  try {
-    console.log('Running bundle analysis...');
-    execSync('node scripts/analyze-bundle.js', { stdio: 'inherit' });
-    console.log('✅ Bundle analysis complete!\n');
-  } catch (error) {
-    console.log('⚠️  Bundle analysis failed, continuing...\n');
-  }
-}
 
 function generatePerformanceReport() {
   console.log('📊 Performance Optimization Report');
   console.log('==================================\n');
-  
-  console.log('🎯 Target Performance Scores:');
-  Object.entries(OPTIMIZATION_CONFIG.targetScores).forEach(([metric, target]) => {
-    console.log(`  ${metric.toUpperCase()}: ${target}/100`);
-  });
-  console.log('');
   
   console.log('🔍 Lighthouse Issues Identified:');
   Object.entries(LIGHTHOUSE_ISSUES).forEach(([issue, details]) => {
@@ -120,6 +61,7 @@ function generatePerformanceReport() {
     console.log(`  ${priorityIcon} ${details.description}`);
     console.log(`     Potential savings: ${details.potentialSavings}`);
     console.log(`     Priority: ${details.priority}`);
+    console.log(`     Solution: ${details.solution}`);
     console.log('');
   });
   
@@ -333,28 +275,208 @@ function createPerformanceBudget() {
   console.log(`✅ Performance budget created: ${budgetPath}`);
 }
 
-async function runFullOptimization() {
-  console.log('🚀 Starting comprehensive performance optimization...\n');
+function createImageOptimizationGuide() {
+  console.log('📸 Creating image optimization guide...\n');
+  
+  const guide = `# Image Optimization Guide
+
+## Current Issues
+Based on Lighthouse audit, these images need optimization:
+
+1. animation-sequence-Cdz_3fVj.png (152.5 KiB)
+   - Target size: 370x330px
+   - Convert to WebP format
+   - Expected savings: 135.9 KiB
+
+2. linked-system-p-800-DnqDCWJs.png (145.7 KiB)
+   - Target size: 370x330px
+   - Convert to WebP format
+   - Expected savings: 125.8 KiB
+
+3. felearn-logo-BoldL7TU.png (86.3 KiB)
+   - Target size: 352x103px
+   - Convert to WebP format
+   - Expected savings: 80.4 KiB
+
+4. youtube-placeholder-kFh5XbQG.jpg (31.1 KiB)
+   - Target size: 370x217px
+   - Convert to WebP format
+   - Expected savings: 28.1 KiB
+
+## Manual Optimization Steps
+
+1. Use online tools like:
+   - https://squoosh.app/
+   - https://tinypng.com/
+   - https://convertio.co/png-webp/
+
+2. For each image:
+   - Resize to target dimensions
+   - Convert to WebP format
+   - Maintain quality around 80-85%
+   - Test in different browsers
+
+3. Update HTML to use WebP with fallbacks:
+   <picture>
+     <source srcset="image.webp" type="image/webp">
+     <img src="image.png" alt="Description">
+   </picture>
+
+## Expected Results
+- Total savings: ~370 KiB
+- Faster page load times
+- Better Core Web Vitals scores
+`;
+  
+  const guidePath = path.join(__dirname, '../IMAGE_OPTIMIZATION_GUIDE.md');
+  fs.writeFileSync(guidePath, guide);
+  
+  console.log(`✅ Image optimization guide created: ${guidePath}`);
+}
+
+function createImplementationChecklist() {
+  console.log('📋 Creating implementation checklist...\n');
+  
+  const checklist = `# Performance Optimization Implementation Checklist
+
+## Phase 1: Immediate Actions (High Priority)
+
+### HTML Optimizations
+- [ ] Replace index.html with index-optimized-template.html
+- [ ] Add preconnect hints for critical domains
+- [ ] Inline critical CSS
+- [ ] Defer non-critical CSS and JavaScript
+
+### Image Optimizations
+- [ ] Convert PNG/JPEG images to WebP format
+- [ ] Implement responsive images with srcset
+- [ ] Add proper alt attributes
+- [ ] Optimize image dimensions
+
+### Caching Strategy
+- [ ] Update vercel.json with optimized configuration
+- [ ] Set proper cache headers for static assets
+- [ ] Implement cache busting for critical resources
+
+## Phase 2: Resource Optimization (Medium Priority)
+
+### CSS Optimization
+- [ ] Remove unused CSS rules
+- [ ] Minify CSS files
+- [ ] Implement CSS code splitting
+- [ ] Optimize CSS delivery
+
+### JavaScript Optimization
+- [ ] Remove unused JavaScript
+- [ ] Implement code splitting
+- [ ] Defer non-critical scripts
+- [ ] Optimize third-party script loading
+
+### Bundle Optimization
+- [ ] Analyze bundle sizes
+- [ ] Implement lazy loading for components
+- [ ] Optimize import statements
+- [ ] Use tree shaking effectively
+
+## Phase 3: Advanced Optimizations (Low Priority)
+
+### Font Optimization
+- [ ] Add font-display: swap
+- [ ] Preload critical fonts
+- [ ] Use system fonts as fallbacks
+- [ ] Optimize font loading
+
+### Service Worker
+- [ ] Implement service worker for caching
+- [ ] Add offline functionality
+- [ ] Optimize cache strategies
+- [ ] Handle cache updates
+
+### Resource Hints
+- [ ] Add preload for critical resources
+- [ ] Implement prefetch for likely resources
+- [ ] Use dns-prefetch for external domains
+- [ ] Optimize resource loading order
+
+## Testing & Monitoring
+
+### Performance Testing
+- [ ] Run Lighthouse audit
+- [ ] Test on mobile devices
+- [ ] Check Core Web Vitals
+- [ ] Monitor bundle sizes
+
+### User Experience Testing
+- [ ] Test loading performance
+- [ ] Verify functionality after optimizations
+- [ ] Check accessibility
+- [ ] Test across different browsers
+
+## Deployment
+
+### Pre-deployment
+- [ ] Run all tests
+- [ ] Check performance budgets
+- [ ] Verify optimizations work
+- [ ] Backup current version
+
+### Post-deployment
+- [ ] Monitor performance metrics
+- [ ] Check for any issues
+- [ ] Compare before/after scores
+- [ ] Document improvements
+
+## Expected Results
+
+### Performance Scores
+- Mobile: 50 → 85+ (70% improvement)
+- Desktop: 67 → 90+ (34% improvement)
+
+### Core Web Vitals
+- FCP: 5.7s → 1.5s (Mobile)
+- LCP: 11.3s → 2.5s (Mobile)
+- TBT: 390ms → 150ms (Mobile)
+- CLS: 0.001 → < 0.1 (Maintain excellent)
+
+### Bundle Size
+- Total: ~7MB → ~2MB (71% reduction)
+`;
+  
+  const checklistPath = path.join(__dirname, '../IMPLEMENTATION_CHECKLIST.md');
+  fs.writeFileSync(checklistPath, checklist);
+  
+  console.log(`✅ Implementation checklist created: ${checklistPath}`);
+}
+
+async function runQuickOptimization() {
+  console.log('🚀 Starting quick performance optimization...\n');
   
   try {
-    // Run optimization steps
-    await runImageOptimization();
-    await runCSSOptimization();
-    await runBundleAnalysis();
-    
     // Generate reports and configurations
     generatePerformanceReport();
     createOptimizedHTMLTemplate();
     createVercelConfig();
     createPerformanceBudget();
+    createImageOptimizationGuide();
+    createImplementationChecklist();
     
-    console.log('🎉 Performance optimization complete!');
+    console.log('🎉 Quick optimization complete!');
+    console.log('\n📋 Generated Files:');
+    console.log('• index-optimized-template.html - Optimized HTML template');
+    console.log('• vercel.optimized.json - Optimized Vercel configuration');
+    console.log('• performance-budget.json - Performance budget');
+    console.log('• IMAGE_OPTIMIZATION_GUIDE.md - Image optimization guide');
+    console.log('• IMPLEMENTATION_CHECKLIST.md - Implementation checklist');
+    
     console.log('\n📋 Next Steps:');
-    console.log('1. Review the generated optimization reports');
-    console.log('2. Replace the current index.html with the optimized template');
-    console.log('3. Update vercel.json with the optimized configuration');
-    console.log('4. Run a new Lighthouse audit to measure improvements');
-    console.log('5. Monitor Core Web Vitals in production');
+    console.log('1. Review the generated files');
+    console.log('2. Replace index.html with index-optimized-template.html');
+    console.log('3. Update vercel.json with vercel.optimized.json');
+    console.log('4. Follow the image optimization guide');
+    console.log('5. Use the implementation checklist');
+    console.log('6. Run: npm run build:optimized');
+    console.log('7. Deploy: npm run deploy:optimized');
+    console.log('8. Test with: npm run lighthouse');
     
     console.log('\n📊 Expected Improvements:');
     console.log('• Performance Score: 50 → 85+ (Mobile), 67 → 90+ (Desktop)');
@@ -364,9 +486,9 @@ async function runFullOptimization() {
     console.log('• Bundle Size: ~7MB → ~2MB');
     
   } catch (error) {
-    console.error('❌ Performance optimization failed:', error.message);
+    console.error('❌ Quick optimization failed:', error.message);
   }
 }
 
-// Run the full optimization suite
-runFullOptimization().catch(console.error);
+// Run the quick optimization
+runQuickOptimization().catch(console.error);
