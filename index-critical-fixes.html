@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+    
+    <!-- Critical preconnect hints -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdn.prod.website-files.com" crossorigin>
+    <link rel="preconnect" href="https://d3e54v103j8qbb.cloudfront.net" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.unicorn.studio" crossorigin>
+    
+    <!-- DNS prefetch for non-critical domains -->
+    <link rel="dns-prefetch" href="https://scripts.clarity.ms">
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    <link rel="dns-prefetch" href="https://www.clarity.ms">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/assets/fonts/raginy-titanium.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="/assets/css/main-Dgyrmvob.css" as="style">
+    
+    <!-- Critical CSS inline -->
+    <style>
+      /* Critical above-the-fold CSS */
+      body { 
+        margin: 0; 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #fff;
+      }
+      .loading { 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        height: 100vh;
+        background: #fff;
+      }
+      .loading-spinner { 
+        width: 40px; 
+        height: 40px; 
+        border: 4px solid #f3f3f3; 
+        border-top: 4px solid #667eea; 
+        border-radius: 50%; 
+        animation: spin 1s linear infinite; 
+      }
+      @keyframes spin { 
+        0% { transform: rotate(0deg); } 
+        100% { transform: rotate(360deg); } 
+      }
+      
+      /* Font display optimization */
+      @font-face {
+        font-family: 'Raginy Titanium';
+        src: url('/assets/fonts/raginy-titanium.ttf') format('truetype');
+        font-display: swap;
+      }
+      
+      /* Critical layout styles */
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+    
+    <!-- Load critical CSS -->
+    <link rel="stylesheet" href="/assets/css/main-Dgyrmvob.css">
+    
+    <!-- Defer non-critical CSS -->
+    <link rel="preload" href="/assets/css/app-D2KWLy74.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/assets/css/app-D2KWLy74.css"></noscript>
+    
+    <title>Felearn AI | Learn Complex Concepts with Cute Cat Stories</title>
+    <meta name="description" content="Transform complex topics into engaging visual stories featuring adorable cats. AI-powered educational platform that makes learning fun and memorable." />
+    
+    <!-- Open Graph tags -->
+    <meta property="og:title" content="Felearn AI | Learn Complex Concepts with Cute Cat Stories" />
+    <meta property="og:description" content="Transform complex topics into engaging visual stories featuring adorable cats." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://felearn.vercel.app/" />
+</head>
+<body>
+    <div id="loading-screen" class="loading">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div id="root"></div>
+    
+    <!-- Critical script loading -->
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Defer third-party scripts -->
+    <script>
+      // Performance optimization: Defer non-critical scripts
+      window.addEventListener('load', function() {
+        // Remove loading screen
+        setTimeout(() => {
+          const loadingScreen = document.getElementById('loading-screen');
+          if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => loadingScreen.remove(), 300);
+          }
+        }, 500);
+        
+        // Load non-critical scripts with delay
+        setTimeout(() => {
+          const scripts = [
+            'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js',
+            'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css'
+          ];
+          
+          scripts.forEach(src => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = true;
+            document.head.appendChild(script);
+          });
+        }, 2000);
+      });
+      
+      // Optimize third-party script loading
+      window.addEventListener('DOMContentLoaded', function() {
+        // Defer analytics and tracking scripts
+        setTimeout(() => {
+          // Load Clarity
+          const clarityScript = document.createElement('script');
+          clarityScript.src = 'https://www.clarity.ms/tag/sqofrdrzuw';
+          clarityScript.async = true;
+          document.head.appendChild(clarityScript);
+          
+          // Load Google Tag Manager
+          const gtmScript = document.createElement('script');
+          gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-N2CWK99B';
+          gtmScript.async = true;
+          document.head.appendChild(gtmScript);
+        }, 3000);
+      });
+    </script>
+</body>
+</html>
