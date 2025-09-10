@@ -173,7 +173,7 @@ const ResetPasswordPage: React.FC = () => {
         loop
         playsInline
         preload="auto"
-        poster="/assets/placeholder-image.png"
+        poster="/assets/placeholder-image.webp"
       >
         <source src="/videos/auth-background-prem.mp4" type="video/mp4" />
         <source src="/videos/auth-background-prem.webm" type="video/webm" />
@@ -244,7 +244,7 @@ const ResetPasswordPage: React.FC = () => {
                   </svg>
                   <input
                     type="password"
-                    className="input"
+                    className="input text-gray-700 dark:text-gray-300"
                     placeholder="Enter your new password"
                     required
                     value={newPassword}
@@ -262,7 +262,7 @@ const ResetPasswordPage: React.FC = () => {
                   </svg>
                   <input
                     type="password"
-                    className="input"
+                    className="input text-gray-700 dark:text-gray-300"
                     placeholder="Confirm your new password"
                     required
                     value={confirmPassword}

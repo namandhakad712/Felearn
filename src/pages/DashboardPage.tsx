@@ -13,6 +13,7 @@ import { ToastContainer } from '../components/ui';
 import { ExportFormat } from '../services/export';
 import StoryLibraryPage from './dashboard/StoryLibraryPage';
 import { geminiService } from '../services/gemini';
+import { databaseService } from '../services/database';
 
 // Story Generator Component with Chat Interface
 const StoryGenerator = () => {
@@ -79,9 +80,57 @@ const StoryGenerator = () => {
     // This is a placeholder function to fix the missing reference
   };
 
+  // Function to update user quota
+  const updateUserQuota = async (userId: string, newQuota: number) => {
+    try {
+      await databaseService.updateUserDocument(userId, { quota: newQuota });
+      console.log('User quota updated successfully to', newQuota);
+      // In a real implementation, you would also update the AuthContext user state
+      // For now, we'll just log it
+    } catch (error) {
+      console.error('Failed to update user quota:', error);
+      showErrorToast('Quota Update Error', 'Failed to update your story generation quota.');
+    }
+  };
+
+  // Function to check if quota should be reset (daily reset)
+  const shouldResetQuota = (lastLogin?: string): boolean => {
+    if (!lastLogin) return true;
+    
+    const lastLoginDate = new Date(lastLogin);
+    const today = new Date();
+    
+    // Reset if last login was not today
+    return lastLoginDate.toDateString() !== today.toDateString();
+  };
+
   const handleStorySubmit = async (concept: string) => {
     if (!user?.geminiKey) {
       setError('Please set up your Gemini API key in settings first.');
+      return;
+    }
+
+    // Check and potentially reset quota
+    let currentUserQuota = user?.quota !== undefined ? user.quota : 15;
+    const shouldReset = shouldResetQuota(user?.lastLogin);
+    
+    if (shouldReset) {
+      // Reset quota to 15 for the new day
+      currentUserQuota = 15;
+      try {
+        await updateUserQuota(user.$id, 15);
+        // Also update lastLogin timestamp
+        await databaseService.updateUserDocument(user.$id, { 
+          lastLogin: new Date().toISOString() 
+        });
+      } catch (error) {
+        console.error('Failed to reset quota:', error);
+      }
+    }
+    
+    if (currentUserQuota <= 0) {
+      setError('You have reached your daily story generation limit. Please try again tomorrow.');
+      showErrorToast('Generation Limit Reached', 'You have reached your daily story generation limit of 15 stories.');
       return;
     }
 
@@ -101,6 +150,7 @@ const StoryGenerator = () => {
     try {
       console.log('Generating story for concept:', concept);
       console.log('Using API key (first 10 chars):', user.geminiKey?.substring(0, 10) + '...');
+      console.log('Current quota:', currentUserQuota);
 
       // Use the real gemini service
       
@@ -172,15 +222,27 @@ const StoryGenerator = () => {
                 ).then(savedStory => {
                   setSelectedStory(savedStory);
                   console.log('Visual story saved automatically:', savedStory);
+                  
+                  // FAIR USAGE: Only update user quota after successful story generation AND saving
+                  // This ensures users don't lose their quota if there are errors during generation or saving
+                  const newQuota = Math.max(0, currentUserQuota - 1);
+                  console.log('Updating user quota from', currentUserQuota, 'to', newQuota);
+                  updateUserQuota(user.$id, newQuota);
+                  // Update lastLogin timestamp to track daily usage
+                  databaseService.updateUserDocument(user.$id, { 
+                    lastLogin: new Date().toISOString() 
+                  }).catch(updateError => {
+                    console.error('Failed to update lastLogin timestamp:', updateError);
+                  });
                 }).catch(saveError => {
                   console.error('Failed to save story:', saveError);
                   // Show error to user but still display the story
-                  showErrorToast('Save Error', 'Failed to save story automatically. You can try saving manually.');
+                  showErrorToast('Save Error', 'Failed to save story automatically. You can try saving manually. Your quota has not been deducted.');
                 });
               } catch (saveError) {
                 console.error('Failed to save story:', saveError);
                 // Show error to user but still display the story
-                showErrorToast('Save Error', 'Failed to save story automatically. You can try saving manually.');
+                showErrorToast('Save Error', 'Failed to save story automatically. You can try saving manually. Your quota has not been deducted.');
               }
             }
 
@@ -190,6 +252,8 @@ const StoryGenerator = () => {
           case 'error':
             if (update.error) {
               setError(update.error);
+              // Don't update quota on error - user hasn't used their quota
+              showErrorToast('Generation Error', 'Failed to generate visual story. Your quota has not been deducted.');
             }
             break;
         }
@@ -197,10 +261,12 @@ const StoryGenerator = () => {
 
       // Refresh rate limit status after successful generation
       refreshStatus();
-
     } catch (error: any) {
       console.error('Story generation error:', error);
-      setError(error.message || 'Failed to generate visual story. Please try again.');
+      setError(error.message || 'Failed to generate visual story. Your quota has not been deducted.');
+      
+      // Don't update quota on error - user hasn't used their quota
+      showErrorToast('Generation Error', 'Failed to generate visual story. Your quota has not been deducted.');
 
       // Check if the error is related to rate limiting
       if (error.message?.includes('Rate limit exceeded')) {
@@ -449,9 +515,13 @@ const Settings = () => {
     setError(null);
 
     try {
+      // Handle FREE keyword (case-insensitive with spaces)
+      const trimmedKey = apiKey.trim();
+      const finalKey = trimmedKey.toLowerCase() === 'free' ? 'FREE' : trimmedKey;
+      
       // Save the API key directly without encryption
       await updateUser({
-        geminiKey: apiKey.trim()
+        geminiKey: finalKey
       });
 
       setSuccess('API key updated successfully');

@@ -91,19 +91,19 @@ const Toast: React.FC<ToastProps> = ({
       initial={{ opacity: 0, y: 50, scale: 0.3 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-      className={`max-w-md w-full shadow-lg rounded-lg pointer-events-auto border ${getBgColor()}`}
+      className={`w-full max-w-sm shadow-lg rounded-lg pointer-events-auto border ${getBgColor()}`}
     >
       <div className="p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0">
             {getIcon()}
           </div>
-          <div className="ml-3 w-0 flex-1">
+          <div className="ml-3 flex-1">
             <p className={`text-sm font-medium ${getTextColor()}`}>
               {title}
             </p>
             {message && (
-              <p className={`mt-1 text-sm ${getTextColor()} opacity-90`}>
+              <p className={`mt-1 text-sm ${getTextColor()} opacity-90 whitespace-normal`}>
                 {message}
               </p>
             )}
@@ -138,7 +138,7 @@ interface ToastContainerProps {
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onClose }) => {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-4">
+    <div className="fixed top-4 right-4 z-50 space-y-4 w-full max-w-md">
       <AnimatePresence>
         {toasts.map((toast) => (
           <Toast

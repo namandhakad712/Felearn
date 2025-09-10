@@ -35,8 +35,8 @@ export const base64ToFile = (base64Data: string, filename: string): File => {
   } catch (error) {
     console.error('Error converting base64 to file:', error);
     // Create a small placeholder file instead of failing
-    const blob = new Blob(['placeholder'], { type: 'image/png' });
-    return new File([blob], filename, { type: 'image/png' });
+    const blob = new Blob(['placeholder'], { type: 'image/webp' });
+    return new File([blob], filename, { type: 'image/webp' });
   }
 };
 
@@ -52,7 +52,7 @@ export const generateImageFilename = (email: string, index: number): string => {
   // Sanitize email for filename (remove @ and special characters)
   const safeEmail = email.replace(/[^a-zA-Z0-9]/g, '-');
   
-  return `${safeEmail}-${day}-${month}-${year}-${index}.png`;
+  return `${safeEmail}-${day}-${month}-${year}-${index}.webp`;
 };
 
 /**

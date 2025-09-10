@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import styled from 'styled-components';
 // import { AnimatePresence } from 'framer-motion'; // Unused import
 import { StorySlide } from '../../types';
+import MobileImageSlider from './MobileImageSlider';
 
 // Styled Components for the new loader
 const StyledWrapper = styled.div`
@@ -177,7 +178,7 @@ interface LiveSlideViewProps {
 
 const LiveSlideView: React.FC<LiveSlideViewProps> = ({
   slides,
-  // images, // Unused parameter
+  images,
   isGenerating,
   className = '',
   totalSlides, // No default - will be calculated dynamically
@@ -185,11 +186,41 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
 }) => {
   const [displayedSlides, setDisplayedSlides] = useState<StorySlide[]>([]);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIsMobile);
+    };
+  }, []);
 
   // Update displayed slides when new slides are added
   useEffect(() => {
     setDisplayedSlides(slides);
   }, [slides]);
+
+  // For mobile devices, use the new MobileImageSlider component
+  if (isMobile) {
+    return (
+      <div className={className}>
+        <MobileImageSlider 
+          slides={slides} 
+          isGenerating={isGenerating} 
+          tokens={tokens} 
+        />
+      </div>
+    );
+  }
+
+  // Desktop implementation continues below...
 
   const slideVariants = {
     hidden: { 
@@ -258,6 +289,46 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
   };
 
   const allSlides = [...displayedSlides, ...createPlaceholderSlides()];
+
+  // Mobile scroll hint - only show on mobile devices
+  const renderMobileScrollHint = () => (
+    <div className="block md:hidden text-center mb-2">
+      <div className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+        </svg>
+        Swipe to see next slide
+      </div>
+    </div>
+  );
+
+  // Progress indicator
+  const renderProgressIndicator = () => (
+    <div className="flex flex-col sm:flex-row items-center justify-center mt-4 gap-2 sm:gap-3">
+      <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 w-32 sm:w-48 md:w-64">
+        <motion.div
+          className="bg-blue-500 h-2 rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${(displayedSlides.length / dynamicTotalSlides) * 100}%` }}
+          transition={{ duration: 0.5 }}
+        />
+      </div>
+      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
+        {displayedSlides.length} / {isGenerating ? '∞' : dynamicTotalSlides} slides
+      </span>
+    </div>
+  );
+
+  // Token count display
+  const renderTokenCount = () => (
+    tokens > 0 && (
+      <div className="flex justify-center mt-2">
+        <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+          {tokens.toLocaleString()} tokens used
+        </span>
+      </div>
+    )
+  );
 
   // Mobile navigation functions
   const scrollToNext = () => {
@@ -492,38 +563,13 @@ const LiveSlideView: React.FC<LiveSlideViewProps> = ({
       </div>
       
       {/* Mobile scroll hint */}
-      <div className="block md:hidden text-center mb-2">
-        <div className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-          </svg>
-          Swipe to see next slide
-        </div>
-      </div>
+      {renderMobileScrollHint()}
 
       {/* Progress indicator */}
-      <div className="flex flex-col sm:flex-row items-center justify-center mt-4 gap-2 sm:gap-3">
-        <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 w-32 sm:w-48 md:w-64">
-          <motion.div
-            className="bg-blue-500 h-2 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${(displayedSlides.length / dynamicTotalSlides) * 100}%` }}
-            transition={{ duration: 0.5 }}
-          />
-        </div>
-        <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
-          {displayedSlides.length} / {isGenerating ? '∞' : dynamicTotalSlides} slides
-        </span>
-      </div>
+      {renderProgressIndicator()}
       
       {/* Token count display */}
-      {tokens > 0 && (
-        <div className="flex justify-center mt-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-            {tokens.toLocaleString()} tokens used
-          </span>
-        </div>
-      )}
+      {renderTokenCount()}
     </div>
   );
 };

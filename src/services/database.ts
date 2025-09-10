@@ -22,6 +22,7 @@ export interface UserDocument {
   emailVerification?: boolean;
   disabled: boolean;
   onboardingcompleted: boolean;
+  quota?: number; // Add quota field
 }
 
 export interface UserSettings {
@@ -63,7 +64,8 @@ export class DatabaseService {
           oauthProvider: userData.oauthProvider || '',
           emailVerification: userData.emailVerification || false,
           disabled: userData.disabled || false,
-          onboardingcompleted: userData.onboardingcompleted || false
+          onboardingcompleted: userData.onboardingcompleted || false,
+          quota: userData.quota || 15 // Add default quota of 15
         }
       );
 

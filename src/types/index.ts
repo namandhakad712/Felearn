@@ -27,6 +27,7 @@ export interface User {
   oauthProvider?: string; // OAuth provider used
   disabled?: boolean; // account status
   onboardingcompleted?: boolean; // onboarding completion status
+  quota?: number; // story generation quota
 }
 
 // Extended User interface that includes Appwrite User properties
@@ -55,6 +56,7 @@ export interface ExtendedUser {
   isAdmin?: boolean;
   settings?: UserSettings | string;
   lastLogin?: string;
+  quota?: number; // story generation quota
 }
 
 export interface UserSettings {

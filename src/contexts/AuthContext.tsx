@@ -90,7 +90,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               settings: userDoc.settings,
               onboardingcompleted: userDoc.onboardingcompleted,
               lastLogin: userDoc.lastLogin,
-              emailVerification: currentUser.emailVerification // Use auth system as source of truth
+              emailVerification: currentUser.emailVerification, // Use auth system as source of truth
+              quota: userDoc.quota // Add quota field
             };
             console.log('✅ Successfully merged user data:', mergedUser);
             console.log('✅ Onboarding status from DB:', userDoc.onboardingcompleted);
