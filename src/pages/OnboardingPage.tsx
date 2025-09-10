@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { validateGeminiApiKey } from '@/utils/userUtils';
+import { validateGeminiApiKey, extractNameFromEmail } from '@/utils/userUtils';
 import { 
   initOnboardingSession, 
   getOnboardingSession, 
@@ -126,7 +126,7 @@ const OnboardingPage: React.FC = () => {
 
   const handleApiKeySubmit = async () => {
     if (!geminiApiKey.trim()) {
-      setError('Please enter your Gemini API key');
+      setError('Please enter your Gemini API key or type FREE for beta access');
       return;
     }
 
@@ -134,7 +134,66 @@ const OnboardingPage: React.FC = () => {
     setError('');
 
     try {
-      // Validate the API key first
+      // Check if user entered "FREE" for beta access (case-insensitive with spaces)
+      const trimmedKey = geminiApiKey.trim();
+      if (trimmedKey.toLowerCase() === 'free') {
+        // For beta access, we bypass validation and use a special key identifier
+        setIsLoading(true);
+        setIsValidatingKey(false);
+
+        // Check if user document exists, create if not
+        try {
+          await updateUser({
+            geminiKey: 'FREE' // Special identifier for beta access
+          });
+        } catch (updateError: any) {
+          // If update fails, try to create the user document first
+          if (updateError.message?.includes('not found') || updateError.message?.includes('document')) {
+            // Create user document first
+            const userData = {
+              email: user?.email || '',
+              name: user?.name || extractNameFromEmail(user?.email || ''),
+              geminiKey: 'FREE',
+              lastLogin: new Date().toISOString(),
+              isAdmin: false,
+              createdAt: new Date().toISOString(),
+              emailVerification: user?.emailVerification || false,
+              disabled: false,
+              onboardingcompleted: false,
+              quota: 15, // Add default quota
+              settings: JSON.stringify({
+                theme: 'light',
+                language: 'en',
+                onboardingcompleted: false
+              })
+            };
+            
+            // Try to create the user document
+            try {
+              const { databaseService } = await import('@/services/databaseService');
+              await databaseService.createDocument('users', userData, user?.$id);
+              
+              // Then update the user state
+              await updateUser({
+                geminiKey: 'FREE'
+              });
+            } catch (createError) {
+              console.error('Failed to create user document:', createError);
+              setError('Failed to set up your account. Please try again.');
+              return;
+            }
+          } else {
+            console.error('Update user failed:', updateError);
+            setError(updateError.message || 'Failed to save API key');
+            return;
+          }
+        }
+        
+        handleNext();
+        return;
+      }
+
+      // Validate the API key first for non-beta users
       const validation = await validateGeminiApiKey(geminiApiKey);
       if (!validation.isValid) {
         setError(validation.error || 'Invalid API key');
@@ -146,11 +205,52 @@ const OnboardingPage: React.FC = () => {
       setIsValidatingKey(false);
 
       // Save the API key and move to next step
-      await updateUser({
-        geminiKey: geminiApiKey
-      });
-      
-      handleNext();
+      try {
+        await updateUser({
+          geminiKey: trimmedKey
+        });
+        
+        handleNext();
+      } catch (updateError: any) {
+        // If update fails, try to create the user document first
+        if (updateError.message?.includes('not found') || updateError.message?.includes('document')) {
+          // Create user document first
+          const userData = {
+            email: user?.email || '',
+            name: user?.name || extractNameFromEmail(user?.email || ''),
+            geminiKey: trimmedKey,
+            lastLogin: new Date().toISOString(),
+            isAdmin: false,
+            createdAt: new Date().toISOString(),
+            emailVerification: user?.emailVerification || false,
+            disabled: false,
+            onboardingcompleted: false,
+            settings: JSON.stringify({
+              theme: 'light',
+              language: 'en',
+              onboardingcompleted: false
+            })
+          };
+          
+          // Try to create the user document
+          try {
+            const { databaseService } = await import('@/services/database');
+            await databaseService.createDocument('users', userData, user?.$id);
+            
+            // Then update the user state
+            await updateUser({
+              geminiKey: trimmedKey
+            });
+            
+            handleNext();
+          } catch (createError) {
+            console.error('Failed to create user document:', createError);
+            setError('Failed to set up your account. Please try again.');
+          }
+        } else {
+          throw updateError;
+        }
+      }
     } catch (error: any) {
       setError(error.message || 'Failed to save API key');
     } finally {
@@ -215,8 +315,8 @@ const OnboardingPage: React.FC = () => {
     }
   };
 
-  // NEW: Handle skipping onboarding
-  const handleSkipOnboarding = async () => {
+  // NEW: Handle skipping onboarding (currently unused but kept for future use)
+  const _handleSkipOnboarding = async () => {
     console.log('⏭️ User chose to skip onboarding');
     setIsLoading(true);
     setError('');
@@ -290,7 +390,7 @@ const OnboardingPage: React.FC = () => {
         loop
         playsInline
         preload="auto"
-        poster="/assets/placeholder-image.png"
+        poster="/assets/placeholder-image.webp"
       >
         <source src="/videos/auth-background-prem.mp4" type="video/mp4" />
         <source src="/videos/auth-background-prem.webm" type="video/webm" />
@@ -397,20 +497,23 @@ const OnboardingPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex items-start">
-                <svg className="w-5 h-5 text-yellow-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-blue-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <h4 className="font-medium text-yellow-800 mb-1">How to get your API key:</h4>
-                  <ol className="text-sm text-yellow-700 space-y-1">
-                    <li>1. Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-800">Google AI Studio</a></li>
-                    <li>2. Sign in with your Google account</li>
-                    <li>3. Click "Create API Key"</li>
-                    <li>4. Copy the generated key and paste it below</li>
-                  </ol>
+                  <h4 className="font-medium text-blue-800 mb-1">Beta Access:</h4>
+                  <p className="text-sm text-blue-700">
+                    During our beta release, you can try out Felearn for free by typing "FREE" in the API key field below.
+                  </p>
                 </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-center">
+                <h4 className="text-2xl font-bold text-yellow-800">Type FREE</h4>
               </div>
             </div>
 
@@ -422,8 +525,8 @@ const OnboardingPage: React.FC = () => {
                 type="password"
                 value={geminiApiKey}
                 onChange={(e) => setGeminiApiKey(e.target.value)}
-                placeholder="Enter your Gemini API key"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Enter your Gemini API key or type FREE for beta access"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700"
               />
               {error && (
                 <p className="text-red-600 text-sm mt-2">{error}</p>

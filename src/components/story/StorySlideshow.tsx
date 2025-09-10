@@ -77,7 +77,7 @@ const StorySlideshow: React.FC<StorySlideshowProps> = ({ slides, className = '' 
                   onError={(e) => {
                     console.error("Slide image failed to load:", 
                       slide.image?.substring(0, 50) + "...");
-                    e.currentTarget.src = "/assets/placeholder-image.png";
+                    e.currentTarget.src = "/assets/placeholder-image.webp";
                     e.currentTarget.alt = "Image failed to load";
                   }}
                 />

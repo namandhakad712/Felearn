@@ -1,7 +1,7 @@
 # 🐱 Felearn AI - Learn with Cute Cat Stories
 
 <div align="center">
-  <img src="public/assets/felearn-logo.png" alt="Felearn AI Logo" width="120" height="120">
+  <img src="public/assets/felearn-logo.webp" alt="Felearn AI Logo" width="120" height="120">
   
   **Transform complex concepts into engaging visual stories featuring adorable cats**
   
@@ -17,6 +17,7 @@
 - Generate engaging stories with cute cat illustrations using Google Gemini AI
 - Real-time image generation with contextual captions
 - Interactive story slides with smooth animations
+- Images now optimized in WebP format for faster loading and smaller file sizes
 
 ### 👤 **User Management**
 - Secure authentication with email verification
@@ -82,13 +83,20 @@ Visit [felearn.vercel.app](https://felearn.vercel.app) to try Felearn AI!
 - Watch as AI generates a story with cute cat illustrations
 - Stories are automatically saved to your library
 
-### 3. **Managing Stories**
+### 3. **Story Generation Limits**
+- Each user has a daily quota of 15 story generations
+- Quota is **only deducted** after a story is successfully generated and saved
+- If generation fails or is interrupted, your quota is **not** consumed
+- Check your remaining quota in the top-right corner of the dashboard
+- Stories are now allocated with smarter resource management for optimal performance
+
+### 4. **Managing Stories**
 - View all your stories in the Library
 - Pin important stories
 - Search and filter by title or content
 - Rename, delete, or export stories
 
-### 4. **Exporting Stories**
+### 5. **Exporting Stories**
 - Click the export button on any story
 - Choose PDF format
 - Download your story with high-quality images
@@ -99,6 +107,7 @@ Visit [felearn.vercel.app](https://felearn.vercel.app) to try Felearn AI!
 - **Bundle Size**: < 500KB gzipped
 - **First Contentful Paint**: < 1.5s
 - **Time to Interactive**: < 3s
+- **Image Loading**: Significantly improved with WebP format migration
 
 ## 🔒 Security
 

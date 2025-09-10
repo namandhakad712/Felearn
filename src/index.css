@@ -597,3 +597,12 @@ Text Animation Styles */
     height: 95vh;
   }
 }
+
+/* Darker password masking dots */
+input[type="password"] {
+  color: #4b5563; /* dark gray instead of default light gray */
+}
+
+.dark input[type="password"] {
+  color: #d1d5db; /* lighter gray for dark mode */
+}

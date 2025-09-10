@@ -374,7 +374,7 @@ const AuthPage: React.FC = () => {
         loop
         playsInline
         preload="auto"
-        poster="/assets/placeholder-image.png"
+        poster="/assets/placeholder-image.webp"
         webkit-playsinline="true"
         x5-playsinline="true"
         x5-video-player-type="h5"
@@ -450,7 +450,7 @@ const AuthPage: React.FC = () => {
             </svg>        
             <input 
               type="password" 
-              className="input" 
+              className="input text-gray-700 dark:text-gray-300" 
               placeholder="Enter your Password"
               required
               value={password}
@@ -663,10 +663,17 @@ const StyledWrapper = styled.div`
   
   @media (max-width: 768px) {
     max-width: 400px;
+    padding: 0 0.5rem;
   }
   
   @media (max-width: 480px) {
     max-width: 340px;
+    padding: 0 0.25rem;
+  }
+  
+  @media (max-width: 360px) {
+    max-width: 320px;
+    padding: 0 0.125rem;
   }
 
   .form {
@@ -687,26 +694,38 @@ const StyledWrapper = styled.div`
     
     /* Mobile responsive - smaller form on mobile */
     @media (max-width: 768px) {
-      padding: 24px;
+      padding: 24px 20px;
       border-radius: 16px;
       gap: 8px;
       background-color: rgba(255, 255, 255, 0.88);
       max-width: 380px;
-    }
-    
-    @media (max-width: 480px) {
-      padding: 18px;
-      border-radius: 14px;
-      gap: 6px;
-      background-color: rgba(255, 255, 255, 0.85);
-      max-width: 320px;
       margin: 0 auto;
     }
     
+    @media (max-width: 480px) {
+      padding: 20px 16px;
+      border-radius: 14px;
+      gap: 8px;
+      background-color: rgba(255, 255, 255, 0.90);
+      max-width: 320px;
+      margin: 0 auto;
+      min-width: 280px;
+    }
+    
     @media (max-width: 360px) {
-      padding: 16px;
+      padding: 18px 14px;
       border-radius: 12px;
       max-width: 300px;
+      min-width: 260px;
+      gap: 6px;
+    }
+    
+    @media (max-width: 320px) {
+      padding: 16px 12px;
+      border-radius: 10px;
+      max-width: 280px;
+      min-width: 240px;
+      gap: 6px;
     }
   }
 
@@ -765,6 +784,20 @@ const StyledWrapper = styled.div`
     
     @media (max-width: 480px) {
       height: 46px;
+      border-radius: 8px;
+      padding-left: 8px;
+    }
+    
+    @media (max-width: 360px) {
+      height: 44px;
+      border-radius: 6px;
+      padding-left: 6px;
+    }
+    
+    @media (max-width: 320px) {
+      height: 42px;
+      border-radius: 6px;
+      padding-left: 6px;
     }
   }
 
@@ -777,10 +810,30 @@ const StyledWrapper = styled.div`
     background: transparent; /* Make input background transparent */
     color: #000000; /* Set text color to black */
     font-size: 16px; /* Prevents zoom on iOS */
+    outline: none;
     
     @media (max-width: 640px) {
       margin-left: 8px;
       font-size: 16px;
+      width: 82%;
+    }
+    
+    @media (max-width: 480px) {
+      margin-left: 6px;
+      font-size: 16px;
+      width: 80%;
+    }
+    
+    @media (max-width: 360px) {
+      margin-left: 6px;
+      font-size: 16px;
+      width: 78%;
+    }
+    
+    @media (max-width: 320px) {
+      margin-left: 4px;
+      font-size: 16px;
+      width: 75%;
     }
   }
 

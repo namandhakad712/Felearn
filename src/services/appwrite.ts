@@ -241,7 +241,7 @@ class AppwriteService {
   private base64ToFile(base64String: string, filename: string): File {
     try {
       const arr = base64String.split(',');
-      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/webp';
       const bstr = atob(arr[1]);
       let n = bstr.length;
       const u8arr = new Uint8Array(n);
@@ -290,7 +290,7 @@ class AppwriteService {
       return url;
     } catch (error) {
       console.error('Error getting file URL:', error);
-      return '/assets/placeholder-image.png';
+      return '/assets/placeholder-image.webp';
     }
   }
 
@@ -338,7 +338,7 @@ class AppwriteService {
 
         try {
           // Convert base64 to file
-          const filename = `story-image-${Date.now()}-${index}.png`;
+          const filename = `story-image-${Date.now()}-${index}.webp`;
           const file = this.base64ToFile(base64Image, filename);
           
           // Upload to storage

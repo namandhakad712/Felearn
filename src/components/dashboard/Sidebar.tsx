@@ -139,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
   return (
     <div
       ref={sidebarRef}
-      className="w-64 fixed h-full sidebar-layer flex flex-col glass-heavy-blur"
+      className="w-64 fixed h-full sidebar-layer flex flex-col glass-heavy-blur rounded-tr-xl rounded-br-xl"
       style={{
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
         transform: 'translateX(-300px)', // Initial position

@@ -74,11 +74,13 @@ This document outlines the requirements for an AI-powered storytelling platform 
 
 #### Acceptance Criteria
 
-1. WHEN API requests are made THEN the system SHALL implement rate limiting on story-generation endpoints
-2. WHEN sensitive data is stored THEN the system SHALL encrypt all Gemini API keys at rest
-3. WHEN the platform is accessed THEN the system SHALL use HTTPS with Let's Encrypt certificates
-4. WHEN errors occur THEN the system SHALL integrate with Sentry or Logflare for monitoring and alerts
-5. WHEN system load increases THEN the system SHALL maintain performance through proper resource management
+1. WHEN API requests are made THEN the system SHALL implement rate limiting on story-generation endpoints with a fair usage quota of 15 stories per user per day
+2. WHEN a story is generated successfully THEN the system SHALL deduct one from the user's daily quota ONLY after the story is fully generated and saved
+3. WHEN story generation fails or is interrupted THEN the system SHALL NOT deduct from the user's daily quota
+4. WHEN sensitive data is stored THEN the system SHALL encrypt all Gemini API keys at rest
+5. WHEN the platform is accessed THEN the system SHALL use HTTPS with Let's Encrypt certificates
+6. WHEN errors occur THEN the system SHALL integrate with Sentry or Logflare for monitoring and alerts
+7. WHEN system load increases THEN the system SHALL maintain performance through proper resource management
 
 ### Requirement 7: Deployment and CI/CD
 

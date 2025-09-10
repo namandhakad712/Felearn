@@ -1,6 +1,7 @@
 import { PDFDocument, rgb, StandardFonts, PageSizes } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { Story, StorySlide } from '../types';
+import { pdfPageGenerator } from './pdfPageGenerator';
 
 interface PdfExportOptions {
   includeImages?: boolean;
@@ -42,7 +43,11 @@ export class EnhancedPdfExportService {
       const pdfDoc = await PDFDocument.create();
 
       // Register fontkit for custom font support
-      pdfDoc.registerFontkit(fontkit);
+      try {
+        pdfDoc.registerFontkit(fontkit);
+      } catch (error) {
+        console.warn('Failed to register fontkit:', error);
+      }
 
       // Set document metadata
       pdfDoc.setTitle(story.title);
@@ -151,10 +156,8 @@ export class EnhancedPdfExportService {
         }
       }
 
-      // Add acknowledgment page at the end
-      currentPage = pdfDoc.addPage(PageSizes.A4);
-      yPosition = currentPage.getHeight() - this.PAGE_MARGIN;
-      await this.addAcknowledgmentPage(currentPage, bodyFont, yPosition, dosisFont, consolasFont, ubuntuLightFont, pdfDoc);
+      // Add acknowledgment page as a separate page
+      await pdfPageGenerator.generateAcknowledgmentPage(pdfDoc, bodyFont, dosisFont, consolasFont, ubuntuLightFont);
 
       // Save and download the PDF (removed encryption for compatibility)
       const pdfBytes = await pdfDoc.save();
@@ -182,9 +185,9 @@ export class EnhancedPdfExportService {
     const logoHeight = 100; // Maintain 2:1 aspect ratio (200/100 = 2)
 
     try {
-      const imageBytes = await this.loadImageFromUrl('/assets/felearn-logo.png');
+      const imageBytes = await this.loadImageFromUrl('/assets/felearn-logo.webp');
       if (imageBytes) {
-        const image = await pdfDoc.embedPng(imageBytes);
+        const image = await this.embedImage(pdfDoc, imageBytes);
         const imageX = (pageWidth - logoWidth) / 2; // Center horizontally
         const imageY = yPosition - logoHeight;
 
@@ -339,50 +342,7 @@ export class EnhancedPdfExportService {
     });
   }
 
-  /**
-   * Add content to PDF with page breaks
-   */
-  private async addContent(
-    page: any,
-    pdfDoc: any,
-    content: string,
-    font: any,
-    yPosition: number
-  ): Promise<number> {
-    const pageWidth = page.getWidth();
-    const pageHeight = page.getHeight();
-    const maxWidth = pageWidth - (this.PAGE_MARGIN * 2);
-
-    const paragraphs = content.split('\n\n');
-
-    for (const paragraph of paragraphs) {
-      if (paragraph.trim() === '') continue;
-
-      const lines = this.splitTextToFitWidth(paragraph, font, this.FONT_SIZE_BODY, maxWidth);
-
-      // Check if we need a new page
-      const requiredHeight = lines.length * this.FONT_SIZE_BODY * this.LINE_HEIGHT;
-      if (yPosition - requiredHeight < this.PAGE_MARGIN) {
-        page = pdfDoc.addPage(PageSizes.A4);
-        yPosition = pageHeight - this.PAGE_MARGIN;
-      }
-
-      lines.forEach(line => {
-        page.drawText(line, {
-          x: this.PAGE_MARGIN,
-          y: yPosition,
-          size: this.FONT_SIZE_BODY,
-          font: font,
-          color: rgb(0, 0, 0)
-        });
-        yPosition -= this.FONT_SIZE_BODY * this.LINE_HEIGHT;
-      });
-
-      yPosition -= 10; // Paragraph spacing
-    }
-
-    return yPosition;
-  }
+  
 
   /**
    * Add a slide page with responsive image and caption that stay together
@@ -444,7 +404,7 @@ export class EnhancedPdfExportService {
       try {
         const imageBytes = await this.loadImageFromUrl(slide.image);
         if (imageBytes) {
-          const image = await pdfDoc.embedPng(imageBytes);
+          const image = await this.embedImage(pdfDoc, imageBytes);
 
           // Calculate optimal image size
           const maxImageWidth = pageWidth - (this.PAGE_MARGIN * 2);
@@ -530,245 +490,76 @@ export class EnhancedPdfExportService {
   }
 
   /**
-   * Add acknowledgment page with specified fonts and structure
+   * Add content to PDF with page breaks
    */
-  private async addAcknowledgmentPage(
+  private async addContent(
     page: any,
-    bodyFont: any,
-    yPosition: number,
-    dosisFont: any,
-    consolasFont: any,
-    ubuntuLightFont: any,
-    pdfDoc: any
-  ): Promise<void> {
+    pdfDoc: any,
+    content: string,
+    font: any,
+    yPosition: number
+  ): Promise<number> {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
+    const maxWidth = pageWidth - (this.PAGE_MARGIN * 2);
 
-    // Start from top of page
-    let currentY = pageHeight - this.PAGE_MARGIN;
+    const paragraphs = content.split('\n\n');
 
-    // ACKNOWLEDGEMENT {TITLE} - Bold, large, top-center, simple font
-    const titleFontSize = 36;
-    const titleText = 'ACKNOWLEDGEMENT';
-    const titleWidth = bodyFont.widthOfTextAtSize(titleText, titleFontSize);
-    const titleX = (pageWidth - titleWidth) / 2;
+    for (const paragraph of paragraphs) {
+      if (paragraph.trim() === '') continue;
 
-    page.drawText(titleText, {
-      x: titleX,
-      y: currentY,
-      size: titleFontSize,
-      font: bodyFont,
-      color: rgb(0.1, 0.1, 0.1)
-    });
-    currentY -= titleFontSize * this.LINE_HEIGHT + 40;
+      const lines = this.splitTextToFitWidth(paragraph, font, this.FONT_SIZE_BODY, maxWidth);
 
-    // A Note on Your AI-Generated Story {sub-title} - Dosis font
-    const subtitleFontSize = 24;
-    const subtitleText = 'A Note on Your AI-Generated Story';
-    const subtitleWidth = dosisFont.widthOfTextAtSize(subtitleText, subtitleFontSize);
-    const subtitleX = (pageWidth - subtitleWidth) / 2;
-
-    page.drawText(subtitleText, {
-      x: subtitleX,
-      y: currentY,
-      size: subtitleFontSize,
-      font: dosisFont,
-      color: rgb(0.2, 0.2, 0.2)
-    });
-    currentY -= subtitleFontSize * this.LINE_HEIGHT + 30;
-
-    // This story was crafted... {text} - Consolas font
-    const textFontSize = 12;
-    const textContent = "This story was crafted through a creative partnership between you and the Felearn AI platform, powered by Google's Gemini model.";
-    const textLines = this.splitTextToFitWidth(textContent, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-
-    textLines.forEach(line => {
-      page.drawText(line, {
-        x: this.PAGE_MARGIN,
-        y: currentY,
-        size: textFontSize,
-        font: consolasFont,
-        color: rgb(0.3, 0.3, 0.3)
-      });
-      currentY -= textFontSize * this.LINE_HEIGHT;
-    });
-    currentY -= 20;
-
-    // How This Story Was Made {heading} - Simple font
-    const headingFontSize = 18;
-    const headingText = 'How This Story Was Made';
-    page.drawText(headingText, {
-      x: this.PAGE_MARGIN,
-      y: currentY,
-      size: headingFontSize,
-      font: bodyFont,
-      color: rgb(0.1, 0.1, 0.1)
-    });
-    currentY -= headingFontSize * this.LINE_HEIGHT + 15;
-
-    // Your Concept: {text} - Consolas font
-    const conceptText = "Your Concept: The core idea, characters, and learning objective for this narrative came directly from the prompt you provided.";
-    const conceptLines = this.splitTextToFitWidth(conceptText, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-
-    conceptLines.forEach(line => {
-      page.drawText(line, {
-        x: this.PAGE_MARGIN,
-        y: currentY,
-        size: textFontSize,
-        font: consolasFont,
-        color: rgb(0.3, 0.3, 0.3)
-      });
-      currentY -= textFontSize * this.LINE_HEIGHT;
-    });
-    currentY -= 15;
-
-    // AI Generation: {text} - Consolas font
-    const aiText = "AI Generation: Felearn AI used that concept to generate the story text and create the accompanying illustrations.";
-    const aiLines = this.splitTextToFitWidth(aiText, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-
-    aiLines.forEach(line => {
-      page.drawText(line, {
-        x: this.PAGE_MARGIN,
-        y: currentY,
-        size: textFontSize,
-        font: consolasFont,
-        color: rgb(0.3, 0.3, 0.3)
-      });
-      currentY -= textFontSize * this.LINE_HEIGHT;
-    });
-    currentY -= 20;
-
-    // Content & Usage Disclaimer {heading} - Simple font
-    const disclaimerHeadingText = 'Content & Usage Disclaimer';
-    page.drawText(disclaimerHeadingText, {
-      x: this.PAGE_MARGIN,
-      y: currentY,
-      size: headingFontSize,
-      font: bodyFont,
-      color: rgb(0.1, 0.1, 0.1)
-    });
-    currentY -= headingFontSize * this.LINE_HEIGHT + 15;
-
-    // This document was generated... {text} - Consolas font
-    const disclaimerText1 = "This document was generated for your personal and educational enjoyment. While we aim for creative and helpful content, please be aware that:";
-    const disclaimerLines1 = this.splitTextToFitWidth(disclaimerText1, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-
-    disclaimerLines1.forEach(line => {
-      page.drawText(line, {
-        x: this.PAGE_MARGIN,
-        y: currentY,
-        size: textFontSize,
-        font: consolasFont,
-        color: rgb(0.3, 0.3, 0.3)
-      });
-      currentY -= textFontSize * this.LINE_HEIGHT;
-    });
-    currentY -= 15;
-
-    // The narrative is AI-generated... {text} - Consolas font
-    const disclaimerText2 = "The narrative is AI-generated and may contain fictional elements or factual inaccuracies. Please verify any critical information independently.";
-    const disclaimerLines2 = this.splitTextToFitWidth(disclaimerText2, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-
-    disclaimerLines2.forEach(line => {
-      page.drawText(line, {
-        x: this.PAGE_MARGIN,
-        y: currentY,
-        size: textFontSize,
-        font: consolasFont,
-        color: rgb(0.3, 0.3, 0.3)
-      });
-      currentY -= textFontSize * this.LINE_HEIGHT;
-    });
-    currentY -= 15;
-
-    // You are welcome to use... {text} - Consolas font
-    const disclaimerText3 = "You are welcome to use and share this story for non-commercial purposes. Commercial use or redistribution of this content is prohibited.";
-    const disclaimerLines3 = this.splitTextToFitWidth(disclaimerText3, consolasFont, textFontSize, pageWidth - (this.PAGE_MARGIN * 2));
-
-    disclaimerLines3.forEach(line => {
-      page.drawText(line, {
-        x: this.PAGE_MARGIN,
-        y: currentY,
-        size: textFontSize,
-        font: consolasFont,
-        color: rgb(0.3, 0.3, 0.3)
-      });
-      currentY -= textFontSize * this.LINE_HEIGHT;
-    });
-    currentY -= 30;
-
-    // Generated by Felearn AI {End title} - Ubuntu Light font
-    const endTitleFontSize = 16;
-    const endTitleText = 'Generated by Felearn AI';
-    const endTitleWidth = ubuntuLightFont.widthOfTextAtSize(endTitleText, endTitleFontSize);
-    const endTitleX = (pageWidth - endTitleWidth) / 2;
-
-    page.drawText(endTitleText, {
-      x: endTitleX,
-      y: currentY,
-      size: endTitleFontSize,
-      font: ubuntuLightFont,
-      color: rgb(0.4, 0.4, 0.4)
-    });
-    currentY -= endTitleFontSize * this.LINE_HEIGHT + 20;
-
-    // Small logo (same as front page but smaller)
-    const smallLogoWidth = 139;
-    const smallLogoHeight = 41;
-
-    try {
-      const imageBytes = await this.loadImageFromUrl('/assets/felearn-logo.png');
-      if (imageBytes) {
-        const image = await pdfDoc.embedPng(imageBytes);
-        const logoX = (pageWidth - smallLogoWidth) / 2;
-        const logoY = currentY - smallLogoHeight;
-
-        page.drawImage(image, {
-          x: logoX,
-          y: logoY,
-          width: smallLogoWidth,
-          height: smallLogoHeight
-        });
-        currentY = logoY - 20;
+      // Check if we need a new page
+      const requiredHeight = lines.length * this.FONT_SIZE_BODY * this.LINE_HEIGHT;
+      if (yPosition - requiredHeight < this.PAGE_MARGIN) {
+        page = pdfDoc.addPage(PageSizes.A4);
+        yPosition = pageHeight - this.PAGE_MARGIN;
       }
-    } catch (error) {
-      console.warn('Failed to load small logo for acknowledgment page:', error);
+
+      lines.forEach(line => {
+        page.drawText(line, {
+          x: this.PAGE_MARGIN,
+          y: yPosition,
+          size: this.FONT_SIZE_BODY,
+          font: font,
+          color: rgb(0, 0, 0)
+        });
+        yPosition -= this.FONT_SIZE_BODY * this.LINE_HEIGHT;
+      });
+
+      yPosition -= 10; // Paragraph spacing
     }
 
-    // Creation Metadata - Consolas font
-    const metadataFontSize = 10;
-    const currentTime = new Date().toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-
-    const metadataText = `Creation Metadata: PDF generated on ${currentTime}`;
-    page.drawText(metadataText, {
-      x: this.PAGE_MARGIN,
-      y: currentY,
-      size: metadataFontSize,
-      font: consolasFont,
-      color: rgb(0.5, 0.5, 0.5)
-    });
+    return yPosition;
   }
+
+  
 
   /**
    * Load image from URL as bytes
    */
   private async loadImageFromUrl(url: string): Promise<Uint8Array | null> {
     try {
-      const response = await fetch(url);
+      // Handle relative URLs by making them absolute
+      let imageUrl = url;
+      if (url.startsWith('/')) {
+        // For relative URLs, make them absolute
+        const baseUrl = window.location.origin;
+        imageUrl = baseUrl + url;
+      }
+      
+      console.log('Loading image from URL:', imageUrl);
+      
+      const response = await fetch(imageUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const arrayBuffer = await response.arrayBuffer();
       return new Uint8Array(arrayBuffer);
     } catch (error) {
-      console.error('Error loading image from URL:', error);
+      console.error('Error loading image from URL:', url, error);
       return null;
     }
   }
@@ -776,53 +567,37 @@ export class EnhancedPdfExportService {
 
 
   /**
-   * Calculate optimal layout for image and caption to fit together
+   * Embed image based on its format
    */
-  private calculateOptimalLayout(
-    availableHeight: number,
-    imageAspectRatio: number,
-    captionLines: number,
-    captionFontSize: number,
-    pageWidth: number
-  ): { imageWidth: number; imageHeight: number; fits: boolean } {
-    const maxImageWidth = pageWidth - (this.PAGE_MARGIN * 2);
-    const captionHeight = captionLines * captionFontSize * this.LINE_HEIGHT + 60; // +60 for spacing
-    const spaceForImage = availableHeight - captionHeight;
-
-    if (spaceForImage < 80) { // Minimum viable image height
-      return { imageWidth: 0, imageHeight: 0, fits: false };
+  private async embedImage(pdfDoc: any, imageBytes: Uint8Array): Promise<any> {
+    try {
+      // Try to detect image format from the bytes
+      if (this.isJpeg(imageBytes)) {
+        return await pdfDoc.embedJpg(imageBytes);
+      } else {
+        // For PNG, WEBP or other formats, use embedPng
+        return await pdfDoc.embedPng(imageBytes);
+      }
+    } catch (error) {
+      console.warn('Failed to embed image as JPEG, trying PNG:', error);
+      try {
+        return await pdfDoc.embedPng(imageBytes);
+      } catch (pngError) {
+        console.error('Failed to embed image as PNG:', pngError);
+        throw error;
+      }
     }
+  }
 
-    // Try natural image size first
-    const naturalImageHeight = maxImageWidth / imageAspectRatio;
-
-    if (naturalImageHeight <= spaceForImage) {
-      return {
-        imageWidth: maxImageWidth,
-        imageHeight: naturalImageHeight,
-        fits: true
-      };
-    }
-
-    // Scale down to fit
-    const scaledImageHeight = spaceForImage;
-    const scaledImageWidth = scaledImageHeight * imageAspectRatio;
-
-    // Ensure width doesn't exceed page
-    if (scaledImageWidth <= maxImageWidth) {
-      return {
-        imageWidth: scaledImageWidth,
-        imageHeight: scaledImageHeight,
-        fits: true
-      };
-    }
-
-    // Width-constrained scaling
-    return {
-      imageWidth: maxImageWidth,
-      imageHeight: maxImageWidth / imageAspectRatio,
-      fits: true
-    };
+  /**
+   * Check if image bytes represent a JPEG image
+   */
+  private isJpeg(bytes: Uint8Array): boolean {
+    // JPEG magic number: FF D8 FF
+    return bytes.length >= 3 && 
+           bytes[0] === 0xFF && 
+           bytes[1] === 0xD8 && 
+           bytes[2] === 0xFF;
   }
 
   /**

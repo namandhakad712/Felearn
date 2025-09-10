@@ -85,6 +85,7 @@ interface User {
     language: string;
   };
   isAdmin?: boolean;
+  quota?: number; // daily story generation quota (default: 15)
 }
 ```
 
@@ -166,7 +167,7 @@ interface AppState {
 3. **Real-time Updates**: Appwrite Realtime → Context → Component Re-render
 4. **Admin Monitoring**: Scheduled Functions → Database → Dashboard Updates
 
-## Error Handling
+### Error Handling
 
 ### Frontend Error Boundaries
 - **Global Error Boundary**: Catches unhandled React errors
@@ -179,6 +180,12 @@ interface AppState {
 - **Gemini API Errors**: Rate limiting and quota management
 - **Database Errors**: Transaction rollback and data consistency
 - **Authentication Errors**: Secure error messages without information leakage
+
+### Fair Usage Quota System
+- **Daily Quota**: Each user has a daily limit of 15 story generations
+- **Fair Deduction**: Quota is only deducted after successful story generation and saving
+- **Error Protection**: Failed generations do not consume quota
+- **User Transparency**: Clear UI indicators for remaining quota
 
 ### Error Monitoring Integration
 ```typescript
@@ -193,6 +200,8 @@ interface ErrorReport {
 ```
 
 ## Testing Strategy
+
+### Performance Testing
 
 ### Frontend Testing
 - **Unit Tests**: Jest + React Testing Library for components
@@ -212,25 +221,32 @@ interface ErrorReport {
 - **API Rate Limiting**: Gemini API quota management
 - **Frontend Performance**: Core Web Vitals monitoring
 - **Database Performance**: Query optimization and indexing
+- **Quota System Testing**: Fair usage enforcement and error handling
 
 ### Testing Environments
 - **Development**: Local Appwrite instance with test data
 - **Staging**: Production-like environment for integration testing
 - **Production**: Monitoring and alerting for real user issues
 
-## Security Considerations
+### Security Considerations
 
 ### Data Protection
 - **API Key Encryption**: AES-256 encryption for Gemini keys
 - **HTTPS Enforcement**: All communications over secure channels
 - **Input Sanitization**: XSS and injection attack prevention
-- **Rate Limiting**: API abuse prevention
+- **Rate Limiting**: API abuse prevention with fair usage quotas
 
 ### Authentication Security
 - **OAuth Integration**: Secure third-party authentication
 - **Session Management**: Secure token handling and expiration
 - **Admin Access Control**: Role-based permissions with Appwrite
 - **Password Security**: Appwrite's built-in security features
+
+### Fair Usage and Abuse Prevention
+- **Daily Quota System**: Limits story generation to prevent abuse
+- **Fair Deduction Policy**: Quota only consumed on successful generation
+- **Error Protection**: System failures don't penalize users
+- **Usage Monitoring**: Track quota consumption for analytics
 
 ### Monitoring and Compliance
 - **Audit Logging**: All admin actions tracked

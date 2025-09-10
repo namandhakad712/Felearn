@@ -1049,8 +1049,8 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
                   <div 
                     className="flex-1 overflow-y-auto story-scroll-container"
                     style={{
-                      height: 'calc(100vh - 140px)',
-                      maxHeight: 'calc(100vh - 140px)',
+                      height: '100%',
+                      maxHeight: '100%',
                       overflowY: 'auto',
                       scrollBehavior: 'smooth',
                       padding: '0'
@@ -1062,7 +1062,7 @@ const StoryViewModes: React.FC<StoryViewModesProps> = ({ story, onClose }) => {
                         transform: `scale(${zoomLevel})`,
                         transformOrigin: 'top center',
                         transition: 'transform 0.3s ease',
-                        minHeight: 'fit-content',
+                        minHeight: '100%',
                         paddingBottom: '2rem'
                       }}
                     >

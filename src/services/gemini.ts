@@ -1,20 +1,25 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GeminiRequest, GeminiResponse, StorySlide, StreamingUpdate } from '../types';
-import { marked } from 'marked';
 
 class GeminiService {
   private genAI: GoogleGenerativeAI | null = null;
-  private readonly EASTER_EGG_KEY = "bynaman";
-  private readonly FALLBACK_API_KEY = "AIzaSyBE-m0-Np0mqdwHrGg1XNue4cz5qC3ecDA";
+  private readonly BETA_ACCESS_KEY = "FREE";
+  private readonly FALLBACK_API_KEYS: string[] = [
+    import.meta.env.VITE_GEMINI_FALLBACK_API_KEY_1,
+    import.meta.env.VITE_GEMINI_FALLBACK_API_KEY_2,
+    import.meta.env.VITE_GEMINI_FALLBACK_API_KEY_3
+  ].filter(key => key); // Filter out undefined keys
 
   initialize(apiKey: string) {
-    // Easter egg: if user enters "bynaman", use the fallback API key
-    if (apiKey === this.EASTER_EGG_KEY) {
-      console.log('🐱 Easter egg activated! Using Naman\'s API key for testing');
-      this.genAI = new GoogleGenerativeAI(this.FALLBACK_API_KEY);
-    } else {
-      this.genAI = new GoogleGenerativeAI(apiKey);
+    // Beta access: if user enters "FREE", use the first fallback API key
+    const trimmedKey = apiKey.trim();
+    if (trimmedKey.toLowerCase() === 'free') {
+      console.log('🎉 Beta access activated! Using fallback API key for testing');
+      this.genAI = new GoogleGenerativeAI(this.FALLBACK_API_KEYS[0] || import.meta.env.VITE_GEMINI_FALLBACK_API_KEY_1);
+      return;
     }
+    
+    this.genAI = new GoogleGenerativeAI(trimmedKey);
   }
 
   async generateStory(request: GeminiRequest, retries: number = 3): Promise<GeminiResponse> {
@@ -23,6 +28,7 @@ class GeminiService {
     }
 
     let lastError: Error | null = null;
+    let currentApiKeyIndex = 0;
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
@@ -112,11 +118,27 @@ class GeminiService {
 
         // Don't retry on authentication errors
         if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+          // If we're using a fallback key and have more keys to try, rotate to the next one
+          if (this.FALLBACK_API_KEYS.length > 1 && currentApiKeyIndex < this.FALLBACK_API_KEYS.length - 1) {
+            currentApiKeyIndex++;
+            this.genAI = new GoogleGenerativeAI(this.FALLBACK_API_KEYS[currentApiKeyIndex]);
+            console.log(`🔄 Rotating to fallback API key ${currentApiKeyIndex + 1}/${this.FALLBACK_API_KEYS.length}`);
+            continue; // Try again with the new key
+          }
+          
           throw new Error('Invalid API key. Please check your Gemini API key in settings.');
         }
 
         // Don't retry on quota exceeded errors
         if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+          // If we're using a fallback key and have more keys to try, rotate to the next one
+          if (this.FALLBACK_API_KEYS.length > 1 && currentApiKeyIndex < this.FALLBACK_API_KEYS.length - 1) {
+            currentApiKeyIndex++;
+            this.genAI = new GoogleGenerativeAI(this.FALLBACK_API_KEYS[currentApiKeyIndex]);
+            console.log(`🔄 Rotating to fallback API key ${currentApiKeyIndex + 1}/${this.FALLBACK_API_KEYS.length}`);
+            continue; // Try again with the new key
+          }
+          
           throw new Error('API quota exceeded. Please try again later or check your Gemini API usage.');
         }
 
@@ -148,6 +170,7 @@ class GeminiService {
     }
 
     let lastError: Error | null = null;
+    let currentApiKeyIndex = 0;
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
@@ -262,6 +285,14 @@ class GeminiService {
 
         // Don't retry on authentication errors
         if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+          // If we're using a fallback key and have more keys to try, rotate to the next one
+          if (this.FALLBACK_API_KEYS.length > 1 && currentApiKeyIndex < this.FALLBACK_API_KEYS.length - 1) {
+            currentApiKeyIndex++;
+            this.genAI = new GoogleGenerativeAI(this.FALLBACK_API_KEYS[currentApiKeyIndex]);
+            console.log(`🔄 Rotating to fallback API key ${currentApiKeyIndex + 1}/${this.FALLBACK_API_KEYS.length}`);
+            continue; // Try again with the new key
+          }
+          
           onUpdate({
             type: 'error',
             error: 'Invalid API key. Please check your Gemini API key in settings.'
@@ -271,6 +302,14 @@ class GeminiService {
 
         // Don't retry on quota exceeded errors
         if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+          // If we're using a fallback key and have more keys to try, rotate to the next one
+          if (this.FALLBACK_API_KEYS.length > 1 && currentApiKeyIndex < this.FALLBACK_API_KEYS.length - 1) {
+            currentApiKeyIndex++;
+            this.genAI = new GoogleGenerativeAI(this.FALLBACK_API_KEYS[currentApiKeyIndex]);
+            console.log(`🔄 Rotating to fallback API key ${currentApiKeyIndex + 1}/${this.FALLBACK_API_KEYS.length}`);
+            continue; // Try again with the new key
+          }
+          
           onUpdate({
             type: 'error',
             error: 'API quota exceeded. Please try again later or check your Gemini API usage.'
@@ -327,7 +366,7 @@ No commentary, just begin your explanation.
 Keep going until you've thoroughly explained the entire concept.`;
   }
 
-  private async generateImages(prompt: string, apiKey: string): Promise<string[]> {
+  private async generateImages(_prompt: string, _apiKey: string): Promise<string[]> {
     try {
       if (!this.genAI) {
         throw new Error('Gemini API not initialized');
@@ -365,19 +404,22 @@ Keep going until you've thoroughly explained the entire concept.`;
 
   async validateApiKey(apiKey: string): Promise<boolean> {
     try {
-      // Easter egg: if user enters "bynaman", use the fallback API key for validation
-      const actualApiKey = apiKey === this.EASTER_EGG_KEY ? this.FALLBACK_API_KEY : apiKey;
+      // Handle beta access key (case-insensitive with spaces)
+      const trimmedKey = apiKey.trim();
+      if (trimmedKey.toLowerCase() === 'free') {
+        return true;
+      }
 
       // For testing purposes, we'll just check if the API key format is valid
       // This avoids making an actual API call that might fail due to model availability
-      if (actualApiKey && actualApiKey.length > 10) {
+      if (trimmedKey && trimmedKey.length > 10) {
         return true;
       }
 
       // If we want to actually validate with the API (uncomment this in production)
       /*
-      const tempGenAI = new GoogleGenerativeAI(actualApiKey);
-      const model = tempGenAI.getGenerativeModel({ model: "gemini-2.5-flash-lite-preview-06-17" }); // Updated model name
+      const tempGenAI = new GoogleGenerativeAI(trimmedKey);
+      const model = tempGenAI.getGenerativeModel({ model: "gemini-2.0-flash-preview-image-generation" });
       
       // Simple validation prompt
       const result = await model.generateContent("Hello, can you respond with 'valid' if you can understand this?");

@@ -50,6 +50,7 @@ export class AuthService {
           emailVerification: false,
           disabled: false,
           onboardingcompleted: false,
+          quota: 15, // Add default quota
           settings: {
             theme: 'light',
             language: 'en',
@@ -122,6 +123,15 @@ export class AuthService {
           success: false,
           message: 'Please verify your email. A new verification link has been sent.'
         };
+      }
+
+      // Update lastLogin timestamp in database
+      try {
+        await databaseService.updateDocument('users', user.$id, {
+          lastLogin: new Date().toISOString()
+        });
+      } catch (updateError) {
+        console.error('Failed to update lastLogin timestamp:', updateError);
       }
 
       return {
@@ -358,6 +368,7 @@ export class AuthService {
                 emailVerification: user.emailVerification || true, // OAuth users are usually verified
                 disabled: false,
                 onboardingcompleted: false,
+                quota: 15, // Add default quota
                 oauthProvider: oauthProvider,
                 settings: {
                   theme: 'light',

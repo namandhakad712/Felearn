@@ -10,6 +10,7 @@ const EmailVerificationPage = lazy(() => import('../pages/EmailVerificationPage'
 const OAuthCallbackPage = lazy(() => import('../pages/OAuthCallbackPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
+const AcknowledgmentPage = lazy(() => import('../pages/AcknowledgmentPage'));
 // Temporarily use regular import for DashboardPage to fix dynamic import issue
 import DashboardPage from '../pages/DashboardPage';
 
@@ -49,6 +50,7 @@ function AppRoutes() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/acknowledgment" element={<AcknowledgmentPage />} />
         {/* Redirect root to auth since landing page is handled by index.html */}
         <Route path="/" element={<Navigate to="/auth/login" replace />} />
         <Route path="*" element={<Navigate to="/auth/login" replace />} />

@@ -28,7 +28,13 @@ export function extractNameFromEmail(email: string): string {
  * Validate Gemini API key by checking available models
  */
 export async function validateGeminiApiKey(apiKey: string): Promise<{ isValid: boolean; error?: string }> {
-  if (!apiKey || apiKey.trim().length === 0) {
+  // Handle beta access keyword (case-insensitive with spaces)
+  const trimmedKey = apiKey.trim();
+  if (trimmedKey.toLowerCase() === 'free') {
+    return { isValid: true };
+  }
+
+  if (!apiKey || trimmedKey.length === 0) {
     return { isValid: false, error: 'API key is required' };
   }
 
@@ -36,7 +42,7 @@ export async function validateGeminiApiKey(apiKey: string): Promise<{ isValid: b
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models', {
       method: 'GET',
       headers: {
-        'x-goog-api-key': apiKey.trim()
+        'x-goog-api-key': trimmedKey
       }
     });
 
