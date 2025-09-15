@@ -101,6 +101,8 @@ export interface GeminiRequest {
 }
 
 export interface StorySlide {
+  id?: string;
+  index?: number;
   text: string;
   image: string | null;
 }

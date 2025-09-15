@@ -7,6 +7,8 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { GlobalStyle, theme, preventStyledComponentsError17 } from './utils/styledComponentsConfig';
 import { NetworkStatus } from './components/ui';
 import ErrorBoundary from './components/ErrorBoundary';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import './App.css';
 
 // Prevent styled-components Error #17
@@ -22,6 +24,8 @@ function App() {
             <ThemeProvider>
               <NetworkStatus />
               <AppRoutes />
+              <Analytics />
+              <SpeedInsights />
             </ThemeProvider>
           </AuthProvider>
         </ErrorBoundary>

@@ -24,7 +24,7 @@ const CredentialUpdate: React.FC<CredentialUpdateProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [showConfirmation, setShowConfirmation] = useState(false); // Removed unused variable
+  const [showConfirmation, setShowConfirmation] = useState(false); // Added missing state variable
   
   // Validation states
   const [currentPasswordError, setCurrentPasswordError] = useState('');
@@ -94,6 +94,8 @@ const CredentialUpdate: React.FC<CredentialUpdateProps> = ({
         // TODO: Implement password verification
         // await authService.verifyPassword(currentPassword);
         console.log('Password verification not implemented yet');
+        // Set showConfirmation to true after successful verification
+        setShowConfirmation(true);
       } catch (error) {
         setCurrentPasswordError('Current password is incorrect');
       }

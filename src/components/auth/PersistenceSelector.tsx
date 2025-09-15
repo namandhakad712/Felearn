@@ -15,9 +15,8 @@ const PersistenceSelector: React.FC<PersistenceSelectorProps> = ({ onSuccess, on
   
   const handlePersistenceChange = async (type: string) => {
     try {
-      setIsLoading(true);
+      // Use the setPersistence function from the hook which should handle loading states
       await setPersistence(type);
-      setSelectedType(type);
       onSuccess?.();
     } catch (error: any) {
       console.error('Persistence change error:', error);
@@ -29,8 +28,6 @@ const PersistenceSelector: React.FC<PersistenceSelectorProps> = ({ onSuccess, on
         retryDelay: 3000
       };
       onError?.(errorData);
-    } finally {
-      setIsLoading(false);
     }
   };
   

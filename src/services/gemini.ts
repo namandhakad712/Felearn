@@ -40,7 +40,6 @@ class GeminiService {
           generationConfig: {
             temperature: request.options.temperature || 0.7,
             maxOutputTokens: request.options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
-            responseModalities: ["TEXT", "IMAGE"], // ✅ FIXED: Specify both modalities
           }
         });
 
@@ -182,7 +181,6 @@ class GeminiService {
           generationConfig: {
             temperature: request.options?.temperature || 0.7,
             maxOutputTokens: request.options?.maxTokens || 11264,
-            responseModalities: ["TEXT", "IMAGE"],
           }
         });
 
