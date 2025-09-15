@@ -39,6 +39,9 @@ dist-ssr
 /build
 /dist
 
+# Optimized assets
+public/assets/optimized/
+
 # Coverage directory
 /coverage
 
@@ -61,13 +64,28 @@ temp.md
 *~
 
 # AI IDE folders
-.kiro/*
-.cursor/*
-.cline/*
-.augment/*
-.qoder/*
-.roo/*
-.windsurf/*
+.kiro/
+.cursor/
+.cline/
+.augment/
+.qoder/
+.roo/
+.windsurf/
+.clinerules/
+.kilocode/
+.qoder/
+.augment/
+.qwen/
+
+# AI IDE files
+*.ai
+*.aider
+*.cursor
+*.cline
+*.kiro
+*.qoder
+*.roo
+*.windsurf
 .clinerules/byterover-rules.md
 .kilocode/rules/byterover-rules.md
 .roo/rules/byterover-rules.md
