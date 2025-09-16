@@ -294,68 +294,6 @@ export class PdfPageGenerator {
   }
 
   /**
-   * Embed image based on its format
-   */
-  private async embedImage(pdfDoc: any, imageBytes: Uint8Array): Promise<any> {
-    try {
-      // Try to detect image format from the bytes
-      if (this.isJpeg(imageBytes)) {
-        return await pdfDoc.embedJpg(imageBytes);
-      } else {
-        // For PNG, WEBP or other formats, use embedPng
-        return await pdfDoc.embedPng(imageBytes);
-      }
-    } catch (error) {
-      console.warn('Failed to embed image as JPEG, trying PNG:', error);
-      try {
-        return await pdfDoc.embedPng(imageBytes);
-      } catch (pngError) {
-        console.error('Failed to embed image as PNG:', pngError);
-        throw error;
-      }
-    }
-  }
-
-  /**
-   * Check if image bytes represent a JPEG image
-   */
-  private isJpeg(bytes: Uint8Array): boolean {
-    // JPEG magic number: FF D8 FF
-    return bytes.length >= 3 && 
-           bytes[0] === 0xFF && 
-           bytes[1] === 0xD8 && 
-           bytes[2] === 0xFF;
-  }
-
-  /**
-   * Load image from URL as bytes
-   */
-  private async loadImageFromUrl(url: string): Promise<Uint8Array | null> {
-    try {
-      // Handle relative URLs by making them absolute
-      let imageUrl = url;
-      if (url.startsWith('/')) {
-        // For relative URLs, make them absolute
-        const baseUrl = window.location.origin;
-        imageUrl = baseUrl + url;
-      }
-      
-      console.log('Loading image from URL:', imageUrl);
-      
-      const response = await fetch(imageUrl);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const arrayBuffer = await response.arrayBuffer();
-      return new Uint8Array(arrayBuffer);
-    } catch (error) {
-      console.error('Error loading image from URL:', url, error);
-      return null;
-    }
-  }
-
-  /**
    * Split text to fit within specified width with improved word wrapping
    */
   private splitTextToFitWidth(

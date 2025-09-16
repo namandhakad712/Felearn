@@ -170,8 +170,8 @@ const OnboardingPage: React.FC = () => {
             
             // Try to create the user document
             try {
-              const { databaseService } = await import('@/services/databaseService');
-              await databaseService.createDocument('users', userData, user?.$id);
+              const { databaseService } = await import('@/services/database');
+              await databaseService.createUserDocument(user?.$id || '', userData);
               
               // Then update the user state
               await updateUser({
@@ -235,7 +235,7 @@ const OnboardingPage: React.FC = () => {
           // Try to create the user document
           try {
             const { databaseService } = await import('@/services/database');
-            await databaseService.createDocument('users', userData, user?.$id);
+            await databaseService.createUserDocument(user?.$id || '', userData);
             
             // Then update the user state
             await updateUser({
