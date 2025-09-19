@@ -94,3 +94,11 @@ temp.md
 .kiro/steering/byterover-rules.md
 .qoder/rules/byterover-rules.md
 .augment/rules/byterover-rules.md
+
+
+# ByteRover specific
+.qwen/
+temp.md
+tempp.md
+QWEN.md
+tmp.md

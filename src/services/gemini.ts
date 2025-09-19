@@ -1,21 +1,32 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+/// <reference types="vite/client" />
+
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { GeminiRequest, GeminiResponse, StorySlide, StreamingUpdate } from '../types';
+
+// Helper function to safely access environment variables
+const getEnvVar = (name: string): string | undefined => {
+  try {
+    // @ts-ignore - TypeScript doesn't recognize import.meta.env in this context
+    return import.meta.env[name];
+  } catch (e) {
+    return undefined;
+  }
+};
 
 class GeminiService {
   private genAI: GoogleGenerativeAI | null = null;
-  private readonly BETA_ACCESS_KEY = "FREE";
   private readonly FALLBACK_API_KEYS: string[] = [
-    import.meta.env.VITE_GEMINI_FALLBACK_API_KEY_1,
-    import.meta.env.VITE_GEMINI_FALLBACK_API_KEY_2,
-    import.meta.env.VITE_GEMINI_FALLBACK_API_KEY_3
-  ].filter(key => key); // Filter out undefined keys
+    getEnvVar('VITE_GEMINI_FALLBACK_API_KEY_1'),
+    getEnvVar('VITE_GEMINI_FALLBACK_API_KEY_2'),
+    getEnvVar('VITE_GEMINI_FALLBACK_API_KEY_3')
+  ].filter((key): key is string => key !== undefined); // Filter out undefined keys with proper typing
 
   initialize(apiKey: string) {
     // Beta access: if user enters "FREE", use the first fallback API key
     const trimmedKey = apiKey.trim();
     if (trimmedKey.toLowerCase() === 'free') {
       console.log('🎉 Beta access activated! Using fallback API key for testing');
-      this.genAI = new GoogleGenerativeAI(this.FALLBACK_API_KEYS[0] || import.meta.env.VITE_GEMINI_FALLBACK_API_KEY_1);
+      this.genAI = new GoogleGenerativeAI(this.FALLBACK_API_KEYS[0] || getEnvVar('VITE_GEMINI_FALLBACK_API_KEY_1') || '');
       return;
     }
     
@@ -34,68 +45,86 @@ class GeminiService {
       try {
         const startTime = Date.now();
 
-        // Create a chat model with image generation capabilities - exactly like "main thing" implementation
-        const model = this.genAI.getGenerativeModel({
-          model: "gemini-2.0-flash-preview-image-generation",
+        // Step 1: Generate the story sentences as a JSON array (like tmp.md approach)
+        const textModel = this.genAI.getGenerativeModel({
+          model: "gemini-2.5-flash", // Using gemini-2.5-flash like tmp.md
           generationConfig: {
             temperature: request.options.temperature || 0.7,
-            maxOutputTokens: request.options.maxTokens || 11264, // ✅ INCREASED: Allows 15-20 slides
+            maxOutputTokens: request.options.maxTokens || 8192,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.STRING,
+                description: "A sentence of the story.",
+              },
+            },
           }
         });
 
-        // Create a chat instance with empty history
-        const chat = model.startChat({
-          history: [],
-        });
+        const storyInstructions = `
+Use a fun story about lots of tiny cats as a metaphor.
+Keep sentences short but conversational, casual, and engaging.
+Return the story as a JSON array of sentences. No commentary, just the JSON.
+`;
 
-        // Send the message with our prompt and get a stream response - exactly like "main thing" implementation
-        const result = await chat.sendMessageStream(request.prompt + this.additionalInstructions());
-        
-        // Process the stream to extract text and images - exactly like "main thing" implementation
-        const slides: StorySlide[] = [];
-        let text = '';
-        let img: string | null = null;
+        const textResult = await textModel.generateContent(request.prompt + storyInstructions);
+        const sentences = JSON.parse(textResult.response.text());
 
-        for await (const chunk of result.stream) {
-          for (const candidate of chunk.candidates || []) {
-            for (const part of candidate.content?.parts || []) {
-              if (part.text) {
-                text += part.text;
-              } else if (part.inlineData) {
-                // Found an image
-                img = `data:image/png;base64,${part.inlineData.data}`;
-              }
-              
-              // If we have both text and image, create a slide
-              if (text && img) {
-                slides.push({
-                  text: text,
-                  image: img
-                });
-                
-                // Reset for next slide
-                text = '';
-                img = null;
-              }
-            }
-          }
+        if (!Array.isArray(sentences) || sentences.length === 0) {
+          throw new Error("Couldn't generate a story. Please try another prompt.");
         }
-        
-        // Handle any remaining text or image at the end
-        if (text || img) {
-          slides.push({
-            text: text || '',
-            image: img || ''
-          });
+
+        // Step 2: Generate an image for each sentence (like tmp.md approach)
+        const imageStyleInstruction = `A cute, minimal illustration with black ink on a white background.`;
+        const images: string[] = [];
+        const slides: StorySlide[] = [];
+
+        // Create image generation model
+        const imageModel = this.genAI.getGenerativeModel({
+          model: "gemini-2.5-flash-image-preview", // Using Imagen 3.0 like tmp.md
+        });
+
+        // Generate images for each sentence
+        for (let i = 0; i < sentences.length; i++) {
+          const sentence = sentences[i];
+          
+          try {
+            const imageResult = await imageModel.generateContent([
+              {
+                text: `${sentence}. ${imageStyleInstruction}`,
+              }
+            ]);
+            
+            // Extract image data
+            const imageData = imageResult.response.text();
+            images.push(imageData);
+            
+            // Create slide
+            slides.push({
+              id: `slide-${i}`,
+              text: sentence,
+              image: imageData,
+              index: i
+            });
+          } catch (imageError) {
+            console.error(`Failed to generate image for sentence ${i}:`, imageError);
+            // Use placeholder if image generation fails
+            const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+SW1hZ2UgR2VuZXJhdGlvbiBGYWlsZWQ8L3RleHQ+PC9zdmc+';
+            images.push(placeholder);
+            
+            // Create slide with placeholder
+            slides.push({
+              id: `slide-${i}`,
+              text: sentence,
+              image: placeholder,
+              index: i
+            });
+          }
         }
 
         // Combine all text for the story content
-        const storyText = slides.map(slide => slide.text).join('\n\n');
-        
-        // Extract images for the response
-        const images = slides
-          .filter(slide => slide.image)
-          .map(slide => slide.image as string);
+        const storyText = sentences.join('\n\n');
 
         const endTime = Date.now();
 
@@ -175,88 +204,113 @@ class GeminiService {
       try {
         const startTime = Date.now();
 
-        // Create a chat model with image generation capabilities
-        const model = this.genAI.getGenerativeModel({
-          model: "gemini-2.0-flash-preview-image-generation",
+        // Step 1: Generate the story sentences as a JSON array (like tmp.md approach)
+        const textModel = this.genAI.getGenerativeModel({
+          model: "gemini-2.5-flash", // Using gemini-2.5-flash like tmp.md
           generationConfig: {
             temperature: request.options?.temperature || 0.7,
-            maxOutputTokens: request.options?.maxTokens || 11264,
+            maxOutputTokens: request.options?.maxTokens || 8192,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.STRING,
+                description: "A sentence of the story.",
+              },
+            },
           }
         });
 
-        // Create a chat instance with empty history
-        const chat = model.startChat({
-          history: [],
-        });
+        const storyInstructions = `
+Use a fun story about lots of tiny cats as a metaphor.
+Keep sentences short but conversational, casual, and engaging.
+Return the story as a JSON array of sentences. No commentary, just the JSON.
+`;
 
-        // Send the message with our prompt and get a stream response
-        const result = await chat.sendMessageStream(request.prompt + this.additionalInstructions());
-        
-        // Process the stream to extract text and images progressively
-        const slides: StorySlide[] = [];
-        const images: string[] = [];
-        let text = '';
-        let img: string | null = null;
-        let slideIndex = 0;
+        const textResult = await textModel.generateContent(request.prompt + storyInstructions);
+        const sentences = JSON.parse(textResult.response.text());
 
-        for await (const chunk of result.stream) {
-          for (const candidate of chunk.candidates || []) {
-            for (const part of candidate.content?.parts || []) {
-              if (part.text) {
-                text += part.text;
-              } else if (part.inlineData) {
-                // Found an image
-                img = `data:image/png;base64,${part.inlineData.data}`;
-              }
-              
-              // If we have both text and image, create a slide and emit update
-              if (text && img) {
-                const newSlide: StorySlide = {
-                  id: `slide-${slideIndex}`,
-                  text: text,
-                  image: img,
-                  index: slideIndex
-                };
-                
-                slides.push(newSlide);
-                images.push(img);
-                slideIndex++;
-                
-                // Emit slide update immediately
-                onUpdate({
-                  type: 'slide',
-                  slide: newSlide
-                });
-                
-                // Reset for next slide
-                text = '';
-                img = null;
-              }
-            }
-          }
+        if (!Array.isArray(sentences) || sentences.length === 0) {
+          throw new Error("Couldn't generate a story. Please try another prompt.");
         }
-        
-        // Handle any remaining text or image at the end
-        if (text || img) {
-          const finalSlide: StorySlide = {
-            id: `slide-${slideIndex}`,
-            text: text || '',
-            image: img || '',
-            index: slideIndex
-          };
+
+        // Step 2: Generate an image for each sentence (like tmp.md approach)
+        const imageStyleInstruction = `A cute, minimal illustration with black ink on a white background.`;
+        const images: string[] = [];
+        const slides: StorySlide[] = [];
+
+        // Create image generation model
+        const imageModel = this.genAI.getGenerativeModel({
+          model: "gemini-2.5-flash-image-preview", // Using Imagen 3.0 like tmp.md
+        });
+
+        // Generate images for each sentence and emit updates
+        for (let i = 0; i < sentences.length; i++) {
+          const sentence = sentences[i];
           
-          slides.push(finalSlide);
-          if (img) images.push(img);
-          
-          // Emit final slide update
+          // Emit text update immediately
           onUpdate({
             type: 'slide',
-            slide: finalSlide
+            slide: {
+              id: `text-${i}`,
+              text: sentence,
+              image: null,
+              index: i
+            }
           });
+          
+          try {
+            const imageResult = await imageModel.generateContent([
+              {
+                text: `${sentence}. ${imageStyleInstruction}`,
+              }
+            ]);
+            
+            // Extract image data
+            const imageData = imageResult.response.text();
+            images.push(imageData);
+            
+            // Create slide
+            const newSlide: StorySlide = {
+              id: `slide-${i}`,
+              text: sentence,
+              image: imageData,
+              index: i
+            };
+            
+            slides.push(newSlide);
+            
+            // Emit slide update immediately
+            onUpdate({
+              type: 'slide',
+              slide: newSlide
+            });
+          } catch (imageError) {
+            console.error(`Failed to generate image for sentence ${i}:`, imageError);
+            // Use placeholder if image generation fails
+            const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+SW1hZ2UgR2VuZXJhdGlvbiBGYWlsZWQ8L3RleHQ+PC9zdmc+';
+            images.push(placeholder);
+            
+            // Create slide with placeholder
+            const newSlide: StorySlide = {
+              id: `slide-${i}`,
+              text: sentence,
+              image: placeholder,
+              index: i
+            };
+            
+            slides.push(newSlide);
+            
+            // Emit slide update immediately
+            onUpdate({
+              type: 'slide',
+              slide: newSlide
+            });
+          }
         }
 
         // Combine all text for the story content
-        const storyText = slides.map(slide => slide.text).join('\n\n');
+        const storyText = sentences.join('\n\n');
         
         const endTime = Date.now();
 
@@ -354,47 +408,6 @@ class GeminiService {
     }
   }
 
-  // Exactly like "main thing" folder's additionalInstructions
-  private additionalInstructions(): string {
-    return `
-Use a fun story about lots of tiny cats as a metaphor.
-Keep sentences short but conversational, casual, and engaging.
-Generate a cute, minimal illustration for each sentence with black ink on white background.
-No commentary, just begin your explanation.
-Keep going until you've thoroughly explained the entire concept.`;
-  }
-
-  private async generateImages(_prompt: string, _apiKey: string): Promise<string[]> {
-    try {
-      if (!this.genAI) {
-        throw new Error('Gemini API not initialized');
-      }
-      
-      // For now, return placeholder images until the actual image generation is implemented
-      // In a production app, you would use these prompts with the image generation model
-      const storyThemes = [
-        'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=400&fit=crop&crop=center',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&crop=center',
-        'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=600&h=400&fit=crop&crop=center',
-        'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&h=400&fit=crop&crop=center',
-      ];
-      
-      // Return placeholder images
-      return [
-        storyThemes[Math.floor(Math.random() * storyThemes.length)],
-        storyThemes[Math.floor(Math.random() * storyThemes.length)],
-        storyThemes[Math.floor(Math.random() * storyThemes.length)],
-      ];
-    } catch (error) {
-      console.error('Error generating images:', error);
-      // Fallback to placeholder images if image generation fails
-      return [
-        'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=400&fit=crop&crop=center',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&crop=center',
-      ];
-    }
-  }
-
   private estimateTokens(text: string): number {
     // A very rough estimate: ~4 characters per token
     return Math.ceil(text.length / 4);
@@ -417,7 +430,7 @@ Keep going until you've thoroughly explained the entire concept.`;
       // If we want to actually validate with the API (uncomment this in production)
       /*
       const tempGenAI = new GoogleGenerativeAI(trimmedKey);
-      const model = tempGenAI.getGenerativeModel({ model: "gemini-2.0-flash-preview-image-generation" });
+      const model = tempGenAI.getGenerativeModel({ model: "gemini-2.5-flash" });
       
       // Simple validation prompt
       const result = await model.generateContent("Hello, can you respond with 'valid' if you can understand this?");
