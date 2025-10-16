@@ -21,13 +21,15 @@ export interface User {
   geminiKey?: string; // API key
   isAdmin?: boolean; // admin privileges
   settings?: UserSettings | string; // user preferences (can be object in memory or string in database)
-  lastLogin?: string; // last login timestamp
+  lastLogin?: string; // last login timestamp (also used to track daily quota resets)
   createdAt?: string; // creation timestamp (for compatibility)
   bio?: string; // user bio
   oauthProvider?: string; // OAuth provider used
   disabled?: boolean; // account status
   onboardingcompleted?: boolean; // onboarding completion status
-  quota?: number; // story generation quota
+  
+  // Daily quota system (using existing database field)
+  quota?: number; // remaining stories for today (default: 15, max: 100000000)
 }
 
 // Extended User interface that includes Appwrite User properties
@@ -55,8 +57,10 @@ export interface ExtendedUser {
   geminiKey?: string;
   isAdmin?: boolean;
   settings?: UserSettings | string;
-  lastLogin?: string;
-  quota?: number; // story generation quota
+  lastLogin?: string; // last login timestamp (also used to track daily quota resets)
+  
+  // Daily quota system (using existing database field)
+  quota?: number; // remaining stories for today (default: 15, max: 100000000)
 }
 
 export interface UserSettings {

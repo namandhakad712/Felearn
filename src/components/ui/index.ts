@@ -14,3 +14,4 @@ export { default as DecryptedText } from './DecryptedText';
 export { default as EnhancedImage } from './EnhancedImage';
 export { default as AuthErrorMessage } from './AuthErrorMessage';
 export { default as NetworkStatus } from './NetworkStatus';
+export { QuotaDisplay } from './QuotaDisplay';

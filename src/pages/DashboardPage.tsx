@@ -6,7 +6,7 @@ import { DashboardLayout } from '../components/dashboard';
 import { Card, JellyText } from '../components/ui';
 import { ChatInterface, StoryDisplay, ExportModal, ExamplePrompts } from '../components/story';
 import { useAuth } from '../contexts/AuthContext';
-import { useStories, useToast } from '../hooks';
+import { useStories, useToast, useQuota } from '../hooks';
 import { useUserTheme } from '../hooks/useUserTheme';
 import { Story, StorySlide } from '../types';
 import { ToastContainer } from '../components/ui';
@@ -33,6 +33,9 @@ const StoryGenerator = () => {
   // Apply user's theme preference automatically
   useUserTheme();
   const { success: showSuccessToast, error: showErrorToast, toasts, removeToast } = useToast();
+  
+  // Use the new quota hook
+  const { remaining: quotaRemaining, hasQuota, decrementQuota, refreshQuota } = useQuota();
 
 
   // Use the stories hook for CRUD operations
@@ -77,31 +80,7 @@ const StoryGenerator = () => {
   // Function to refresh rate limit status
   const refreshStatus = () => {
     console.log("Rate limit status refreshed");
-    // This is a placeholder function to fix the missing reference
-  };
-
-  // Function to update user quota
-  const updateUserQuota = async (userId: string, newQuota: number) => {
-    try {
-      await databaseService.updateUserDocument(userId, { quota: newQuota });
-      console.log('User quota updated successfully to', newQuota);
-      // In a real implementation, you would also update the AuthContext user state
-      // For now, we'll just log it
-    } catch (error) {
-      console.error('Failed to update user quota:', error);
-      showErrorToast('Quota Update Error', 'Failed to update your story generation quota.');
-    }
-  };
-
-  // Function to check if quota should be reset (daily reset)
-  const shouldResetQuota = (lastLogin?: string): boolean => {
-    if (!lastLogin) return true;
-    
-    const lastLoginDate = new Date(lastLogin);
-    const today = new Date();
-    
-    // Reset if last login was not today
-    return lastLoginDate.toDateString() !== today.toDateString();
+    refreshQuota(); // Refresh quota from the hook
   };
 
   const handleStorySubmit = async (concept: string) => {
@@ -110,27 +89,10 @@ const StoryGenerator = () => {
       return;
     }
 
-    // Check and potentially reset quota
-    let currentUserQuota = user?.quota !== undefined ? user.quota : 15;
-    const shouldReset = shouldResetQuota(user?.lastLogin);
-    
-    if (shouldReset) {
-      // Reset quota to 15 for the new day
-      currentUserQuota = 15;
-      try {
-        await updateUserQuota(user.$id, 15);
-        // Also update lastLogin timestamp
-        await databaseService.updateUserDocument(user.$id, { 
-          lastLogin: new Date().toISOString() 
-        });
-      } catch (error) {
-        console.error('Failed to reset quota:', error);
-      }
-    }
-    
-    if (currentUserQuota <= 0) {
+    // Check quota using the new system
+    if (!hasQuota()) {
       setError('You have reached your daily story generation limit. Please try again tomorrow.');
-      showErrorToast('Generation Limit Reached', 'You have reached your daily story generation limit of 15 stories.');
+      showErrorToast('Generation Limit Reached', `You have used all ${quotaRemaining} stories today. Quota resets at midnight.`);
       return;
     }
 
@@ -150,7 +112,7 @@ const StoryGenerator = () => {
     try {
       console.log('Generating story for concept:', concept);
       console.log('Using API key (first 10 chars):', user.geminiKey?.substring(0, 10) + '...');
-      console.log('Current quota:', currentUserQuota);
+      console.log('Current quota remaining:', quotaRemaining);
 
       // Use the real gemini service
       
@@ -219,21 +181,19 @@ const StoryGenerator = () => {
                   update.images || [], 
                   update.slides || [], 
                   update.metadata?.tokensUsed || 0
-                ).then(savedStory => {
+                ).then(async (savedStory) => {
                   setSelectedStory(savedStory);
                   console.log('Visual story saved automatically:', savedStory);
                   
-                  // FAIR USAGE: Only update user quota after successful story generation AND saving
+                  // FAIR USAGE: Only decrement quota after successful story generation AND saving
                   // This ensures users don't lose their quota if there are errors during generation or saving
-                  const newQuota = Math.max(0, currentUserQuota - 1);
-                  console.log('Updating user quota from', currentUserQuota, 'to', newQuota);
-                  updateUserQuota(user.$id, newQuota);
-                  // Update lastLogin timestamp to track daily usage
-                  databaseService.updateUserDocument(user.$id, { 
-                    lastLogin: new Date().toISOString() 
-                  }).catch(updateError => {
-                    console.error('Failed to update lastLogin timestamp:', updateError);
-                  });
+                  const success = await decrementQuota();
+                  if (success) {
+                    console.log('Quota decremented successfully. Remaining:', quotaRemaining - 1);
+                    showSuccessToast('Story Saved', `Story saved successfully! ${quotaRemaining - 1} stories remaining today.`);
+                  } else {
+                    console.error('Failed to decrement quota');
+                  }
                 }).catch(saveError => {
                   console.error('Failed to save story:', saveError);
                   // Show error to user but still display the story

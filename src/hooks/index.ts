@@ -44,6 +44,9 @@ export { useColorScheme };
 import { useStories } from './useStories';
 export { useStories };
 
+import { useQuota } from './useQuota';
+export { useQuota };
+
 // Create a mock useToast hook to prevent import errors
 export const useToast = () => {
   return {
@@ -83,6 +86,7 @@ const hooks = {
   useColorScheme,
   useStories,
   useToast,
+  useQuota,
 };
 
 export default hooks;
