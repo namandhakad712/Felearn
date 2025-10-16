@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GeminiRequest, GeminiResponse, StorySlide, StreamingUpdate } from '../types';
 
 // Helper function to safely access environment variables
@@ -45,95 +45,118 @@ class GeminiService {
       try {
         const startTime = Date.now();
 
-        // Step 1: Generate the story sentences as a JSON array (like tmp.md approach)
-        const textModel = this.genAI.getGenerativeModel({
-          model: "gemini-2.5-flash", // Using gemini-2.5-flash like tmp.md
+        // Use single multimodal model for both text and images
+        const model = this.genAI.getGenerativeModel({
+          model: "gemini-2.0-flash-preview-image-generation", // Using free Gemini 2.0 Flash Preview for image generation
           generationConfig: {
             temperature: request.options.temperature || 0.7,
             maxOutputTokens: request.options.maxTokens || 8192,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: SchemaType.ARRAY,
-              items: {
-                type: SchemaType.STRING,
-                description: "A sentence of the story.",
-              },
-            },
+            // @ts-ignore - responseModalities is required for image generation model
+            responseModalities: ['TEXT', 'IMAGE'],
           }
         });
 
         const storyInstructions = `
-Use a fun story about lots of tiny cats as a metaphor.
+Create a fun educational story about the following topic using lots of tiny cats as a metaphor.
 Keep sentences short but conversational, casual, and engaging.
-Return the story as a JSON array of sentences. No commentary, just the JSON.
+
+For each sentence of the story:
+1. Write one clear, engaging sentence
+2. Generate a cute, minimal illustration with black ink on a white background that matches the sentence
+
+Generate 8-12 sentences total to explain the concept thoroughly.
 `;
 
-        const textResult = await textModel.generateContent(request.prompt + storyInstructions);
-        const sentences = JSON.parse(textResult.response.text());
-
-        if (!Array.isArray(sentences) || sentences.length === 0) {
+        const fullPrompt = `${request.prompt}\n\n${storyInstructions}`;
+        
+        // Generate story with images in one go
+        const result = await model.generateContent(fullPrompt);
+        
+        // Extract text and images from multimodal response
+        const candidate = result.response.candidates?.[0];
+        const parts = candidate?.content?.parts || [];
+        
+        const images: string[] = [];
+        const slides: StorySlide[] = [];
+        const sentences: string[] = [];
+        
+        // Parse the response parts
+        let currentText = '';
+        let slideIndex = 0;
+        
+        for (const part of parts) {
+          if (part.text) {
+            // Accumulate text
+            currentText += part.text;
+          } else if (part.inlineData) {
+            // Found an image - create a slide with accumulated text
+            if (currentText.trim()) {
+              const sentence = currentText.trim();
+              sentences.push(sentence);
+              
+              // Convert image to base64 data URL
+              const mimeType = part.inlineData.mimeType || 'image/png';
+              const base64Data = part.inlineData.data;
+              const imageData = `data:${mimeType};base64,${base64Data}`;
+              
+              images.push(imageData);
+              
+              slides.push({
+                id: `slide-${slideIndex}`,
+                text: sentence,
+                image: imageData,
+                index: slideIndex
+              });
+              
+              slideIndex++;
+              currentText = ''; // Reset for next sentence
+            }
+          }
+        }
+        
+        // Handle any remaining text without image
+        if (currentText.trim() && slides.length > 0) {
+          // Add to last slide or create new one with placeholder
+          const sentence = currentText.trim();
+          sentences.push(sentence);
+          
+          const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+Q29uY2x1c2lvbjwvdGV4dD48L3N2Zz4=';
+          images.push(placeholder);
+          
+          slides.push({
+            id: `slide-${slideIndex}`,
+            text: sentence,
+            image: placeholder,
+            index: slideIndex
+          });
+        }
+        
+        if (slides.length === 0) {
           throw new Error("Couldn't generate a story. Please try another prompt.");
         }
 
-        // Step 2: Generate an image for each sentence (like tmp.md approach)
-        const imageStyleInstruction = `A cute, minimal illustration with black ink on a white background.`;
-        const images: string[] = [];
-        const slides: StorySlide[] = [];
-
-        // Create image generation model
-        const imageModel = this.genAI.getGenerativeModel({
-          model: "gemini-2.5-flash-image-preview", // Using Imagen 3.0 like tmp.md
-        });
-
-        // Generate images for each sentence
-        for (let i = 0; i < sentences.length; i++) {
-          const sentence = sentences[i];
-          
-          try {
-            const imageResult = await imageModel.generateContent([
-              {
-                text: `${sentence}. ${imageStyleInstruction}`,
-              }
-            ]);
-            
-            // Extract image data
-            const imageData = imageResult.response.text();
-            images.push(imageData);
-            
-            // Create slide
-            slides.push({
-              id: `slide-${i}`,
-              text: sentence,
-              image: imageData,
-              index: i
-            });
-          } catch (imageError) {
-            console.error(`Failed to generate image for sentence ${i}:`, imageError);
-            // Use placeholder if image generation fails
-            const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+SW1hZ2UgR2VuZXJhdGlvbiBGYWlsZWQ8L3RleHQ+PC9zdmc+';
-            images.push(placeholder);
-            
-            // Create slide with placeholder
-            slides.push({
-              id: `slide-${i}`,
-              text: sentence,
-              image: placeholder,
-              index: i
-            });
-          }
-        }
-
         // Combine all text for the story content
-        const storyText = sentences.join('\n\n');
+        const storyText = slides.map(slide => slide.text).join('\n\n');
 
         const endTime = Date.now();
+
+        // Get actual token usage from API response
+        const usageMetadata = result.response.usageMetadata;
+        const actualTokensUsed = usageMetadata ? {
+          promptTokens: usageMetadata.promptTokenCount || 0,
+          candidatesTokens: usageMetadata.candidatesTokenCount || 0,
+          totalTokens: usageMetadata.totalTokenCount || 0,
+        } : null;
 
         return {
           story: storyText,
           images,
           slides,
           metadata: {
-            tokensUsed: this.estimateTokens(storyText),
+            tokensUsed: actualTokensUsed?.totalTokens || this.estimateTokens(storyText),
+            promptTokens: actualTokensUsed?.promptTokens,
+            candidatesTokens: actualTokensUsed?.candidatesTokens,
+            totalTokens: actualTokensUsed?.totalTokens,
             processingTime: endTime - startTime,
           }
         };
@@ -204,115 +227,119 @@ Return the story as a JSON array of sentences. No commentary, just the JSON.
       try {
         const startTime = Date.now();
 
-        // Step 1: Generate the story sentences as a JSON array (like tmp.md approach)
-        const textModel = this.genAI.getGenerativeModel({
-          model: "gemini-2.5-flash", // Using gemini-2.5-flash like tmp.md
+        // Use single multimodal model for both text and images
+        const model = this.genAI.getGenerativeModel({
+          model: "gemini-2.0-flash-preview-image-generation", // Using free Gemini 2.0 Flash Preview for image generation
           generationConfig: {
             temperature: request.options?.temperature || 0.7,
             maxOutputTokens: request.options?.maxTokens || 8192,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: SchemaType.ARRAY,
-              items: {
-                type: SchemaType.STRING,
-                description: "A sentence of the story.",
-              },
-            },
+            // @ts-ignore - responseModalities is required for image generation model
+            responseModalities: ['TEXT', 'IMAGE'],
           }
         });
 
         const storyInstructions = `
-Use a fun story about lots of tiny cats as a metaphor.
+Create a fun educational story about the following topic using lots of tiny cats as a metaphor.
 Keep sentences short but conversational, casual, and engaging.
-Return the story as a JSON array of sentences. No commentary, just the JSON.
+
+For each sentence of the story:
+1. Write one clear, engaging sentence
+2. Generate a cute, minimal illustration with black ink on a white background that matches the sentence
+
+Generate 8-12 sentences total to explain the concept thoroughly.
 `;
 
-        const textResult = await textModel.generateContent(request.prompt + storyInstructions);
-        const sentences = JSON.parse(textResult.response.text());
-
-        if (!Array.isArray(sentences) || sentences.length === 0) {
+        const fullPrompt = `${request.prompt}\n\n${storyInstructions}`;
+        
+        // Generate story with images in one go
+        const result = await model.generateContent(fullPrompt);
+        
+        // Extract text and images from multimodal response
+        const candidate = result.response.candidates?.[0];
+        const parts = candidate?.content?.parts || [];
+        
+        const images: string[] = [];
+        const slides: StorySlide[] = [];
+        
+        // Parse the response parts and emit updates as we go
+        let currentText = '';
+        let slideIndex = 0;
+        
+        for (const part of parts) {
+          if (part.text) {
+            // Accumulate text
+            currentText += part.text;
+          } else if (part.inlineData) {
+            // Found an image - create a slide with accumulated text
+            if (currentText.trim()) {
+              const sentence = currentText.trim();
+              
+              // Convert image to base64 data URL
+              const mimeType = part.inlineData.mimeType || 'image/png';
+              const base64Data = part.inlineData.data;
+              const imageData = `data:${mimeType};base64,${base64Data}`;
+              
+              images.push(imageData);
+              
+              const newSlide: StorySlide = {
+                id: `slide-${slideIndex}`,
+                text: sentence,
+                image: imageData,
+                index: slideIndex
+              };
+              
+              slides.push(newSlide);
+              
+              // Emit slide update immediately
+              onUpdate({
+                type: 'slide',
+                slide: newSlide
+              });
+              
+              slideIndex++;
+              currentText = ''; // Reset for next sentence
+            }
+          }
+        }
+        
+        // Handle any remaining text without image
+        if (currentText.trim() && slides.length > 0) {
+          const sentence = currentText.trim();
+          
+          const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+Q29uY2x1c2lvbjwvdGV4dD48L3N2Zz4=';
+          images.push(placeholder);
+          
+          const newSlide: StorySlide = {
+            id: `slide-${slideIndex}`,
+            text: sentence,
+            image: placeholder,
+            index: slideIndex
+          };
+          
+          slides.push(newSlide);
+          
+          onUpdate({
+            type: 'slide',
+            slide: newSlide
+          });
+        }
+        
+        if (slides.length === 0) {
           throw new Error("Couldn't generate a story. Please try another prompt.");
         }
 
-        // Step 2: Generate an image for each sentence (like tmp.md approach)
-        const imageStyleInstruction = `A cute, minimal illustration with black ink on a white background.`;
-        const images: string[] = [];
-        const slides: StorySlide[] = [];
-
-        // Create image generation model
-        const imageModel = this.genAI.getGenerativeModel({
-          model: "gemini-2.5-flash-image-preview", // Using Imagen 3.0 like tmp.md
-        });
-
-        // Generate images for each sentence and emit updates
-        for (let i = 0; i < sentences.length; i++) {
-          const sentence = sentences[i];
-          
-          // Emit text update immediately
-          onUpdate({
-            type: 'slide',
-            slide: {
-              id: `text-${i}`,
-              text: sentence,
-              image: null,
-              index: i
-            }
-          });
-          
-          try {
-            const imageResult = await imageModel.generateContent([
-              {
-                text: `${sentence}. ${imageStyleInstruction}`,
-              }
-            ]);
-            
-            // Extract image data
-            const imageData = imageResult.response.text();
-            images.push(imageData);
-            
-            // Create slide
-            const newSlide: StorySlide = {
-              id: `slide-${i}`,
-              text: sentence,
-              image: imageData,
-              index: i
-            };
-            
-            slides.push(newSlide);
-            
-            // Emit slide update immediately
-            onUpdate({
-              type: 'slide',
-              slide: newSlide
-            });
-          } catch (imageError) {
-            console.error(`Failed to generate image for sentence ${i}:`, imageError);
-            // Use placeholder if image generation fails
-            const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+SW1hZ2UgR2VuZXJhdGlvbiBGYWlsZWQ8L3RleHQ+PC9zdmc+';
-            images.push(placeholder);
-            
-            // Create slide with placeholder
-            const newSlide: StorySlide = {
-              id: `slide-${i}`,
-              text: sentence,
-              image: placeholder,
-              index: i
-            };
-            
-            slides.push(newSlide);
-            
-            // Emit slide update immediately
-            onUpdate({
-              type: 'slide',
-              slide: newSlide
-            });
-          }
-        }
-
         // Combine all text for the story content
-        const storyText = sentences.join('\n\n');
+        const storyText = slides.map(slide => slide.text).join('\n\n');
         
         const endTime = Date.now();
+
+        // Get actual token usage from API response
+        const usageMetadata = result.response.usageMetadata;
+        const actualTokensUsed = usageMetadata ? {
+          promptTokens: usageMetadata.promptTokenCount || 0,
+          candidatesTokens: usageMetadata.candidatesTokenCount || 0,
+          totalTokens: usageMetadata.totalTokenCount || 0,
+        } : null;
 
         // Emit completion update
         onUpdate({
@@ -321,7 +348,10 @@ Return the story as a JSON array of sentences. No commentary, just the JSON.
           images,
           slides,
           metadata: {
-            tokensUsed: this.estimateTokens(storyText),
+            tokensUsed: actualTokensUsed?.totalTokens || this.estimateTokens(storyText),
+            promptTokens: actualTokensUsed?.promptTokens,
+            candidatesTokens: actualTokensUsed?.candidatesTokens,
+            totalTokens: actualTokensUsed?.totalTokens,
             processingTime: endTime - startTime,
           }
         });

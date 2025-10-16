@@ -113,6 +113,9 @@ export interface GeminiResponse {
   slides?: StorySlide[];
   metadata: {
     tokensUsed: number;
+    promptTokens?: number;
+    candidatesTokens?: number;
+    totalTokens?: number;
     processingTime: number;
   };
 }
@@ -126,6 +129,9 @@ export interface StreamingUpdate {
   slides?: StorySlide[]; // Add slides array for complete type
   metadata?: {
     tokensUsed: number;
+    promptTokens?: number;
+    candidatesTokens?: number;
+    totalTokens?: number;
     processingTime: number;
   };
   error?: string;
