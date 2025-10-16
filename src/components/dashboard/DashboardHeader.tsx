@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { ThemeToggle } from '../ui';
-import GenerationLimitDisplay from './GenerationLimitDisplay';
+import { QuotaDisplay } from '../ui/QuotaDisplay';
 
 interface DashboardHeaderProps {
   onToggleSidebar: () => void;
@@ -58,8 +58,12 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           {/* Theme toggle */}
           <ThemeToggle size="sm" />
           
-          {/* Generation Limit Display */}
-          <GenerationLimitDisplay onNotificationClick={onNotificationClick} />
+          {/* Quota Display - New daily quota system */}
+          <QuotaDisplay 
+            compact={false} 
+            showResetTime={true} 
+            onNotificationClick={onNotificationClick}
+          />
           
           {/* User avatar and info */}
           <button

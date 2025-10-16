@@ -47,7 +47,9 @@ export class UserService {
       lastLogin: new Date().toISOString(),
       settings,
       geminiKey: '', // Empty by default
-      emailVerification: false
+      emailVerification: false,
+      // Initialize quota system (using existing fields only)
+      quota: 15
     };
     
     return databaseService.createDocument<User>(
@@ -164,6 +166,93 @@ export class UserService {
   }
 
   /**
+   * Check and reset daily quota if needed
+   * @param userId User ID
+   * @returns Promise with the updated user and whether quota was reset
+   */
+  async checkAndResetQuota(userId: string): Promise<{ user: User; wasReset: boolean }> {
+    const user = await this.getUser(userId);
+    
+    // Admin users have unlimited quota
+    if (user.isAdmin) {
+      return { user, wasReset: false };
+    }
+    
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // Get YYYY-MM-DD
+    
+    // Check if quota needs to be reset
+    let needsReset = false;
+    
+    if (!user.lastLogin) {
+      // First time - initialize quota
+      needsReset = true;
+    } else {
+      const lastLoginDate = user.lastLogin.split('T')[0];
+      if (lastLoginDate !== today) {
+        // New day - reset quota
+        needsReset = true;
+      }
+    }
+    
+    if (needsReset) {
+      const updatedUser = await this.updateUser(userId, {
+        quota: 15,
+        lastLogin: now.toISOString()
+      });
+      return { user: updatedUser, wasReset: true };
+    }
+    
+    return { user, wasReset: false };
+  }
+
+  /**
+   * Decrement user's daily quota
+   * @param userId User ID
+   * @returns Promise with the updated user
+   * @throws Error if quota is exceeded
+   */
+  async decrementQuota(userId: string): Promise<User> {
+    // First check and reset quota if needed
+    const { user } = await this.checkAndResetQuota(userId);
+    
+    // Admin users have unlimited quota
+    if (user.isAdmin) {
+      return user;
+    }
+    
+    // Initialize quota if not set
+    const currentQuota = user.quota ?? 15;
+    
+    if (currentQuota <= 0) {
+      throw new Error('Daily story generation quota exceeded. Please try again tomorrow.');
+    }
+    
+    // Decrement quota
+    const updatedUser = await this.updateUser(userId, {
+      quota: currentQuota - 1
+    });
+    
+    return updatedUser;
+  }
+
+  /**
+   * Get user's remaining quota
+   * @param userId User ID
+   * @returns Promise with remaining quota count
+   */
+  async getRemainingQuota(userId: string): Promise<number> {
+    const { user } = await this.checkAndResetQuota(userId);
+    
+    // Admin users have unlimited quota
+    if (user.isAdmin) {
+      return 999;
+    }
+    
+    return user.quota ?? 15;
+  }
+
+  /**
    * Set user as admin (admin only)
    * @param userId User ID
    * @param isAdmin Whether the user should be an admin
@@ -181,6 +270,123 @@ export class UserService {
    */
   async setUserStatus(userId: string, disabled: boolean): Promise<User> {
     return this.updateUser(userId, { disabled });
+  }
+
+  /**
+   * Check if user's quota needs to be reset (daily reset)
+   * @param user User object
+   * @returns Whether quota was reset
+   */
+  private needsQuotaReset(user: User): boolean {
+    if (!user.lastLogin) return true;
+    
+    const lastLogin = new Date(user.lastLogin);
+    const now = new Date();
+    
+    // Check if it's a new day (reset at midnight)
+    return lastLogin.toDateString() !== now.toDateString();
+  }
+
+  /**
+   * Get user's remaining quota (with automatic daily reset)
+   * @param userId User ID
+   * @returns Promise with remaining quota count
+   */
+  async getUserQuota(userId: string): Promise<{ remaining: number; total: number; resetsAt: string }> {
+    const user = await this.getUser(userId);
+    const DAILY_QUOTA_LIMIT = 15;
+    
+    // Admins have unlimited quota
+    if (user.isAdmin) {
+      return {
+        remaining: 999,
+        total: 999,
+        resetsAt: new Date().toISOString()
+      };
+    }
+    
+    // Check if quota needs reset
+    if (this.needsQuotaReset(user)) {
+      await this.resetUserQuota(userId);
+      return {
+        remaining: DAILY_QUOTA_LIMIT,
+        total: DAILY_QUOTA_LIMIT,
+        resetsAt: this.getNextMidnight().toISOString()
+      };
+    }
+    
+    const remaining = user.quota ?? DAILY_QUOTA_LIMIT;
+    
+    return {
+      remaining,
+      total: DAILY_QUOTA_LIMIT,
+      resetsAt: this.getNextMidnight().toISOString()
+    };
+  }
+
+  /**
+   * Reset user's daily quota
+   * @param userId User ID
+   * @returns Promise with the updated user
+   */
+  async resetUserQuota(userId: string): Promise<User> {
+    const DAILY_QUOTA_LIMIT = 15;
+    
+    return this.updateUser(userId, {
+      quota: DAILY_QUOTA_LIMIT,
+      lastLogin: new Date().toISOString()
+    });
+  }
+
+  /**
+   * Decrement user's quota after successful story generation
+   * @param userId User ID
+   * @returns Promise with the updated user and remaining quota
+   */
+  async decrementQuota(userId: string): Promise<{ user: User; remaining: number }> {
+    const user = await this.getUser(userId);
+    
+    // Admins have unlimited quota
+    if (user.isAdmin) {
+      return { user, remaining: 999 };
+    }
+    
+    // Check if quota needs reset first
+    if (this.needsQuotaReset(user)) {
+      await this.resetUserQuota(userId);
+      const updatedUser = await this.getUser(userId);
+      return { user: updatedUser, remaining: updatedUser.quota ?? 15 };
+    }
+    
+    const currentQuota = user.quota ?? 15;
+    const newQuota = Math.max(0, currentQuota - 1);
+    
+    const updatedUser = await this.updateUser(userId, {
+      quota: newQuota
+    });
+    
+    return { user: updatedUser, remaining: newQuota };
+  }
+
+  /**
+   * Check if user has quota remaining
+   * @param userId User ID
+   * @returns Promise with boolean indicating if user can generate stories
+   */
+  async hasQuotaRemaining(userId: string): Promise<boolean> {
+    const { remaining } = await this.getUserQuota(userId);
+    return remaining > 0;
+  }
+
+  /**
+   * Get next midnight time for quota reset
+   * @returns Date object for next midnight
+   */
+  private getNextMidnight(): Date {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow;
   }
 }
 

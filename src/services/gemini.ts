@@ -64,7 +64,7 @@ For each sentence of the story:
 1. Write one clear, engaging sentence
 2. Generate a cute, minimal illustration with black ink on a white background that matches the sentence
 
-Generate 8-12 sentences total to explain the concept thoroughly.
+Generate 10-15 sentences total to explain the concept thoroughly.
 `;
 
         const fullPrompt = `${request.prompt}\n\n${storyInstructions}`;
@@ -246,7 +246,7 @@ For each sentence of the story:
 1. Write one clear, engaging sentence
 2. Generate a cute, minimal illustration with black ink on a white background that matches the sentence
 
-Generate 8-12 sentences total to explain the concept thoroughly.
+Generate 10-15 sentences total to explain the concept thoroughly.
 `;
 
         const fullPrompt = `${request.prompt}\n\n${storyInstructions}`;

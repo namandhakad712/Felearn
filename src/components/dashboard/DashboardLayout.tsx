@@ -16,7 +16,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, onSidebarCo
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [generationsLeft, setGenerationsLeft] = useState(15); // Default to 15
   const { user } = useAuth();
   const { toasts, removeToast, info } = useToast();
   
@@ -44,16 +43,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, onSidebarCo
     window.addEventListener('openProfile', handleOpenProfile);
     return () => window.removeEventListener('openProfile', handleOpenProfile);
   }, []);
-  
-  // Set generations left based on user quota
-  useEffect(() => {
-    if (user?.quota !== undefined) {
-      setGenerationsLeft(user.quota);
-    } else {
-      // For users without quota set, default to 15
-      setGenerationsLeft(15);
-    }
-  }, [user]);
   
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -118,8 +107,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, onSidebarCo
           onToggleSidebar={toggleSidebar}
           sidebarOpen={sidebarOpen}
           onNotificationClick={() => {
-          const userQuota = user?.quota !== undefined ? user.quota : 15;
-          info('Story Generation Limit', `You have ${userQuota} story generations left today.`, 3000);
+          info('Daily Quota', 'Your story generation quota resets at midnight every day. Check the quota display for remaining stories!', 4000);
         }}
         />
         
